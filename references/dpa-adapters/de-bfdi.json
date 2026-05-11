@@ -1,0 +1,42 @@
+{
+  "id": "de-bfdi",
+  "name": "Bundesbeauftragter für den Datenschutz und die Informationsfreiheit",
+  "country": "DE",
+  "jurisdiction": "Germany (federal)",
+  "languages": ["de"],
+  "letterLanguage": "de",
+  "submission": {
+    "portalUrl": "https://formulare.bfdi.bund.de/lip/action/invoke.do?id=BfDIBeschwerde",
+    "acceptsEmail": true,
+    "email": "poststelle@bfdi.bund.de",
+    "acceptsPost": true,
+    "postalAddress": "Bundesbeauftragter für den Datenschutz und die Informationsfreiheit, Graurheindorfer Str. 153, 53117 Bonn, Germany"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Name und Vorname",
+      "complainantAddress": "Postanschrift",
+      "complainantEmail": "E-Mail-Adresse",
+      "controllerName": "Name der Organisation",
+      "controllerDomain": "Webseite",
+      "factsSummary": "Sachverhalt",
+      "articlesCited": "Verletzte Artikel der DSGVO"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 20
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The BfDI has a narrow federal remit: it supervises federal public authorities, telecommunications providers, postal services, and federal social insurance bodies. Complaints against private-sector website operators almost always fall to the Land-level DPA where the controller is established, not the BfDI. Complaints can be filed via the online form at formulare.bfdi.bund.de, by email to poststelle@bfdi.bund.de, or by post to Graurheindorfer Str. 153, 53117 Bonn. Working language is German."
+  }
+}

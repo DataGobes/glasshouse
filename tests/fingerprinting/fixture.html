@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fingerprinting Detection Fixture</title>
+</head>
+<body>
+  <h1>FP fixture</h1>
+  <script>
+  // === Tier 1: Canvas (text-only hidden, never inserted) ===
+  (function () {
+    const c = document.createElement("canvas");
+    c.width = 280; c.height = 40;
+    const ctx = c.getContext("2d");
+    ctx.font = "14px Arial";
+    ctx.fillText("fingerprint", 2, 15);
+    void c.toDataURL();
+  })();
+
+  // === Tier 1: Canvas measureText font enum (>20 calls) ===
+  (function () {
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d");
+    for (let i = 0; i < 25; i++) {
+      ctx.font = `12px font${i}`;
+      ctx.measureText("mmmmmmmmmm");
+    }
+  })();
+
+  // === Tier 1: WebGL hardware params + getShaderPrecisionFormat ===
+  (function () {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl");
+    if (gl) {
+      gl.getParameter(0x1F00); // VENDOR
+      gl.getParameter(0x1F01); // RENDERER
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      if (ext) {
+        gl.getParameter(ext.UNMASKED_VENDOR_WEBGL);
+        gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      }
+      if (gl.getShaderPrecisionFormat) {
+        gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+      }
+    }
+  })();
+
+  // === Tier 1: OfflineAudioContext + online AC graph ===
+  (function () {
+    if (typeof OfflineAudioContext !== "undefined") {
+      try { new OfflineAudioContext(1, 1, 44100); } catch (e) {}
+    }
+    if (typeof AudioContext !== "undefined") {
+      try {
+        const ac = new AudioContext();
+        const an = ac.createAnalyser();
+        const sp = ac.createScriptProcessor(4096, 1, 1);
+        an.connect(sp);
+      } catch (e) {}
+    }
+  })();
+
+  // === Tier 1: OffscreenCanvas + Worker ===
+  (function () {
+    if (typeof OffscreenCanvas !== "undefined") {
+      const oc = new OffscreenCanvas(280, 40);
+      try {
+        const blob = new Blob(["self.onmessage = e => { /* noop */ };"], { type: "application/javascript" });
+        const worker = new Worker(URL.createObjectURL(blob));
+        worker.postMessage({ canvas: oc }, [oc]);
+      } catch (e) {}
+    }
+  })();
+
+  // === Tier 1: WebRTC + enumerateDevices + Battery ===
+  (function () {
+    if (typeof RTCPeerConnection !== "undefined") {
+      try { new RTCPeerConnection(); } catch {}
+    }
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().catch(()=>{});
+    }
+    if (navigator.getBattery) {
+      navigator.getBattery().catch(()=>{});
+    }
+  })();
+
+  // === Tier 1: getHighEntropyValues ===
+  (function () {
+    if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+      navigator.userAgentData.getHighEntropyValues(["model", "platformVersion"]).catch(()=>{});
+    }
+  })();
+
+  // === Tier 2: Navigator + Screen + matchMedia FP queries ===
+  (function () {
+    void navigator.hardwareConcurrency;
+    void navigator.platform;
+    void navigator.maxTouchPoints;
+    void navigator.deviceMemory;
+    void screen.colorDepth;
+    void screen.pixelDepth;
+    void screen.availWidth;
+    matchMedia("(color-gamut: p3)");
+    matchMedia("(dynamic-range: high)");
+    matchMedia("(resolution: 2dppx)");
+  })();
+
+  // === Tier 3: language + cookieEnabled (should never appear in stackedSignals) ===
+  (function () {
+    void navigator.language;
+    void navigator.cookieEnabled;
+    void screen.width;
+  })();
+  </script>
+</body>
+</html>

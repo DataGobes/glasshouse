@@ -1,0 +1,16 @@
+## {{article}} — {{headline}}
+
+**Scanner finding:** {{detail}}
+
+**Cited article text:** see `articles-cited.md`, section "{{article}}".
+
+{{#if enforcementPrecedent}}
+**Enforcement precedent:** {{enforcementPrecedent}}
+{{/if}}
+
+{{#if evidencePointers.length}}
+**Evidence:**
+{{#each evidencePointers}}
+- `{{this.file}}`{{#if this.domain}} (row: `{{this.domain}}`){{/if}}{{#if this.name}} (row: `{{this.name}}`){{/if}}{{#if this.time}} ({{this.time}}: {{this.title}}{{#if this.eventDomain}} — `{{this.eventDomain}}`{{/if}}){{/if}}
+{{/each}}
+{{/if}}

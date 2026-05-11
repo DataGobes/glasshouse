@@ -1,0 +1,41 @@
+{
+  "id": "fr-cnil",
+  "name": "Commission Nationale de l'Informatique et des Libertés",
+  "country": "FR",
+  "jurisdiction": "France",
+  "languages": ["fr"],
+  "letterLanguage": "fr",
+  "submission": {
+    "portalUrl": "https://www.cnil.fr/fr/plaintes",
+    "acceptsEmail": false,
+    "acceptsPost": true,
+    "postalAddress": "CNIL - Service des Plaintes, 3 Place de Fontenoy, 75007 Paris, France"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Nom et prénom",
+      "complainantAddress": "Adresse postale",
+      "complainantEmail": "Adresse e-mail",
+      "controllerName": "Nom de l'organisme",
+      "controllerDomain": "Site internet",
+      "factsSummary": "Exposé des faits",
+      "articlesCited": "Articles du RGPD invoqués"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 20
+  },
+  "enforcementFocus": [
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The CNIL requires complaints to be drafted in French (\"être rédigée en langue française\"). Complaints can be filed online via the cnil.fr plaintes portal (account creation required) or by post to the Service des Plaintes address. The CNIL has actively enforced ePrivacy Article 5(3) cookie/consent obligations (cookie banner fines under the CNIL recommendation of October 2020)."
+  }
+}

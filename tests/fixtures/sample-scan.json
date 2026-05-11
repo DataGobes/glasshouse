@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "schemaVersion": "1",
+    "domain": "example-tracker.test",
+    "scanDate": "2026-04-01T10:00:00Z",
+    "url": "https://example-tracker.test",
+    "overallScore": 3.8
+  },
+  "scores": {
+    "consent": 2.5,
+    "preConsentTracking": 2.0,
+    "legalPages": 4.0,
+    "crossBorder": 3.0,
+    "securityHeaders": 6.0,
+    "cookieManagement": 3.5,
+    "darkPatterns": 4.0
+  },
+  "findings": {
+    "consent": {
+      "bannerDetected": true,
+      "rejectSymmetry": "asymmetric",
+      "rejectAccessible": false,
+      "cmpPlatform": "Custom"
+    },
+    "darkPatterns": {
+      "tilt": "strong-accept",
+      "factors": ["reject-button-hidden", "accept-pre-highlighted"]
+    },
+    "trackers": [
+      {
+        "domain": "google-analytics.com",
+        "category": "analytics",
+        "preConsent": true,
+        "jurisdiction": "US",
+        "dpfCertified": true,
+        "purpose": "Site analytics"
+      }
+    ],
+    "cookies": [
+      {
+        "name": "_ga",
+        "domain": ".example-tracker.test",
+        "firstParty": true,
+        "preConsent": true,
+        "durationDays": 730,
+        "purpose": "analytics"
+      }
+    ],
+    "thirdPartyDomains": [
+      { "domain": "google-analytics.com", "requests": 4, "jurisdiction": "US" }
+    ],
+    "legalPages": {
+      "privacyPolicyFound": true,
+      "cookiePolicyFound": false,
+      "privacyPolicyArticles": { "art13CoverageScore": 0.4 }
+    },
+    "crossBorder": {
+      "nonEuTransfersDetected": true,
+      "dpfReliedUpon": true,
+      "otherSafeguards": []
+    },
+    "controller": {
+      "registeredName": "Example Tracker BV",
+      "country": "NL",
+      "imprintUrl": "https://example-tracker.test/imprint"
+    }
+  },
+  "slides": { "include": [] }
+}

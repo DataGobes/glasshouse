@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers (for PDF + scan tests)
+        run: npx playwright install --with-deps chromium firefox
+        continue-on-error: true
+
+      - name: Validate every DPA adapter
+        run: |
+          for f in references/dpa-adapters/*.json; do
+            base="$(basename "$f")"
+            if [ "$base" = "_schema.json" ]; then
+              continue
+            fi
+            node scripts/validate-adapter.js "$f"
+          done
+
+      - name: Run test suite
+        run: npm test
+        env:
+          NODE_NO_WARNINGS: '1'

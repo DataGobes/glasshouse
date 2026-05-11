@@ -1,0 +1,41 @@
+{
+  "id": "nl-ap",
+  "name": "Autoriteit Persoonsgegevens",
+  "country": "NL",
+  "jurisdiction": "Netherlands",
+  "languages": ["nl", "en"],
+  "letterLanguage": "en",
+  "submission": {
+    "portalUrl": "https://klachten.autoriteitpersoonsgegevens.nl/",
+    "acceptsEmail": false,
+    "acceptsPost": true,
+    "postalAddress": "Autoriteit Persoonsgegevens, Postbus 93374, 2509 AJ Den Haag, Netherlands"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Uw naam",
+      "complainantAddress": "Uw adres",
+      "complainantEmail": "Uw e-mailadres",
+      "controllerName": "Naam van de organisatie",
+      "controllerDomain": "Website",
+      "factsSummary": "Omschrijving van uw klacht",
+      "articlesCited": "Welke regels zijn volgens u overtreden"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 25
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": true,
+    "notes": "The AP accepts complaints in Dutch or English via the online form at klachten.autoriteitpersoonsgegevens.nl. Postal submission is also accepted at the Postbus address; the Bezuidenhoutseweg physical address does not accept post. The AP is the lead supervisory authority for controllers established in the Netherlands under the GDPR one-stop-shop mechanism."
+  }
+}

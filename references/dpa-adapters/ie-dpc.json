@@ -1,0 +1,42 @@
+{
+  "id": "ie-dpc",
+  "name": "Data Protection Commission",
+  "country": "IE",
+  "jurisdiction": "Ireland",
+  "languages": ["en", "ga"],
+  "letterLanguage": "en",
+  "submission": {
+    "portalUrl": "https://forms.dataprotection.ie/contact",
+    "acceptsEmail": true,
+    "email": "info@dataprotection.ie",
+    "acceptsPost": true,
+    "postalAddress": "Data Protection Commission, 6 Pembroke Row, Dublin 2, D02 X963, Ireland"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Full name",
+      "complainantAddress": "Postal address",
+      "complainantEmail": "Email address",
+      "controllerName": "Organisation name",
+      "controllerDomain": "Website",
+      "factsSummary": "Details of your concern",
+      "articlesCited": "Provisions you allege are infringed"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg", "txt"],
+    "maxTotalAttachmentMB": 25
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",             "weight": "high"   },
+    { "article": "Art. 7",             "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Ch. V",              "weight": "high"   },
+    { "article": "Art. 13",            "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": true,
+    "notes": "The DPC is the lead supervisory authority under the GDPR one-stop-shop for many large platforms headquartered in Dublin (Meta, LinkedIn, Google EMEA, TikTok, Microsoft EMEA, Airbnb). The DPC generally expects the complainant to have raised the matter directly with the controller before filing, and primarily seeks amicable resolution before formal investigation. The DPC commits to an update or outcome report within three months. The DPC cannot award compensation; that is reserved for the courts. Major cross-border / Chapter V enforcement (Schrems II) sits with the DPC for controllers established in Ireland."
+  }
+}

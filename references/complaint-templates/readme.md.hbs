@@ -1,0 +1,25 @@
+# Complaint dossier — {{controller.domain}} → {{dpa.name}}
+
+Generated: {{scanDate}}
+Scan source: `evidence/scan.json`
+
+## What is in this folder
+
+- `complaint.md` — the complaint letter (markdown source).
+- `complaint.pdf` — the same letter as PDF (what most DPAs want attached).
+- `facts.md` — per-article narrative of the violations alleged.
+- `articles-cited.md` — verbatim text of every GDPR / ePrivacy provision cited.
+- `submission-checklist.md` — **start here** — how to actually submit to {{dpa.name}}.
+- `evidence/` — the raw proof: scan JSON, screenshots, tracker / cookie CSVs, timeline.
+
+## Before you submit
+
+1. Read `complaint.md` and `facts.md` end-to-end. You are signing this.
+2. If anything is wrong, incomplete, or not something you want to defend to {{dpa.name}}, edit it out. This is your filing.
+3. Follow `submission-checklist.md` to upload / email / post.
+
+{{#unless anonymized}}
+## Reminder
+
+This folder contains your personal data ({{complainant.fullName}}, {{complainant.email}}, postal address). **Do not commit it to a public repository.** If you are using git in this directory, add `dpa-complaint-*` to `.gitignore`.
+{{/unless}}

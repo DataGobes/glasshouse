@@ -1,0 +1,42 @@
+{
+  "id": "de-bayern",
+  "name": "Bayerisches Landesamt für Datenschutzaufsicht",
+  "country": "DE",
+  "jurisdiction": "Germany — Bavaria (private sector)",
+  "languages": ["de"],
+  "letterLanguage": "de",
+  "submission": {
+    "portalUrl": "https://www.lda.bayern.de/de/beschwerde.html",
+    "acceptsEmail": true,
+    "email": "poststelle@lda.bayern.de",
+    "acceptsPost": true,
+    "postalAddress": "Bayerisches Landesamt für Datenschutzaufsicht, Postfach 1349, 91504 Ansbach, Germany"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Name und Vorname",
+      "complainantAddress": "Postanschrift",
+      "complainantEmail": "E-Mail-Adresse",
+      "controllerName": "Name der Organisation",
+      "controllerDomain": "Webseite",
+      "factsSummary": "Sachverhalt",
+      "articlesCited": "Verletzte Artikel der DSGVO"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 10
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The BayLDA supervises private-sector controllers established in Bavaria (public-sector controllers in Bavaria fall under the separate Bayerischer Landesbeauftragter für den Datenschutz). Complaints can be filed via the online form at lda.bayern.de/de/beschwerde.html (10 MB attachment limit), by email to poststelle@lda.bayern.de, or by post to Postfach 1349, 91504 Ansbach. Working language is German. BayLDA has been an active enforcer on website tracking, notably issuing a 2022 decision against a publisher for unlawful Google Fonts embedding."
+  }
+}

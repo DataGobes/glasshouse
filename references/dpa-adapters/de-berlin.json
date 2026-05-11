@@ -1,0 +1,42 @@
+{
+  "id": "de-berlin",
+  "name": "Berliner Beauftragte für Datenschutz und Informationsfreiheit",
+  "country": "DE",
+  "jurisdiction": "Germany — Berlin",
+  "languages": ["de"],
+  "letterLanguage": "de",
+  "submission": {
+    "portalUrl": "https://kontakt.datenschutz-berlin.de/",
+    "acceptsEmail": true,
+    "email": "mailbox@datenschutz-berlin.de",
+    "acceptsPost": true,
+    "postalAddress": "Berliner Beauftragte für Datenschutz und Informationsfreiheit, Alt-Moabit 59-61, 10555 Berlin, Germany"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Name und Vorname",
+      "complainantAddress": "Postanschrift",
+      "complainantEmail": "E-Mail-Adresse",
+      "controllerName": "Name der Organisation",
+      "controllerDomain": "Webseite",
+      "factsSummary": "Sachverhalt",
+      "articlesCited": "Verletzte Artikel der DSGVO"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 20
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The BlnBDI is competent for controllers established in Berlin (private sector and Berlin state public bodies). Complaints can be filed via the dedicated webform at kontakt.datenschutz-berlin.de, by email to mailbox@datenschutz-berlin.de, or by post to Alt-Moabit 59-61, 10555 Berlin. Working language is German; the authority does not publish an English-language complaint channel. Berlin has a track record of public enforcement against media and adtech actors and was the first German DPA to issue a major GDPR fine (Deutsche Wohnen, 2019)."
+  }
+}

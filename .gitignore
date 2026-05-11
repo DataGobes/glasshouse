@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+
+# Claude Code worktree mechanism — never commit these
+.claude/
+
+# Complaint builder draft state (resumable-run artifacts)
+.complaint-draft-*.json
+
+# Generated complaint dossiers contain personal data — do not commit
+dpa-complaint-*/

@@ -1,0 +1,42 @@
+{
+  "id": "de-hamburg",
+  "name": "Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit",
+  "country": "DE",
+  "jurisdiction": "Germany — Hamburg",
+  "languages": ["de"],
+  "letterLanguage": "de",
+  "submission": {
+    "portalUrl": "https://datenschutz-hamburg.de/service-information/beschwerde-oder-hinweis-einreichen/thema-der-datenschutzverletzung-als-betroffener",
+    "acceptsEmail": true,
+    "email": "mailbox@datenschutz.hamburg.de",
+    "acceptsPost": true,
+    "postalAddress": "Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit, Ludwig-Erhard-Str. 22, 20459 Hamburg, Germany"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Name und Vorname",
+      "complainantAddress": "Postanschrift",
+      "complainantEmail": "E-Mail-Adresse",
+      "controllerName": "Name der Organisation",
+      "controllerDomain": "Webseite",
+      "factsSummary": "Sachverhalt",
+      "articlesCited": "Verletzte Artikel der DSGVO"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 20
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The HmbBfDI is competent for controllers established in Hamburg (private sector and Hamburg state public bodies). The authority prefers complaints via the structured online forms at datenschutz-hamburg.de, but also accepts email to mailbox@datenschutz.hamburg.de (encrypted email recommended for special categories of data under Art. 9 GDPR) and post to Ludwig-Erhard-Str. 22, 20459 Hamburg. Working language is German. Hamburg has been an active enforcer against major platforms including action against Facebook/Meta over WhatsApp data sharing and Clearview AI."
+  }
+}

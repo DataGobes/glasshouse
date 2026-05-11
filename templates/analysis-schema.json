@@ -1,0 +1,664 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Glasshouse Privacy Analysis",
+  "description": "Structured analysis output from Claude for the glasshouse skill. Fed into generate.js to produce HTML presentation + markdown report.",
+  "type": "object",
+  "required": ["meta", "scores", "findings", "slides"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["domain", "schemaVersion", "scanDate", "episode", "theme", "overallScore"],
+      "properties": {
+        "domain": { "type": "string", "description": "Target domain (e.g. linkedin.com)" },
+        "schemaVersion": { "type": "string", "description": "Scan schema version. Complaint builder refuses incompatible versions.", "enum": ["1"] },
+        "scanDate": { "type": "string", "description": "ISO date string" },
+        "episode": { "type": "integer", "description": "Series episode number (#01, #02...)" },
+        "theme": { "type": "string", "enum": ["datagobes", "dark", "corporate"], "default": "corporate" },
+        "overallScore": { "type": "number", "minimum": 1.0, "maximum": 10.0 },
+        "faviconBase64": { "type": "string", "description": "Complete base64 of site favicon (200-4000 chars)" },
+        "subtitle": { "type": "string", "description": "One-line summary for title slide" },
+        "company": { "type": "string", "description": "Optional company name for branding" },
+        "logoBase64": { "type": "string", "description": "Optional base64 company logo" }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "description": "Category scores (1.0-10.0 scale)",
+      "required": ["consent", "preConsentTracking", "legalPages", "crossBorder", "securityHeaders", "cookieManagement", "darkPatterns"],
+      "properties": {
+        "consent":            { "$ref": "#/$defs/categoryScore" },
+        "preConsentTracking": { "$ref": "#/$defs/categoryScore" },
+        "legalPages":         { "$ref": "#/$defs/categoryScore" },
+        "crossBorder":        { "$ref": "#/$defs/categoryScore" },
+        "securityHeaders":    { "$ref": "#/$defs/categoryScore" },
+        "cookieManagement":   { "$ref": "#/$defs/categoryScore" },
+        "darkPatterns":       { "$ref": "#/$defs/categoryScore" }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "properties": {
+        "tldr": {
+          "type": "array",
+          "description": "3 key takeaways: one positive, one negative, one surprising",
+          "items": {
+            "type": "object",
+            "required": ["emoji", "headline", "detail", "sentiment"],
+            "properties": {
+              "emoji": { "type": "string" },
+              "headline": { "type": "string" },
+              "detail": { "type": "string" },
+              "sentiment": { "type": "string", "enum": ["positive", "negative", "surprising"] }
+            }
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "consent": {
+          "type": "object",
+          "properties": {
+            "detected": { "type": "boolean" },
+            "platform": { "type": ["string", "null"] },
+            "bannerText": { "type": "string", "description": "Abbreviated banner text" },
+            "acceptText": { "type": "string" },
+            "rejectText": { "type": ["string", "null"] },
+            "acceptWidth": { "type": "string", "description": "Relative size description e.g. '2x wider'" },
+            "rejectWidth": { "type": "string" },
+            "isAsymmetric": { "type": "boolean" },
+            "annotations": {
+              "type": "array",
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "required": ["status", "title", "detail"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+                  "title": { "type": "string" },
+                  "detail": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "darkPatterns": {
+          "type": "object",
+          "properties": {
+            "tiltClass": { "type": "string", "enum": ["fs-bar-balanced", "fs-bar-tilted-accept", "fs-bar-tilted-reject", "fs-bar-heavy-accept", "fs-bar-heavy-tilt"] },
+            "verdictClass": { "type": "string", "enum": ["fs-verdict-fair", "fs-verdict-minor", "fs-verdict-dark"] },
+            "verdictText": { "type": "string" },
+            "acceptFactors": { "type": "array", "items": { "$ref": "#/$defs/fairnessFactor" } },
+            "rejectFactors": { "type": "array", "items": { "$ref": "#/$defs/fairnessFactor" } }
+          }
+        },
+        "beforeAfter": {
+          "type": "object",
+          "properties": {
+            "preCookieCount": { "type": "integer" },
+            "postCookieCount": { "type": "integer" },
+            "preBreakdown": { "type": "array", "items": { "$ref": "#/$defs/pill" } },
+            "postBreakdown": { "type": "array", "items": { "$ref": "#/$defs/pill" } },
+            "preCategoryBreakdown": {
+              "type": "array",
+              "description": "Per-category cookie counts before consent",
+              "items": { "$ref": "#/$defs/categoryBreakdownItem" }
+            },
+            "postCategoryBreakdown": {
+              "type": "array",
+              "description": "Per-category cookie counts after consent",
+              "items": { "$ref": "#/$defs/categoryBreakdownItem" }
+            },
+            "preTrackerCount": { "type": "integer", "description": "Number of distinct trackers before consent" },
+            "postTrackerCount": { "type": "integer", "description": "Number of distinct trackers after consent" },
+            "preThirdPartyCount": { "type": "integer", "description": "Third-party domains before consent" },
+            "postThirdPartyCount": { "type": "integer", "description": "Third-party domains after consent" },
+            "preStorageMechanisms": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["cookies", "localStorage", "sessionStorage", "indexedDB"] },
+              "description": "Storage mechanisms observed before consent"
+            },
+            "postStorageMechanisms": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["cookies", "localStorage", "sessionStorage", "indexedDB"] },
+              "description": "Storage mechanisms observed after consent"
+            },
+            "newCookiesDelta": { "type": "integer", "description": "postCookieCount - preCookieCount" }
+          }
+        },
+        "auditTrail": {
+          "type": "object",
+          "properties": {
+            "preConsent": { "type": "array", "items": { "$ref": "#/$defs/timelineEvent" } },
+            "postConsent": { "type": "array", "items": { "$ref": "#/$defs/timelineEvent" } },
+            "rejectConsent": { "type": "array", "items": { "$ref": "#/$defs/timelineEvent" }, "description": "Timeline events after reject — what fires despite rejection" }
+          }
+        },
+        "trackers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "domains", "category", "tier", "status"],
+            "properties": {
+              "name": { "type": "string" },
+              "domains": { "type": ["string", "array"], "description": "Domain(s) — string or array of strings" },
+              "category": { "type": "string" },
+              "tier": { "type": "string", "enum": ["active", "gated", "csp"], "description": "active=pre-consent firing, gated=post-consent only, csp=CSP-whitelisted" },
+              "status": { "type": "string" },
+              "jurisdiction": { "type": "string" },
+              "risk": { "type": "string", "enum": ["low", "medium", "high", "very-high"] },
+              "gdprArticles": { "type": "array", "items": { "type": "string" } },
+              "is4thParty": { "type": "boolean" },
+              "loadedBy": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "cookies": {
+          "type": "array",
+          "description": "All cookies sorted by duration descending",
+          "items": {
+            "type": "object",
+            "required": ["name", "domain", "duration", "durationDays", "purpose"],
+            "properties": {
+              "name": { "type": "string" },
+              "domain": { "type": "string" },
+              "duration": { "type": "string", "description": "Human label: '2yr', '30min', 'Session'" },
+              "durationDays": { "type": "number", "description": "Numeric days for bar width calc. 0 for session." },
+              "purpose": { "type": "string", "enum": ["essential", "functional", "analytics", "tracking", "marketing", "advertising", "unknown"] },
+              "risk": { "type": "string", "enum": ["low", "medium", "high"] }
+            }
+          }
+        },
+        "thirdPartyDomains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["jurisdiction", "flag", "risk", "domains"],
+            "properties": {
+              "jurisdiction": { "type": "string" },
+              "flag": { "type": "string", "description": "Flag emoji" },
+              "risk": { "type": "string", "enum": ["safe", "dpf", "risk"], "description": "Transfer risk for line color" },
+              "domains": { "type": "string", "description": "Comma-separated domain list (max 3, then +N more)" },
+              "requestCount": { "type": "integer" }
+            }
+          }
+        },
+        "securityHeaders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "status"],
+            "properties": {
+              "name": { "type": "string" },
+              "status": { "type": "string", "enum": ["present", "missing", "partial"] },
+              "value": { "type": "string" }
+            }
+          }
+        },
+        "legalPages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "status"],
+            "properties": {
+              "title": { "type": "string" },
+              "status": { "type": "string", "enum": ["present", "missing"] },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "gdprCompliance": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["article", "title", "status"],
+            "properties": {
+              "article": { "type": "string", "description": "e.g. 'Art. 6(1)(a)' or 'ePrivacy 5(3)'" },
+              "title": { "type": "string" },
+              "status": { "type": "string", "enum": ["pass", "fail", "partial"] },
+              "finding": { "type": "string", "description": "Brief explanation for fail/partial" }
+            }
+          }
+        },
+        "requestPulse": {
+          "type": "array",
+          "description": "Third-party domains by request count, with pre/post split",
+          "items": {
+            "type": "object",
+            "required": ["domain", "total"],
+            "properties": {
+              "domain": { "type": "string" },
+              "total": { "type": "integer" },
+              "preConsent": { "type": "integer" },
+              "postConsent": { "type": "integer" },
+              "isEssential": { "type": "boolean" }
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "detail"],
+            "properties": {
+              "action": { "type": "string", "description": "Bold action title" },
+              "detail": { "type": "string", "description": "Explanation and expected impact" },
+              "enforcementRef": { "type": "string", "description": "Optional DPA enforcement precedent citation" }
+            }
+          },
+          "maxItems": 8
+        },
+        "privacyPolicyAnalysis": {
+          "type": "array",
+          "description": "Art. 13/14 mandatory elements checklist (13 items)",
+          "items": {
+            "type": "object",
+            "required": ["element", "status"],
+            "properties": {
+              "element": { "type": "string", "description": "Art. 13/14 mandatory element name" },
+              "status": { "type": "string", "enum": ["present", "absent", "vague"] },
+              "excerpt": { "type": "string", "description": "Relevant excerpt from privacy policy text" }
+            }
+          }
+        },
+        "fingerprinting": {
+          "type": "object",
+          "properties": {
+            "detected": { "type": "boolean" },
+            "apis": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "callCount"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "callCount": { "type": "integer" },
+                  "preConsent": { "type": "boolean" }
+                }
+              }
+            },
+            "severity": { "type": "string", "enum": ["none", "low", "medium", "high"] }
+          }
+        },
+        "tcf": {
+          "type": "object",
+          "properties": {
+            "detected": { "type": "boolean" },
+            "version": { "type": ["integer", "null"] },
+            "cmpId": { "type": ["integer", "null"] },
+            "purposeConsents": { "type": "object" },
+            "vendorCount": { "type": "integer" }
+          }
+        },
+        "googleConsentMode": {
+          "type": "object",
+          "properties": {
+            "detected": { "type": "boolean" },
+            "defaultState": { "type": "object" },
+            "updateEvents": { "type": "array", "items": { "type": "object" } }
+          }
+        },
+        "gpc": {
+          "type": "object",
+          "properties": {
+            "signalSent": { "type": "boolean" },
+            "siteReadsSignal": { "type": "boolean" }
+          }
+        },
+        "consentRevocation": {
+          "type": "object",
+          "properties": {
+            "mechanismFound": { "type": "boolean" },
+            "mechanismType": { "type": "string", "enum": ["cmp-api", "footer-link", "floating-widget", "not-found", "not-tested"] },
+            "acceptanceClicks": { "type": "integer" },
+            "revocationClicks": { "type": "integer" },
+            "cookiesBefore": { "type": "integer" },
+            "cookiesAfter": { "type": "integer" },
+            "trackingCookiesDeleted": { "type": "boolean" },
+            "trackingCookiesRemaining": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "formLeakage": {
+          "type": "object",
+          "properties": {
+            "detected": { "type": "boolean" },
+            "leaks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["field", "destination"],
+                "properties": {
+                  "field": { "type": "string" },
+                  "destination": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "dataSubjectRights": {
+          "type": "array",
+          "description": "Accessible data subject rights and their click depth",
+          "items": {
+            "type": "object",
+            "required": ["right", "accessible"],
+            "properties": {
+              "right": { "type": "string" },
+              "accessible": { "type": "boolean" },
+              "clickDepth": { "type": "integer" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "methodology": {
+          "type": "object",
+          "description": "Metadata about how the scan was performed — drives the methodology slide",
+          "properties": {
+            "scoutUsed": { "type": "boolean", "description": "Whether scout mode was used before the full scan" },
+            "bannerDetectionMethod": {
+              "type": "string",
+              "enum": ["cmp-selector", "content-fallback", "vision-assisted", "none"],
+              "description": "How the consent banner was detected"
+            },
+            "variants": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Which variants were run, e.g. ['ignore', 'accept', 'reject']"
+            },
+            "preCounts": {
+              "type": "object",
+              "properties": {
+                "cookies": { "type": "integer" },
+                "trackers": { "type": "integer" },
+                "requests": { "type": "integer" },
+                "thirdPartyDomains": { "type": "integer" }
+              }
+            },
+            "postCounts": {
+              "type": "object",
+              "properties": {
+                "cookies": { "type": "integer" },
+                "trackers": { "type": "integer" },
+                "requests": { "type": "integer" },
+                "thirdPartyDomains": { "type": "integer" }
+              }
+            }
+          }
+        },
+        "riskSummaryNotes": {
+          "type": "array",
+          "description": "Per-category insights shown in the right panel of the Risk Summary slide",
+          "items": {
+            "type": "object",
+            "required": ["category", "note"],
+            "properties": {
+              "category": { "type": "string", "enum": ["consent", "preConsentTracking", "legalPages", "crossBorder", "securityHeaders", "cookieManagement", "darkPatterns"] },
+              "note": { "type": "string" }
+            }
+          }
+        },
+        "cookiePurposeMatching": {
+          "type": "array",
+          "description": "Cross-reference of scanner-classified vs policy-declared cookie purposes",
+          "items": {
+            "type": "object",
+            "required": ["cookie", "declared", "observed", "match"],
+            "properties": {
+              "cookie": { "type": "string" },
+              "declared": { "type": "string" },
+              "observed": { "type": "string" },
+              "match": { "type": "boolean" }
+            }
+          }
+        },
+        "consentGranularity": {
+          "type": "object",
+          "properties": {
+            "hasToggles": { "type": "boolean" },
+            "toggleCount": { "type": "integer" },
+            "categories": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "rejectScenario": {
+          "type": "object",
+          "description": "What happens when the user rejects consent",
+          "properties": {
+            "rejectHonoured": { "type": "boolean", "description": "True if reject meaningfully reduces tracking" },
+            "summary": { "type": "string", "description": "One-line summary of reject behaviour" },
+            "persistingTrackers": {
+              "type": "array",
+              "description": "Trackers that continue firing after reject",
+              "items": {
+                "type": "object",
+                "required": ["name", "domains", "category"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "domains": { "type": ["string", "array"] },
+                  "category": { "type": "string" }
+                }
+              }
+            },
+            "persistingCookies": {
+              "type": "array",
+              "description": "Non-essential cookies that persist after reject",
+              "items": {
+                "type": "object",
+                "required": ["name", "domain", "purpose"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "domain": { "type": "string" },
+                  "purpose": { "type": "string" },
+                  "reason": { "type": "string", "description": "Why this cookie persists despite reject (e.g. set pre-consent, outside CMP scope)" }
+                }
+              }
+            }
+          }
+        },
+        "variantComparison": {
+          "type": "object",
+          "description": "Side-by-side comparison of ignore/accept/reject variants",
+          "properties": {
+            "ignore": { "$ref": "#/$defs/variantMetrics" },
+            "accept": { "$ref": "#/$defs/variantMetrics" },
+            "reject": { "$ref": "#/$defs/variantMetrics" },
+            "verdict": { "type": "string", "description": "One-line verdict summarising the comparison" }
+          }
+        },
+        "piggybackingChains": {
+          "type": "array",
+          "description": "4th-party tracker dependency chains",
+          "items": {
+            "type": "object",
+            "required": ["chain"],
+            "properties": {
+              "chain": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "domain": { "type": "string" }
+                  }
+                }
+              },
+              "risk": { "type": "string", "enum": ["low", "medium", "high"] }
+            }
+          }
+        },
+        "storageAnalysis": {
+          "type": "object",
+          "description": "localStorage, sessionStorage, IndexedDB pre/post consent",
+          "properties": {
+            "localStorage": {
+              "type": "object",
+              "properties": {
+                "preConsent": { "type": "array", "items": { "type": "object" } },
+                "postConsent": { "type": "array", "items": { "type": "object" } }
+              }
+            },
+            "sessionStorage": {
+              "type": "object",
+              "properties": {
+                "preConsent": { "type": "array", "items": { "type": "object" } },
+                "postConsent": { "type": "array", "items": { "type": "object" } }
+              }
+            },
+            "indexedDB": {
+              "type": "object",
+              "properties": {
+                "preConsent": { "type": "array", "items": { "type": "object" } },
+                "postConsent": { "type": "array", "items": { "type": "object" } }
+              }
+            }
+          }
+        },
+        "scriptIntegrity": {
+          "type": "object",
+          "properties": {
+            "totalExternal": { "type": "integer" },
+            "withIntegrity": { "type": "integer" },
+            "coveragePercent": { "type": "integer" }
+          }
+        },
+        "cors": {
+          "type": "object",
+          "properties": {
+            "allowOrigin": { "type": ["string", "null"] },
+            "isWildcard": { "type": "boolean" },
+            "hasCredentialsWithWildcard": { "type": "boolean" }
+          }
+        },
+        "indexedDB": {
+          "type": "object",
+          "properties": {
+            "preConsent": { "type": "array" },
+            "postConsent": { "type": "array" }
+          }
+        }
+      }
+    },
+    "slides": {
+      "type": "object",
+      "description": "Controls which slides to include and their order",
+      "properties": {
+        "include": {
+          "type": "array",
+          "description": "Ordered list of slide types to render",
+          "items": {
+            "type": "string",
+            "enum": [
+              "title", "tldr", "beforeAfter",
+              "auditTrailPre", "auditTrailPost", "auditTrailReject",
+              "consent", "darkPatterns",
+              "rejectScenario", "variantComparison",
+              "preConsentFindings", "postConsentDelta",
+              "trackers", "cookies", "cookiePurposeMatching",
+              "thirdPartyDomains", "piggybackingChains",
+              "requestPulse", "storageAnalysis",
+              "securityHeaders", "legalPages",
+              "gdprCompliance", "riskSummary",
+              "recommendations", "methodology",
+              "privacyPolicy", "fingerprinting",
+              "consentRevocation", "tcfConsentMode",
+              "dataSubjectRights", "formLeakage"
+            ]
+          }
+        }
+      }
+    },
+    "customSlides": {
+      "type": "object",
+      "description": "Optional custom slides injected at named slot positions",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "content"],
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string", "description": "Raw HTML wrapped in standard slide chrome" },
+          "style": { "type": "string", "enum": ["finding-highlight", "evidence", "analysis", "comparison"] }
+        }
+      }
+    },
+    "markdownReport": {
+      "type": "object",
+      "description": "Prose content for the markdown report (sections Claude writes)",
+      "properties": {
+        "executiveSummary": { "type": "string" },
+        "consentAnalysis": { "type": "string" },
+        "preConsentAnalysis": { "type": "string" },
+        "postConsentAnalysis": { "type": "string" },
+        "storageAnalysis": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "categoryScore": {
+      "type": "object",
+      "required": ["score"],
+      "properties": {
+        "score": { "type": "number", "minimum": 1.0, "maximum": 10.0 }
+      }
+    },
+    "pill": {
+      "type": "object",
+      "required": ["label", "color"],
+      "properties": {
+        "label": { "type": "string" },
+        "color": { "type": "string", "enum": ["red", "yellow", "green", "blue"] }
+      }
+    },
+    "timelineEvent": {
+      "type": "object",
+      "required": ["time", "title"],
+      "properties": {
+        "time": { "type": "string", "description": "e.g. 't+0ms', 't+1.2s'" },
+        "title": { "type": "string" },
+        "domain": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["essential", "tracking", "adtech", "security", "consent"], "description": "Maps to tl-* CSS class" },
+        "tag": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "type": { "type": "string", "enum": ["violation", "ok", "warn"] }
+          }
+        },
+        "chips": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "type": { "type": "string", "enum": ["tracking", "adtech", "essential"] }
+            }
+          }
+        }
+      }
+    },
+    "fairnessFactor": {
+      "type": "object",
+      "required": ["name", "value", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "status": { "type": "string", "enum": ["good", "bad", "neutral"] }
+      }
+    },
+    "categoryBreakdownItem": {
+      "type": "object",
+      "required": ["category", "count", "color"],
+      "properties": {
+        "category": { "type": "string", "description": "e.g. tracking, analytics, essential" },
+        "count": { "type": "integer" },
+        "color": { "type": "string", "description": "CSS color string (hex or named)" }
+      }
+    },
+    "variantMetrics": {
+      "type": "object",
+      "description": "Aggregated metrics for a single consent variant",
+      "properties": {
+        "trackerCount": { "type": "integer" },
+        "cookieCount": { "type": "integer" },
+        "thirdPartyDomainCount": { "type": "integer" }
+      }
+    }
+  }
+}

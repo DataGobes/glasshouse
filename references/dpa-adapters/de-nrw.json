@@ -1,0 +1,42 @@
+{
+  "id": "de-nrw",
+  "name": "Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen",
+  "country": "DE",
+  "jurisdiction": "Germany — North Rhine-Westphalia",
+  "languages": ["de"],
+  "letterLanguage": "de",
+  "submission": {
+    "portalUrl": "https://www.ldi.nrw.de/kontakt/ihre-beschwerde",
+    "acceptsEmail": true,
+    "email": "poststelle@ldi.nrw.de",
+    "acceptsPost": true,
+    "postalAddress": "Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen, Postfach 20 04 44, 40102 Düsseldorf, Germany"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Name und Vorname",
+      "complainantAddress": "Postanschrift",
+      "complainantEmail": "E-Mail-Adresse",
+      "controllerName": "Name der Organisation",
+      "controllerDomain": "Webseite",
+      "factsSummary": "Sachverhalt",
+      "articlesCited": "Verletzte Artikel der DSGVO"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 20
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "ePrivacy Art. 5(3)", "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": false,
+    "notes": "The LDI NRW is competent for controllers established in North Rhine-Westphalia (private sector and NRW state public bodies). The authority publishes a downloadable PDF complaint form (Beschwerdeformular) that can be submitted by email to poststelle@ldi.nrw.de, by fax, or by post to Postfach 20 04 44, 40102 Düsseldorf — there is no JavaScript webform. PGP encryption is offered for sensitive submissions. Working language is German."
+  }
+}

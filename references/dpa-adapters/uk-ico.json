@@ -1,0 +1,41 @@
+{
+  "id": "uk-ico",
+  "name": "Information Commissioner's Office",
+  "country": "GB",
+  "jurisdiction": "United Kingdom",
+  "languages": ["en", "cy"],
+  "letterLanguage": "en",
+  "submission": {
+    "portalUrl": "https://ico.org.uk/make-a-complaint/data-protection-complaints/",
+    "acceptsEmail": false,
+    "acceptsPost": true,
+    "postalAddress": "Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF, United Kingdom"
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantAddress", "complainantEmail", "controllerName", "controllerDomain", "factsSummary", "articlesCited"],
+    "fieldMapping": {
+      "complainantName": "Your name",
+      "complainantAddress": "Your address",
+      "complainantEmail": "Your email address",
+      "controllerName": "Name of the organisation",
+      "controllerDomain": "Website",
+      "factsSummary": "Details of your complaint",
+      "articlesCited": "Which rules you believe have been broken"
+    },
+    "attachmentsAccepted": ["pdf", "png", "jpg"],
+    "maxTotalAttachmentMB": 10
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6",            "weight": "high"   },
+    { "article": "Art. 7",            "weight": "high"   },
+    { "article": "PECR Reg. 6",       "weight": "high"   },
+    { "article": "Art. 13",           "weight": "medium" },
+    { "article": "Ch. V",             "weight": "medium" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": true,
+    "notes": "The ICO funnels complaints through its online portal at ico.org.uk/make-a-complaint. Postal submission is accepted at Wycliffe House in Wilmslow; the ICO acknowledges complaints within 14 calendar days and typically responds within 30 calendar days (six weeks for complex cases). UK GDPR is near-identical to EU GDPR; cookie/consent obligations live in the Privacy and Electronic Communications Regulations (PECR), specifically Regulation 6 (the UK analogue of ePrivacy Article 5(3))."
+  }
+}

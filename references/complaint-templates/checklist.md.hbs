@@ -1,0 +1,49 @@
+# Submission checklist — {{dpa.name}}
+
+## Where to submit
+
+- **Online portal:** {{dpa.submission.portalUrl}}
+{{#if dpa.submission.acceptsEmail}}
+- **Email:** {{dpa.submission.email}}
+{{/if}}
+{{#if dpa.submission.acceptsPost}}
+- **Postal:** {{dpa.submission.postalAddress}}
+{{/if}}
+
+## Language
+
+{{#if dpa.procedural.canFileInEnglish}}
+{{dpa.name}} accepts complaints in English. The letter in `complaint.md` is in English and can be submitted as-is.
+{{else}}
+{{dpa.name}} prefers complaints in {{dpa.letterLanguage}}. The letter in `complaint.md` is a draft — you may need to translate it.
+{{/if}}
+
+## What to paste where (portal form)
+
+{{#each dpa.form.fieldMapping}}
+- **{{this}}** → (see `complaint.md`, section "{{@key}}")
+{{/each}}
+
+## Attachments
+
+Upload the following files:
+
+- `complaint.pdf`
+{{#each evidenceFiles}}
+- `evidence/{{this}}`
+{{/each}}
+
+Maximum total size: {{dpa.form.maxTotalAttachmentMB}} MB.
+Accepted formats: {{join dpa.form.attachmentsAccepted ", "}}.
+
+## After submission
+
+{{#if dpa.procedural.acknowledgementExpected}}
+{{dpa.name}} will acknowledge receipt. Typical response time: {{dpa.procedural.responseTimeMonths}} months.
+{{else}}
+Typical response time: {{dpa.procedural.responseTimeMonths}} months.
+{{/if}}
+
+{{#if dpa.procedural.notes}}
+**Notes from the {{dpa.name}} official site:** {{dpa.procedural.notes}}
+{{/if}}

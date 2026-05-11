@@ -1,0 +1,56 @@
+# Complaint under Regulation (EU) 2016/679 and Directive 2002/58/EC
+
+**To:** {{dpa.name}}
+{{#if dpa.submission.postalAddress}}{{dpa.submission.postalAddress}}{{/if}}
+
+**From:**
+{{complainant.fullName}}
+{{complainant.postalAddress.street}}
+{{complainant.postalAddress.postalCode}} {{complainant.postalAddress.city}}
+{{complainant.postalAddress.country}}
+Email: {{complainant.email}}
+{{#if complainant.phone}}Phone: {{complainant.phone}}{{/if}}
+
+**Concerning:** {{controller.registeredName}} ({{controller.domain}})
+{{#if controller.postalAddress}}{{controller.postalAddress}}{{/if}}
+{{#if controller.dpoEmail}}DPO contact: {{controller.dpoEmail}}{{/if}}
+
+**Date:** {{scanDate}}
+
+---
+
+## 1. Status of the complainant
+
+I am the data subject whose personal data is processed by {{controller.registeredName}} through the website {{controller.domain}}. I submit this complaint under Article 77 of Regulation (EU) 2016/679.
+
+## 2. Summary
+
+On {{scanDate}}, an automated privacy audit of {{controller.domain}} identified {{violationCount}} infringement{{#if (eq violationCount 1)}}{{else}}s{{/if}} of the General Data Protection Regulation and related ePrivacy provisions. Evidence is attached in the accompanying dossier. The articles I allege are infringed are:
+
+{{#each articleList}}
+- {{this}}
+{{/each}}
+
+## 3. Facts
+
+See the accompanying `facts.md` for a per-article narrative, and `evidence/` for the raw evidence (scan JSON, screenshots, tracker and cookie tables, timeline).
+
+## 4. Request
+
+I respectfully ask the {{dpa.name}} to investigate whether {{controller.registeredName}} is in compliance with the articles listed above, and to take such corrective measures as appropriate under Article 58 GDPR.
+
+## 5. Evidence
+
+- `complaint.pdf` — this letter as PDF
+- `facts.md` — per-article narrative
+- `articles-cited.md` — verbatim text of cited provisions
+- `evidence/scan.json` — full output of the automated audit
+- `evidence/scan-summary.md` — human-readable digest
+- `evidence/screenshots/` — banner and page screenshots
+- `evidence/trackers.csv` — trackers observed
+- `evidence/cookies.csv` — cookies observed
+- `evidence/timeline.md` — audit trail of pre- and post-consent events
+
+---
+
+*Generated with glasshouse (open source). Reviewed and signed by the complainant.*

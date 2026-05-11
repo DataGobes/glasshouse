@@ -1,0 +1,29 @@
+{
+  "id": "xx-test",
+  "name": "Test Authority",
+  "country": "XX",
+  "jurisdiction": "Test",
+  "languages": ["en"],
+  "letterLanguage": "en",
+  "submission": {
+    "portalUrl": "https://example.test/complain",
+    "acceptsEmail": true,
+    "email": "test@example.test",
+    "acceptsPost": false
+  },
+  "form": {
+    "requiredFields": ["complainantName", "complainantEmail", "controllerName"],
+    "fieldMapping": { "complainantName": "Your name" },
+    "attachmentsAccepted": ["pdf", "png"],
+    "maxTotalAttachmentMB": 10
+  },
+  "enforcementFocus": [
+    { "article": "Art. 6", "weight": "high" }
+  ],
+  "procedural": {
+    "responseTimeMonths": 3,
+    "acknowledgementExpected": true,
+    "canFileInEnglish": true,
+    "notes": "Test fixture."
+  }
+}
