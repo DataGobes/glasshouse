@@ -7,14 +7,16 @@ audit of any public website and — optionally — turns the result into a
 ready-to-submit complaint dossier for a data protection authority of your
 choice.
 
-Two commands ship together:
+One slash command with two subcommands:
 
-- **`/glasshouse-scan <url>`** — scans the site with Playwright Firefox, scores
-  it across consent, pre-consent tracking, dark patterns, cross-border
-  transfers, security headers, cookie management, and legal pages, and
-  generates a scored HTML deck + markdown report.
+- **`/glasshouse <url>`** *(default: `scan`)* — scans the site with Playwright
+  Firefox, scores it across consent, pre-consent tracking, dark patterns,
+  cross-border transfers, security headers, cookie management, and legal
+  pages, and generates a scored HTML deck + markdown report. The scanner
+  handles multi-layer banners (sites that hide "Reject" behind a "Settings"
+  click) and walls that redirect to a separate consent domain.
 
-- **`/glasshouse-file <scan-json>`** — takes a scan JSON and walks you
+- **`/glasshouse file <scan-json>`** — takes a scan JSON and walks you
   through DPA selection, controller detection, identity, and per-finding
   curation, then writes a complete complaint dossier (letter, PDF, facts
   per article, verbatim cited articles, evidence CSVs, screenshots, scan
@@ -51,6 +53,26 @@ Adding a DPA is a one-JSON-file pull request — see
 4(11), 6, 7, 13, 14, 80, Chapter V (Arts. 44–49), ePrivacy Directive Art.
 5(3), and EDPB Guidelines 03/2022 reference.
 
+## Example output
+
+[See the full interactive deck →](https://datagobes.github.io/glasshouse/examples/datagobes.dev/)
+([source files](./docs/examples/datagobes.dev/))
+
+A clean-baseline audit of this project's own homepage (datagobes.dev). Zero
+trackers, zero cookies, server-side analytics under Art. 6(1)(f), six of six
+security headers. One genuine finding worth a recommendation. Useful as a
+reference for "what does a passing audit look like."
+
+|  |  |  |
+|---|---|---|
+| ![Title slide showing datagobes.dev score 9.5/10](./docs/examples/datagobes.dev/slide-title.png) | ![TL;DR slide with three findings](./docs/examples/datagobes.dev/slide-tldr.png) | ![Recommendations slide](./docs/examples/datagobes.dev/slide-recommendations.png) |
+| Title | TL;DR | Recommendations |
+
+The deck is 11 slides total — title, TL;DR, consent mechanism, variant
+comparison, third-party domains, security headers, legal pages, privacy
+policy analysis, fingerprinting, risk summary, recommendations. The full
+analysis JSON and a Markdown version of the report live alongside the HTML.
+
 ## Install
 
 ```bash
@@ -65,8 +87,9 @@ npx playwright install firefox
 # 3. Restart Claude Code so the skill is discovered
 ```
 
-The skill is then user-invocable via `/glasshouse-scan` and
-`/glasshouse-file` in any Claude Code session.
+The skill is then user-invocable via `/glasshouse <url>` (scan) and
+`/glasshouse file <scan-json>` (complaint builder) in any Claude Code
+session.
 
 ## Usage
 
@@ -77,7 +100,7 @@ node scripts/scan.js https://example.com
 # → /tmp/glasshouse-example.com-{timestamp}.json
 ```
 
-Or invoke the skill conversationally: `/glasshouse-scan example.com`.
+Or invoke the skill conversationally: `/glasshouse example.com`.
 
 ### File a complaint from a scan
 
@@ -144,7 +167,7 @@ dpa-complaint-example-2026-04-01/
 ## Development
 
 ```bash
-npm test           # node:test suite (~80 tests)
+npm test           # node:test suite (~90 tests)
 npm run test:watch # watch mode
 node scripts/validate-adapter.js references/dpa-adapters/<id>.json
 ```
