@@ -46,10 +46,31 @@ const consent = details.consent || summary?.consent || {};
 ln(`Detected: ${consent.detected ?? summary?.consentDetected ?? "unknown"}`);
 ln(`Platform: ${consent.platform || summary?.platform || "none"}`);
 ln(`Via cookie wall: ${consent.viaCookieWall ?? false}`);
+
+// Reject path — read the *reject* variant for the user-facing assessment.
+// On the accept variant (which feeds `details`), rejectAccessibility always
+// reflects what the scanner did (accept on layer 1), not what a real user
+// rejecting would face. The reject variant is the authoritative signal.
+const rejectConsent = raw.variants?.reject?.consent;
+if (rejectConsent) {
+  ln(`Reject path: ${rejectConsent.rejectAccessibility || "unknown"} (multiLayer=${rejectConsent.multiLayer ?? false})`);
+  if (rejectConsent.multiLayer) {
+    ln(`  Layer-2 method: ${rejectConsent.multiLayerMethod || "unknown"}`);
+    ln(`  NOTE: reject required opening "Manage settings" / layer 2 — flag this as a dark pattern (Hidden Defaults / Multi-Layer Consent, CNIL Bing 2022 precedent).`);
+  } else if (rejectConsent.rejectAccessibility === "not-found") {
+    ln(`  NOTE: banner detected but no reject path found, even after attempting layer-2 traversal.`);
+  }
+}
+
 if (details.cookieWall || summary?.cookieWall) {
   const cw = details.cookieWall || summary.cookieWall;
   ln(`Cookie wall: ${cw.detected ? `YES (${cw.type}, ${cw.name})` : "no"}`);
   ln(`  Bypassed: ${cw.bypassed ?? cw.bypassSuccess ?? "unknown"} (${cw.method || "n/a"})`);
+  // Wall path multiLayer info lives on the reject variant's cookieWall obj.
+  const rejectWall = raw.variants?.reject?.cookieWall;
+  if (rejectWall?.multiLayer?.attempted) {
+    ln(`  Reject required multi-layer traversal: settings=${rejectWall.multiLayer.settingsFound} method=${rejectWall.multiLayer.layer2Method}`);
+  }
 }
 if (darkPatterns.length) {
   ln(`Dark patterns: ${darkPatterns.map(d => d.type).join(", ")}`);

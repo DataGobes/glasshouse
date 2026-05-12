@@ -31,6 +31,8 @@ Reject button text engineered to shame: "No, I prefer worse content", "No, I don
 - Withdrawal options buried in account settings
 - "Continue browsing = consent" implication
 
+**Detection signal**: the scanner emits `findings.consent.rejectAccessibility` (`"layer-1" | "layer-2" | "not-found"`) and `findings.consent.multiLayer` (boolean). When `rejectAccessibility === "layer-2"`, the reject path *exists* but the user must click "Manage settings" / "Instellen" / equivalent first — call this out in the audit narrative as a freely-given-consent violation rather than treating it like a missing-reject case. CNIL Bing (2022, €60M) and CNIL Google (2021, €150M) are the load-bearing enforcement precedents for "reject must be as easy as accept."
+
 ### Trick Location / Visual Hierarchy
 - Accept button placed where the eye lands first (F-pattern reading)
 - Reject below the fold or in low-contrast position

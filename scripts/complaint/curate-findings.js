@@ -83,7 +83,19 @@ function extractCandidates(scan) {
     });
   }
 
-  if (f.consent && f.consent.rejectAccessible === false) {
+  // Multi-layer banner: scanner traversed layer 2 to find reject. Strongest
+  // case under CNIL Bing (2022) / Google (2021) — "reject must be as easy as accept".
+  if (f.consent && (f.consent.rejectAccessibility === 'layer-2' || f.consent.multiLayer === true)) {
+    out.push({
+      id: hashId(['multiLayerReject']),
+      kind: 'multiLayerReject',
+      headline: 'Reject option requires opening a second layer',
+      detail: `The consent banner only exposes "Accept" and "Settings" on the first layer. Reject was reached on layer 2 via ${f.consent.multiLayerMethod || 'further interaction'}. CNIL has fined this exact pattern repeatedly (Google €150M 2021, Bing €60M 2022).`,
+      articles: ['Art. 7', 'Art. 4(11)', 'EDPB Guidelines 03/2022'],
+      actionable: true,
+      evidencePointers: [{ file: 'screenshots/banner-viewport.png' }]
+    });
+  } else if (f.consent && f.consent.rejectAccessible === false) {
     out.push({
       id: hashId(['rejectInaccessible']),
       kind: 'rejectInaccessible',

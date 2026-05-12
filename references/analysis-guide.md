@@ -11,6 +11,17 @@ Reference for Steps 4–8 of the glasshouse scan workflow. Read this during the 
 5. `field-contract.md` immediately before writing the analysis JSON
 6. `scoring.md` when calculating the score
 
+## Reject-Path Accessibility (Multi-Layer Banners)
+
+The scanner now traverses one layer deep when the reject button is missing on layer 1. Read these fields from `raw.variants.reject.consent` (the brief surfaces them as "Reject path"):
+
+- **`rejectAccessibility: "layer-1"`** — reject reachable on the first panel. Normal.
+- **`rejectAccessibility: "layer-2"`** — the scanner had to click "Manage settings" / "Instellen" / equivalent before reject became reachable. Always emit a `findings.consent.annotations[]` entry calling this out (status: `"fail"`, title: `"Reject requires opening layer 2"`, detail referencing CNIL Bing 2022 / Google 2021 — "reject must be as easy as accept"). Also surface as a dark pattern under "Hidden Defaults / Multi-Layer Consent" (see `criteria/dark-patterns.md`).
+- **`rejectAccessibility: "not-found"`** — banner detected but no reject path discovered even after traversal. Score consent as 0 and call out the dark pattern explicitly.
+- **`multiLayerMethod`** — `"layer2-direct-reject"` means there was a "Reject all" on layer 2; `"layer2-toggle-save"` means the scanner had to uncheck non-essential toggles and save. The second is *more* of a freely-given-consent problem because real users almost never do that.
+
+Do not infer "no reject" from missing `rejectText` — that field reflects what was visible on layer 1, not what's reachable.
+
 ## Three-Tier Tracker Classification
 
 Present each tier separately with appropriate severity language. Do NOT lump consent-mode pings with full tracking fires — this undermines report credibility with technical reviewers.

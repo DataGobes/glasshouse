@@ -92,6 +92,9 @@ Do NOT use decorated values like `"Analytics (Snowplow)"` or `"Advertising (Goog
 - **`rejectText`**: the reject button label. **NOT** `rejectButton`. Omit if no reject button exists.
 - **`isAsymmetric`**: `true` if accept button is visually larger/more prominent than reject
 - `acceptWidth` / `rejectWidth`: optional size descriptors for the measurement bar (e.g. `"2x larger"`, `"standard"`)
+- **`multiLayer`** (scanner-emitted): `true` if reject was only reachable by opening a second layer (clicking a "Settings"/"Manage" button on layer 1). `false` when reject is on layer 1, omitted when no banner.
+- **`rejectAccessibility`** (scanner-emitted): one of `"layer-1"` (reject button on the first banner), `"layer-2"` (reject was reached after opening settings), or `"not-found"` (banner detected but no reject path discovered even after layer-2 traversal). Read this in your audit narrative instead of inferring "no reject" from missing fields — the scanner now traverses one layer deep before giving up.
+- `multiLayerMethod` (scanner-emitted, optional): when `multiLayer` is `true`, the strategy used — `"layer2-direct-reject"` (clicked a reject button on layer 2) or `"layer2-toggle-save"` (unchecked non-essential toggles and saved).
 
 ## `findings.consent.annotations[]` (Consent Banner)
 ```json
