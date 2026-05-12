@@ -104,11 +104,30 @@ function normalizeLegalPages(legalPages, privacyPolicyAnalysis) {
   };
 }
 
+// A real registered company name is short and doesn't read like a sentence.
+// Excerpts in privacyPolicyAnalysis are free-form analyst prose and often
+// describe the controller instead of naming it ("X named throughout. Policy
+// clarifies..."). Reject anything that smells like prose so we don't put
+// it on the front of a complaint letter.
+function looksLikeProse(s) {
+  if (!s) return true;
+  if (s.length > 80) return true;
+  // Sentence-ending punctuation followed by a space and a capital letter
+  // anywhere except the trailing position = multiple sentences = prose.
+  if (/[.!?]\s+[A-Z]/.test(s)) return true;
+  return false;
+}
+
 function parseControllerExcerpt(excerpt) {
   if (!excerpt) return null;
   const parts = excerpt.split(',').map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) return { registeredName: parts[0] || '', country: '' };
+  if (parts.length < 2) {
+    const name = parts[0] || '';
+    if (looksLikeProse(name)) return null;
+    return { registeredName: name, country: '' };
+  }
   const name = parts[0];
+  if (looksLikeProse(name)) return null;
   const country = parts[parts.length - 1];
   const postalAddress = parts.slice(1).join(', ');
   return { registeredName: name, country, postalAddress };
@@ -126,16 +145,21 @@ function normalizeController(scan) {
     ? legal.find((e) => e && e.title && /privacy/i.test(e.title))
     : null;
 
+  // meta.company is the curated, structured field — prefer it over excerpt parsing.
+  const metaCompany = scan.meta && scan.meta.company;
+  const useMetaCompany = metaCompany && !looksLikeProse(metaCompany);
+
   const parsed = parseControllerExcerpt(ctrl && ctrl.excerpt);
-  if (!parsed) return undefined;
-  const countryName = parsed.country;
+  if (!useMetaCompany && !parsed) return undefined;
+
+  const countryName = parsed ? parsed.country : '';
   const countryCode = COUNTRY_FROM_LOCALE[countryName] || (countryName && countryName.length === 2 ? countryName.toUpperCase() : '');
   const dpoMatch = (dpo && dpo.excerpt && dpo.excerpt.match(EMAIL_RE)) || null;
 
   return {
-    registeredName: parsed.registeredName,
+    registeredName: useMetaCompany ? metaCompany : parsed.registeredName,
     country: countryCode,
-    postalAddress: parsed.postalAddress || '',
+    postalAddress: (parsed && parsed.postalAddress) || '',
     imprintUrl: (privacyEntry && privacyEntry.url) || '',
     dpoEmail: dpoMatch ? dpoMatch[1] : ''
   };

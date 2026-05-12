@@ -59,17 +59,89 @@ function parseArgs(argv) {
 function usage() {
   console.error(`Usage: node scripts/glasshouse-file.js <scan.json> [options]
 
+Modes:
+  (default)               Interactive: prompts the user step by step.
+  --list-findings         Emit JSON of all candidate findings to stdout and exit.
+                          Use this from an agent to present findings in chat.
+  --include <ids>         Non-interactive: comma-separated finding IDs to file.
+                          Use the IDs returned by --list-findings.
+
 Options:
-  --dpa <id>            Skip the DPA picker
-                        (nl-ap | fr-cnil | uk-ico | ie-dpc |
-                         de-bfdi | de-berlin | de-hamburg | de-bayern | de-nrw)
-  --anonymize           Use placeholders instead of a stored complainant profile
-  --include-all         Include non-actionable findings in curation
-  --output-dir <path>   Output directory for the dossier (default: cwd)
-  --inline              Produce a single markdown file instead of a folder
-  --on-collision <p>    abort (default) | overwrite | suffix
+  --dpa <id>              Skip the DPA picker
+                          (nl-ap | fr-cnil | uk-ico | ie-dpc |
+                           de-bfdi | de-berlin | de-hamburg | de-bayern | de-nrw)
+  --anonymize             Use placeholders instead of a stored complainant profile
+  --include-all           Include non-actionable findings in candidate list
+                          (default: only actionable findings)
+  --yes                   Suppress every confirmation prompt and use defaults.
+                          Required when stdin is not a TTY unless --list-findings.
+  --output-dir <path>     Output directory for the dossier (default: cwd)
+  --inline                Produce a single markdown file instead of a folder
+  --on-collision <p>      abort (default) | overwrite | suffix
+
+Complainant overrides (non-interactive use without --anonymize):
+  --full-name <name>      Complainant full name
+  --email <addr>          Complainant email
+  --phone <num>           Complainant phone (optional)
+  --street <line>         Postal address line
+  --postal-code <code>    Postal code
+  --city <name>           City
+  --country <CC>          ISO country code (e.g. NL)
+  --save-profile          Persist the entered complainant profile
+  --no-save-profile       Do not persist the entered complainant profile
 `);
   process.exit(2);
+}
+
+// Emit candidates as JSON. The agent calls this to present findings to the
+// user in chat, then calls again with --include <ids> to build the dossier.
+function runListFindings(scan, includeAll) {
+  const candidates = extractCandidates(scan);
+  const visible = includeAll ? candidates : candidates.filter(c => c.actionable);
+  const controller = detectController(scan);
+  process.stdout.write(JSON.stringify({
+    meta: {
+      domain: scan.meta.domain,
+      scanDate: scan.meta.scanDate
+    },
+    controller,
+    candidates: visible.map(c => ({
+      id: c.id,
+      kind: c.kind,
+      headline: c.headline,
+      detail: c.detail,
+      articles: c.articles,
+      actionable: c.actionable
+    }))
+  }, null, 2) + '\n');
+}
+
+function parseIncludeIds(value) {
+  if (value === true || value == null) return null;
+  return String(value).split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function complainantFromFlags(flags) {
+  const required = ['full-name', 'email', 'street', 'postal-code', 'city', 'country'];
+  const missing = required.filter(k => !flags[k] || flags[k] === true);
+  if (missing.length) {
+    throw new Error(
+      `Missing complainant fields for non-interactive use: ${missing.map(k => '--' + k).join(', ')}.\n` +
+      `Either pass these flags, use --anonymize, or run interactively in a terminal.`
+    );
+  }
+  return {
+    fullName: String(flags['full-name']).trim(),
+    email: String(flags.email).trim(),
+    phone: flags.phone && flags.phone !== true ? String(flags.phone).trim() : undefined,
+    postalAddress: {
+      street: String(flags.street).trim(),
+      postalCode: String(flags['postal-code']).trim(),
+      city: String(flags.city).trim(),
+      country: String(flags.country).trim()
+    },
+    dataSubjectStatus: 'self'
+  };
 }
 
 async function main() {
@@ -82,19 +154,41 @@ async function main() {
   const anonymize = !!flags.anonymize;
   const includeAll = !!flags['include-all'];
   const collisionPolicy = flags['on-collision'] || 'abort';
+  const nonInteractive = !!flags.yes;
+  const includeIds = parseIncludeIds(flags.include);
+
+  // --list-findings is a pure-emit mode: no prompts, no side effects.
+  if (flags['list-findings']) {
+    runListFindings(scan, includeAll);
+    return;
+  }
+
+  // TTY guard: without a terminal we cannot safely prompt. The agent flow
+  // must pass --yes (and either --include or --include-all explicitly) so
+  // intent is recorded in the command, not implied by silence.
+  if (!process.stdin.isTTY && !nonInteractive) {
+    throw new Error(
+      'stdin is not a TTY and --yes was not passed.\n' +
+      'For agent/non-interactive use, run with: --yes --dpa <id> --include <ids> ' +
+      '(and --anonymize OR complainant flags). Use --list-findings first to get the IDs.'
+    );
+  }
 
   const asker = makeAsker();
   const ask = (q) => asker.ask(q);
 
   try {
     const draft = readDraft(outputRoot, slug);
-    if (draft) {
+    if (draft && !nonInteractive) {
       const resume = (await ask(`Found a previous draft for ${slug}. Resume? [Y/n] `)).trim().toLowerCase();
       if (resume === 'n' || resume === 'no') deleteDraft(outputRoot, slug);
     }
 
     let dpaId = flags.dpa;
     if (!dpaId) {
+      if (nonInteractive) {
+        throw new Error('--dpa <id> is required when --yes is set. Available ids: ' + listAdapters().map(a => a.id).join(', '));
+      }
       const adapters = listAdapters();
       const lead = inferLeadDpa(scan);
       stdout.write(`\nAvailable DPAs:\n`);
@@ -110,23 +204,28 @@ async function main() {
     const dpa = loadAdapter(dpaId);
 
     let controller = detectController(scan);
-    stdout.write(`\nController (from scan):\n`);
-    for (const [k, v] of Object.entries(controller)) stdout.write(`  ${k}: ${v}\n`);
-    const edit = (await ask(`Edit any field? [y/N] `)).trim().toLowerCase();
-    if (edit === 'y' || edit === 'yes') {
-      const overrides = {};
-      for (const key of Object.keys(controller)) {
-        if (controller[key] === PLACEHOLDER) {
-          const v = (await ask(`  ${key}: `)).trim();
-          if (v) overrides[key] = v;
+    if (!nonInteractive) {
+      stdout.write(`\nController (from scan):\n`);
+      for (const [k, v] of Object.entries(controller)) stdout.write(`  ${k}: ${v}\n`);
+      const edit = (await ask(`Edit any field? [y/N] `)).trim().toLowerCase();
+      if (edit === 'y' || edit === 'yes') {
+        const overrides = {};
+        for (const key of Object.keys(controller)) {
+          if (controller[key] === PLACEHOLDER) {
+            const v = (await ask(`  ${key}: `)).trim();
+            if (v) overrides[key] = v;
+          }
         }
+        controller = applyOverrides(controller, overrides);
       }
-      controller = applyOverrides(controller, overrides);
     }
 
     let complainant;
     if (anonymize) {
       complainant = anonymizedProfile();
+    } else if (nonInteractive) {
+      const existing = readProfile(os.homedir());
+      complainant = existing || complainantFromFlags(flags);
     } else {
       const existing = readProfile(os.homedir());
       if (existing) {
@@ -151,14 +250,33 @@ async function main() {
       }
     }
 
+    // Explicit save-profile flags only apply when we built the profile from CLI flags.
+    if (nonInteractive && !anonymize && !readProfile(os.homedir()) && flags['save-profile']) {
+      writeProfile(os.homedir(), complainant);
+    }
+
     const candidates = extractCandidates(scan);
     const visible = includeAll ? candidates : candidates.filter(c => c.actionable);
-    stdout.write(`\nFindings to consider (${visible.length}):\n`);
-    const choices = {};
-    for (const c of visible) {
-      stdout.write(`\n  ${c.headline}\n    ${c.detail}\n    Articles: ${c.articles.join(', ')}\n`);
-      const ans = (await ask(`    Include? [Y/n] `)).trim().toLowerCase();
-      choices[c.id] = !(ans === 'n' || ans === 'no');
+    let choices = {};
+
+    if (includeIds) {
+      // Validate every passed id exists; reject typos loudly rather than
+      // silently producing an empty dossier.
+      const visibleById = new Map(visible.map(c => [c.id, c]));
+      const unknown = includeIds.filter(id => !visibleById.has(id));
+      if (unknown.length) {
+        throw new Error(`Unknown finding id(s): ${unknown.join(', ')}. Run --list-findings to see valid ids.`);
+      }
+      for (const id of includeIds) choices[id] = true;
+    } else if (nonInteractive) {
+      throw new Error('--include <ids> is required when --yes is set. Run --list-findings first to discover ids.');
+    } else {
+      stdout.write(`\nFindings to consider (${visible.length}):\n`);
+      for (const c of visible) {
+        stdout.write(`\n  ${c.headline}\n    ${c.detail}\n    Articles: ${c.articles.join(', ')}\n`);
+        const ans = (await ask(`    Include? [Y/n] `)).trim().toLowerCase();
+        choices[c.id] = !(ans === 'n' || ans === 'no');
+      }
     }
     const selections = applyUserChoices(candidates, choices);
     if (selections.length === 0) throw new Error('No findings selected; nothing to file.');
