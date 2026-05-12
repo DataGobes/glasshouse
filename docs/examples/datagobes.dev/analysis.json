@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "domain": "datagobes.dev",
+    "company": "datagobes.dev",
+    "scanDate": "2026-05-12",
+    "episode": 2,
+    "overallScore": 9.5,
+    "theme": "datagobes",
+    "faviconBase64": "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAflBMVEUNDQ3////HXCwAAADOXy0ACgxBIRQAAAoJCQnLXi0ACAz6+voIDA0VFRUABQugoKC3t7dQUFA9PT3MzMyWRiMtLS2tra26VioXEA56enqYmJjy8vJDQ0MfEw+pTyZmMRqNQiFdLRiBPR+gSyVTKRc6HhMwGhFwNRwoFxBLJhX8EZNcAAACqUlEQVR4nO2b65KiMBSEYyCGm1FERVBBHVH3/V9wgwxDvI1sAenaqnz/rLLs5qRzQCqHjJ6Ipkm4nJCemSzDZBo9q5GHz7PQKnH61ifEuf1wOPvNgJ/Kr/QvrSIFUv+dgdUgV/6IrMTqpYHNXId8ZWG+eTYQDV18FcuKHg3MdF1+hWPN7g3MNF5+Re2AfNdft750EDUGNnrrX+FYmx8DW0ABZAm2tYEVRF86WFUGfMQClDiWfzOQggogS5DeDKAKUJagNKC/BTTIZkBGIdJAOCI+UF868AmiCSoGIoLbAzcDKUmwBhKCzGCZQrKEdYESZ0l6f/7+N8DyBoPBYDAYDAaDwfAfwLwAqs+LfMcZUH9h2/bXlaOq4F1sSqlr7wOBMcAzl5a47pF7SAOU2jRHRME72LTGjseAKPDcrWsgo4BIo1gvbMXCnmlPY8DPmWLBvehPI+OnWI3CQX8aGc+pYiEDpFGIIzqN3KSxjMIfk0Yi+H0adwALBJ/G3c9NsrRw0RxGqb9Q9N0j0bsIQuzVFVis9YbA4xeqyGeFXnnGD3eN4KS3EQR8nDXyLtXcCmX2vtTFPwq9208wkz1k9mJo9q5q9lzd2Que+p5WeRKsm+rrzx4p/527sOxVBur7Lui/aV0B/dmrYWcZQUD2Grwiixdn2BsaUnZBjnxHZTAYDIZWBKwNg91OGN8V488UbKA7mjjFdjuy9RAOgnPzzPoBNx7ioUIc2+rLx7rrmxJ0OVHYg4FJpyOdrLA/K/+6BM6SdJotEDltG8LdywJY247Hej1+brELxwV5sw2tpPPB5m6NyErxR7vhh9vhx/vxAw7wEQ/8kAt8zAc+6IQf9cIPu8HH/fADj/iRT/zQK37sdwQffB7hR79vYYQOv3/HcZqE8/7H/+evx///Au9ILUFVRZ3mAAAAAElFTkSuQmCC",
+    "subtitle": "When privacy means doing less"
+  },
+  "scores": {
+    "consent": { "score": 9.5 },
+    "preConsentTracking": { "score": 10.0 },
+    "legalPages": { "score": 8.0 },
+    "crossBorder": { "score": 8.5 },
+    "securityHeaders": { "score": 10.0 },
+    "cookieManagement": { "score": 10.0 },
+    "darkPatterns": { "score": 10.0 },
+    "dsar": { "score": 7.5 },
+    "processorTransparency": { "score": 7.0 }
+  },
+  "findings": {
+    "tldr": [
+      {
+        "emoji": "✓",
+        "headline": "Zero tracking storage",
+        "detail": "No cookies. No third-party trackers. No fingerprinting. localStorage is used only for user-requested feature state (jukebox playback), exempt under Art. 5(3)'s strictly-necessary carve-out.",
+        "sentiment": "positive"
+      },
+      {
+        "emoji": "⚙",
+        "headline": "GPC sent but not read",
+        "detail": "The browser sent Sec-GPC: 1 during the visit. The site doesn't read it. This is moot here (no tracking to suppress), but worth wiring up if tracking is ever added.",
+        "sentiment": "surprising"
+      },
+      {
+        "emoji": "🛡",
+        "headline": "Six of six security headers",
+        "detail": "HSTS preload, comprehensive CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy (camera/mic/geolocation disabled).",
+        "sentiment": "positive"
+      }
+    ],
+    "consent": {
+      "platform": "None — Art. 5(3) not triggered, Art. 6(1)(f) legitimate interest for server-side analytics",
+      "bannerText": "No consent banner present. ePrivacy Art. 5(3) is only triggered when information is stored in the user's terminal equipment — and the site stores nothing (no cookies, no localStorage, no indexedDB). Server-side analytics (Vercel) hashes the IP with a daily salt and discards, operating under GDPR Art. 6(1)(f) legitimate interest rather than consent. CNIL and DSK both carve out first-party, non-cross-site analytics as not requiring consent under this model.",
+      "acceptText": "n/a",
+      "rejectText": "n/a",
+      "isAsymmetric": false,
+      "annotations": [
+        {
+          "status": "pass",
+          "title": "ePrivacy Art. 5(3) limited to strictly-necessary state",
+          "detail": "No cookies. No fingerprinting. localStorage is used only for user-requested features (jukebox playback state), which falls under Art. 5(3)'s strictly-necessary carve-out — the same rule that lets sites remember dark-mode preferences or shopping-cart state without consent. Article 29 WP Opinion 04/2012 names this category explicitly as exempt."
+        },
+        {
+          "status": "pass",
+          "title": "Server-side analytics under Art. 6(1)(f)",
+          "detail": "Vercel Web Analytics processes the IP server-side, hashes it with a daily salt + User-Agent for unique-visitor counting, then discards the IP. Per CNIL guidance, first-party, non-cross-site, aggregated analytics operates lawfully under legitimate interest — consent is not the right basis."
+        },
+        {
+          "status": "partial",
+          "title": "GPC signal received but not parsed",
+          "detail": "Under Art. 6(1)(f), users retain the Art. 21 right to object. GPC is the implementable form of that objection. Reading the Sec-GPC: 1 header and conditionally skipping the analytics beacon is the action that closes the loop. Currently the signal arrives but isn't acted on."
+        }
+      ]
+    },
+    "variantComparison": {
+      "ignorePhase1Trackers": 0,
+      "ignorePhase2Trackers": 0,
+      "acceptPhase2Trackers": 0,
+      "rejectPhase2Trackers": 0,
+      "ignorePhase1Cookies": 0,
+      "ignorePhase2Cookies": 0,
+      "acceptPhase2Cookies": 0,
+      "rejectPhase2Cookies": 0
+    },
+    "trackers": [],
+    "cookies": [],
+    "thirdPartyDomains": [
+      {
+        "domains": "jmsrmcpfzkcwofggbvto.supabase.co",
+        "company": "Supabase (first-party backend)",
+        "jurisdiction": "US",
+        "purpose": "Content delivery from site's own Supabase project",
+        "risk": "adequate",
+        "requestCount": 1
+      }
+    ],
+    "crossBorder": {
+      "nonEuTransfersDetected": true,
+      "dpfReliedUpon": false,
+      "otherSafeguards": ["First-party-controlled subdomain", "CSP-restricted endpoints"],
+      "notes": "Supabase is the only non-EU endpoint. It is the site operator's own Supabase project, restricted via CSP to specific subdomains. No third-party processor handles user data."
+    },
+    "securityHeaders": [
+      { "name": "Strict-Transport-Security", "status": "present", "value": "max-age=63072000; includeSubDomains; preload" },
+      { "name": "Content-Security-Policy", "status": "present", "value": "default-src 'self' with locked-down allowlists for scripts, styles, images, connect-src" },
+      { "name": "X-Content-Type-Options", "status": "present", "value": "nosniff" },
+      { "name": "X-Frame-Options", "status": "present", "value": "SAMEORIGIN" },
+      { "name": "Referrer-Policy", "status": "present", "value": "strict-origin-when-cross-origin" },
+      { "name": "Permissions-Policy", "status": "present", "value": "camera=(), microphone=(), geolocation=()" }
+    ],
+    "legalPages": [
+      { "title": "Privacy notice", "status": "present", "url": "https://datagobes.dev/privacy" },
+      { "title": "Privacy-audit playbook", "status": "present", "url": "https://datagobes.dev/playbooks/privacy-audit" }
+    ],
+    "privacyPolicyAnalysis": [
+      { "element": "Controller identity", "status": "present", "excerpt": "datagobes.dev (Gijs Jansen)" },
+      { "element": "Processing purposes", "status": "present" },
+      { "element": "Lawful basis", "status": "present" },
+      { "element": "Retention period", "status": "vague" },
+      { "element": "Data subject rights", "status": "present" },
+      { "element": "Right to lodge complaint", "status": "present" }
+    ],
+    "fingerprinting": {
+      "detected": false,
+      "tier1Calls": [],
+      "tier2Calls": [],
+      "stackedSignals": [],
+      "commercialSdks": [],
+      "tier3Appendix": [],
+      "outOfScopeCaveats": [
+        "TLS JA3/JA4 fingerprinting at the network layer is not detectable from JavaScript instrumentation.",
+        "HTTP/3 QUIC fingerprinting at the transport layer is not detectable.",
+        "CSS-timing side channels are out of scope."
+      ]
+    },
+    "riskSummaryNotes": [
+      { "category": "consent", "note": "No CMP present, no tracking to require consent. Browser GPC signal is sent but not parsed by the site (moot today)." },
+      { "category": "preConsentTracking", "note": "Zero trackers, zero cookies, zero SDK loads, zero Consent Mode pings. localStorage is used only for user-initiated feature state (jukebox); strictly-necessary exemption applies." },
+      { "category": "crossBorder", "note": "Single non-EU endpoint (Supabase US), restricted to the site's own project via CSP." },
+      { "category": "securityHeaders", "note": "All six core headers present with strong configuration (HSTS preload, comprehensive CSP, Permissions-Policy disabling camera/mic/geolocation)." },
+      { "category": "cookieManagement", "note": "Zero cookies set, period — no expiry, alignment, or post-reject deletion concerns to evaluate." },
+      { "category": "darkPatterns", "note": "No consent banner means no dark patterns to score." },
+      { "category": "legalPages", "note": "Privacy notice present. Retention language is vague; spec maximum durations per processing purpose to strengthen Art. 13(2)(a) compliance." }
+    ],
+    "recommendations": [
+      {
+        "priority": "low",
+        "action": "Read the GPC signal explicitly",
+        "detail": "Even with no current tracking to suppress, parsing Sec-GPC: 1 and signaling acknowledgement (e.g., setting an internal flag) future-proofs the site for any future addition of analytics or marketing tools.",
+        "category": "consent"
+      },
+      {
+        "priority": "low",
+        "action": "Tighten privacy notice retention language",
+        "detail": "The privacy notice mentions retention but in general terms. Specifying maximum durations per processing purpose strengthens Art. 13(2)(a) compliance.",
+        "category": "legalPages"
+      }
+    ]
+  },
+  "slides": {
+    "include": [
+      "tldr",
+      "consent",
+      "variantComparison",
+      "thirdPartyDomains",
+      "securityHeaders",
+      "legalPages",
+      "privacyPolicy",
+      "fingerprinting",
+      "riskSummary",
+      "recommendations"
+    ],
+    "exclude": [
+      "darkPatterns",
+      "beforeAfter",
+      "auditTrailPre",
+      "auditTrailPost",
+      "gdprCompliance"
+    ]
+  },
+  "markdownReport": {
+    "executiveSummary": "datagobes.dev is the homepage for an open-source GDPR audit toolkit and operates on a strict no-tracking baseline. The site sets zero cookies, loads zero third-party trackers, performs no fingerprinting, and connects only to its own Supabase backend over a CSP-restricted channel. No consent banner is needed because (a) ePrivacy Art. 5(3) is only triggered by storage that goes beyond strictly-necessary feature state — localStorage is used only for user-requested feature state (jukebox playback), which is exempt under the Article 29 WP Opinion 04/2012 carve-out — and (b) server-side analytics (Vercel Web Analytics) operates under Art. 6(1)(f) legitimate interest, not consent: it hashes the IP with a daily salt + User-Agent, discards the IP, and produces aggregated first-party traffic counts. Security headers are complete (6/6) with strong configuration (HSTS preload, comprehensive CSP, permissions-policy disabling camera/mic/geolocation). The only finding worth a recommendation: the browser sends a Sec-GPC: 1 signal that the site doesn't currently parse — under Art. 6(1)(f) users retain the Art. 21 right to object, and GPC is the implementable form of that objection. Reading the header and conditionally skipping the analytics beacon is the action that closes the loop.",
+    "consentAnalysis": "No CMP is present because no processing on the page requires consent under Art. 6. The CSP locks third-party origins to a small allowlist (fonts.googleapis.com, opengraph.githubassets.com, the site's own Supabase project, Vercel analytics for vitals). localStorage is used only for user-requested feature state (jukebox) and is exempt under Art. 5(3)'s strictly-necessary carve-out. Server-side analytics operates under Art. 6(1)(f) legitimate interest, not consent. The site receives Sec-GPC: 1 but doesn't parse it — the recommendation is to wire that up so users keep an enforceable Art. 21 right to object.",
+    "preConsentAnalysis": "Zero trackers, zero cookies, zero fingerprinting calls before any (non-existent) consent action. The only outbound request beyond first-party assets is a single GET to the site's own Supabase project at jmsrmcpfzkcwofggbvto.supabase.co, restricted by CSP connect-src to that specific subdomain.",
+    "postConsentAnalysis": "Because there is no consent banner, the accept and reject variants produce identical state. No new trackers or cookies appear after attempted interaction. The site's behavior is the same regardless of any consent the user might attempt to grant or withhold."
+  }
+}
