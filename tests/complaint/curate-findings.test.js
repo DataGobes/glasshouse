@@ -87,6 +87,42 @@ test('extractCandidates marks essential/functional pre-consent cookies as non-ac
   assert.equal(byName.tracking.actionable, true);
 });
 
+test('extractCandidates surfaces multi-layer reject pattern with CNIL precedent', () => {
+  const scanMultiLayer = {
+    meta: { domain: 'nu.nl', schemaVersion: '1' },
+    findings: {
+      consent: {
+        detected: true,
+        platform: 'DPG Media Privacy Gate',
+        multiLayer: true,
+        rejectAccessibility: 'layer-2',
+        multiLayerMethod: 'layer2-direct-reject'
+      }
+    }
+  };
+  const cands = extractCandidates(scanMultiLayer);
+  const ml = cands.find(c => c.kind === 'multiLayerReject');
+  assert.ok(ml, 'multiLayerReject candidate expected');
+  assert.equal(ml.actionable, true);
+  assert.ok(ml.detail.includes('CNIL'), 'expected CNIL precedent in detail');
+  assert.ok(ml.articles.includes('Art. 7'));
+  assert.ok(ml.articles.includes('EDPB Guidelines 03/2022'));
+  // Should not double-fire the older rejectInaccessible candidate
+  assert.equal(cands.filter(c => c.kind === 'rejectInaccessible').length, 0);
+});
+
+test('extractCandidates falls back to rejectInaccessible when layer-2 traversal not attempted', () => {
+  const scanNoTraversal = {
+    meta: { domain: 'x.test', schemaVersion: '1' },
+    findings: {
+      consent: { detected: true, platform: 'Custom', rejectAccessible: false }
+    }
+  };
+  const cands = extractCandidates(scanNoTraversal);
+  assert.ok(cands.find(c => c.kind === 'rejectInaccessible'), 'fallback candidate expected');
+  assert.equal(cands.filter(c => c.kind === 'multiLayerReject').length, 0);
+});
+
 test('applyUserChoices returns only candidates whose id is confirmed', () => {
   const cands = extractCandidates(scan);
   const firstId = cands[0].id;

@@ -1480,6 +1480,7 @@ async function scan(targetUrl, buttonHints = {}) {
             viaCookieWall: true,
             multiLayer: bypassResult.multiLayer ? true : false,
             rejectAccessibility: bypassResult.multiLayer ? "layer-2" : "layer-1",
+            multiLayerMethod: bypassResult.multiLayer?.layer2Method || null,
           };
 
           // Now on the actual site — capture legal pages and meta tags

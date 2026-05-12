@@ -137,11 +137,13 @@ Base score = `(present_headers / total_checked) × 100` covering HSTS, CSP, X-Co
 ### Dark Patterns (5%)
 - 100: No dark patterns detected
 - 75: Minor asymmetry (accept slightly larger)
-- 50: Clear asymmetry OR missing reject button
+- 50: Clear asymmetry OR missing reject button OR reject only on layer 2 (`findings.consent.rejectAccessibility === "layer-2"`)
 - 25: Multiple patterns combined
 - 0: Cookie wall + forced consent
 
 When citing in the report, use the EDPB Guidelines 03/2022 taxonomy (overloading, skipping, stirring, hindering, fickle, left in the dark) — see `concepts/dark-patterns-taxonomy.md`.
+
+**Multi-layer reject + consent score interaction**: when `rejectAccessibility === "layer-2"`, the consent score caps at 50 (binary accept/reject only on layer 1, with the reject path one click deeper). Score the dark-patterns slot at 50 too, not both — the impact is one pattern, not two. The complaint builder emits a `multiLayerReject` candidate citing CNIL Bing (2022, €60M).
 
 ## Commercial Fingerprinting SDK Modifier (NEW 2026-04, applies independently)
 
