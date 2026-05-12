@@ -209,6 +209,299 @@ const COOKIE_WALL_SELECTORS = {
 };
 
 // ───────────────────────────────────────────
+// Multi-layer banner traversal
+//
+// Many CMPs (and walls like DPG Media's Privacy Gate) only expose
+// "Accept" + "Settings" on layer 1 — the reject path requires opening
+// layer 2. Layer 2 may have a direct "Reject all" button (quick path)
+// or only per-category toggles that have to be unchecked before saving
+// (deep path). These selectors and helpers are shared between
+// bypassCookieWall and the same-domain reject-click path.
+// ───────────────────────────────────────────
+const MULTILAYER_SELECTORS = {
+  // Buttons that OPEN layer 2 (settings / manage / customize).
+  // i18n labels first (most reliable), structural fallbacks last.
+  settings: [
+    // English
+    'button:has-text("Manage settings")',
+    'button:has-text("Manage preferences")',
+    'button:has-text("Manage your choices")',
+    'button:has-text("Manage cookies")',
+    'button:has-text("Cookie settings")',
+    'button:has-text("Customize")',
+    'button:has-text("Customise")',
+    'button:has-text("Show purposes")',
+    'button:has-text("Show details")',
+    'button:has-text("More options")',
+    'button:has-text("Preferences")',
+    // Dutch
+    'button:has-text("Instellen")',
+    'button:has-text("Instellingen")',
+    'button:has-text("Aanpassen")',
+    'button:has-text("Voorkeuren")',
+    'button:has-text("Meer opties")',
+    // German
+    'button:has-text("Einstellungen")',
+    'button:has-text("Anpassen")',
+    'button:has-text("Einstellungen verwalten")',
+    'button:has-text("Mehr Optionen")',
+    // French
+    'button:has-text("Personnaliser")',
+    'button:has-text("Paramètres")',
+    'button:has-text("Gérer mes choix")',
+    'button:has-text("Plus d\'options")',
+    // Spanish / Portuguese
+    'button:has-text("Configurar")',
+    'button:has-text("Personalizar")',
+    'button:has-text("Preferencias")',
+    'button:has-text("Gestionar")',
+    // Italian
+    'button:has-text("Personalizza")',
+    'button:has-text("Impostazioni")',
+    'button:has-text("Gestisci")',
+    // Nordic
+    'button:has-text("Tilpas")',
+    'button:has-text("Inställningar")',
+    'button:has-text("Mer information")',
+    // Structural fallbacks
+    'button[class*="settings"]',
+    'button[class*="manage"]',
+    'button[class*="customize"]',
+    'button[id*="settings"]',
+    'button[id*="manage"]',
+    'a[class*="settings"]',
+    'a[class*="manage"]',
+  ],
+  // Direct reject on layer 2 (the quick path — most major CMPs have this).
+  layer2Reject: [
+    // English
+    'button:has-text("Reject All")', 'button:has-text("Reject all")',
+    'button:has-text("Refuse all")', 'button:has-text("Decline all")',
+    'button:has-text("Reject non-essential")',
+    'button:has-text("Continue without accepting")',
+    'button:has-text("Save without consent")',
+    // Dutch
+    'button:has-text("Alles weigeren")', 'button:has-text("Weigeren")',
+    'button:has-text("Alles afwijzen")', 'button:has-text("Afwijzen")',
+    // German
+    'button:has-text("Alle ablehnen")', 'button:has-text("Ablehnen")',
+    'button:has-text("Alles ablehnen")',
+    // French
+    'button:has-text("Tout refuser")', 'button:has-text("Refuser tout")',
+    'button:has-text("Continuer sans accepter")',
+    // Spanish / Portuguese
+    'button:has-text("Rechazar todo")', 'button:has-text("Rechazar")',
+    'button:has-text("Rejeitar tudo")',
+    // Italian
+    'button:has-text("Rifiuta tutti")', 'button:has-text("Rifiuta tutto")',
+    // Nordic
+    'button:has-text("Afvis alle")', 'button:has-text("Avvisa alla")',
+    // Structural fallbacks
+    'button[class*="reject"]',
+    'button[class*="refuse"]',
+    'button[class*="decline"]',
+  ],
+  // Save button on layer 2 (the deep path — click after unchecking toggles).
+  layer2Save: [
+    // English
+    'button:has-text("Save preferences")',
+    'button:has-text("Save settings")',
+    'button:has-text("Save and exit")',
+    'button:has-text("Save choices")',
+    'button:has-text("Confirm choices")',
+    'button:has-text("Confirm my choices")',
+    'button:has-text("Confirm")',
+    'button:has-text("Save")',
+    'button:has-text("Apply")',
+    // Dutch
+    'button:has-text("Opslaan")',
+    'button:has-text("Bevestig keuze")',
+    'button:has-text("Bevestigen")',
+    'button:has-text("Mijn keuzes opslaan")',
+    // German
+    'button:has-text("Speichern")',
+    'button:has-text("Auswahl bestätigen")',
+    'button:has-text("Bestätigen")',
+    // French
+    'button:has-text("Enregistrer")',
+    'button:has-text("Confirmer mes choix")',
+    'button:has-text("Valider")',
+    // Spanish / Portuguese
+    'button:has-text("Guardar")',
+    'button:has-text("Guardar preferencias")',
+    'button:has-text("Confirmar")',
+    // Italian
+    'button:has-text("Salva preferenze")',
+    'button:has-text("Conferma")',
+    // Structural fallbacks (avoid generic .btn-primary — too lossy)
+    'button[class*="save"]',
+    'button[class*="confirm"]',
+  ],
+};
+
+// Keywords that mark a toggle as essential / always-on / locked.
+// The deep path must NEVER uncheck these — doing so either causes the
+// save to fail or leaves the CMP in a broken state. If you add a locale,
+// add both the long form ("strictly necessary") and the short form ("necessary").
+const ESSENTIAL_TOGGLE_KEYWORDS = /\b(strictly\s+necessary|essential|necessary|required|always\s+(on|active)|technical|noodzakelijk|verplicht|essentiel|essentiell|notwendig|erforderlich|technisch|esencial|necesario|essenziali|tecnici|funcional)\b/i;
+
+// Check if any layer-2 reject OR save button is visible right now.
+// Used both as a success signal after clicking a settings button, and
+// as the entry condition for the deep-path toggle flow.
+async function findVisibleLayer2RejectOrSave(page) {
+  for (const sel of MULTILAYER_SELECTORS.layer2Reject) {
+    const btn = await page.$(sel).catch(() => null);
+    if (btn && await btn.isVisible().catch(() => false)) {
+      return { type: "reject", selector: sel };
+    }
+  }
+  for (const sel of MULTILAYER_SELECTORS.layer2Save) {
+    const btn = await page.$(sel).catch(() => null);
+    if (btn && await btn.isVisible().catch(() => false)) {
+      return { type: "save", selector: sel };
+    }
+  }
+  return null;
+}
+
+// Open layer 2 by clicking a settings-style button. Validates success by
+// confirming a layer-2 reject or save button became visible after the
+// click — not by measuring text deltas (which were too brittle for
+// banners where layer-2 content overlaps layer-1 content in size).
+async function openLayer2(page) {
+  // If a layer-2 reject/save is already visible, we don't need to open anything.
+  const preexisting = await findVisibleLayer2RejectOrSave(page);
+  if (preexisting) return { opened: true, selector: "(layer-2 already visible)", preexisting: true };
+
+  let candidatesChecked = 0;
+  let candidatesFound = 0;
+  for (const sel of MULTILAYER_SELECTORS.settings) {
+    candidatesChecked++;
+    let btn;
+    try {
+      btn = await page.$(sel);
+    } catch (err) {
+      if (process.env.GLASSHOUSE_DEBUG) console.error(`[openLayer2] selector error ${sel}: ${err.message}`);
+      continue;
+    }
+    if (!btn) continue;
+    candidatesFound++;
+    const visible = await btn.isVisible().catch(() => false);
+    if (process.env.GLASSHOUSE_DEBUG) console.error(`[openLayer2] candidate ${sel} → visible=${visible}`);
+    if (!visible) continue;
+
+    try {
+      await btn.click({ timeout: 5000 });
+    } catch {
+      continue;
+    }
+    await page.waitForTimeout(1500);
+
+    const layer2 = await findVisibleLayer2RejectOrSave(page);
+    if (process.env.GLASSHOUSE_DEBUG) console.error(`[openLayer2] post-click via ${sel} → layer2=${JSON.stringify(layer2)}`);
+    if (layer2) {
+      return { opened: true, selector: sel, layer2Hint: layer2 };
+    }
+    // No layer-2 reject/save appeared. The click went somewhere we don't
+    // want (footer link, account page). Best-effort: continue to next candidate.
+    // Doing more would require state restoration we can't reliably provide.
+  }
+  if (process.env.GLASSHOUSE_DEBUG) console.error(`[openLayer2] no opener clicked. checked=${candidatesChecked} found=${candidatesFound}`);
+  return { opened: false };
+}
+
+// Reject on layer 2. Quick path first (direct reject button), then deep
+// path (uncheck non-essential toggles + save). Returns the method used
+// so callers can surface it in the multiLayer signal.
+async function rejectOnLayer2(page) {
+  // Quick path: direct reject button on layer 2
+  for (const sel of MULTILAYER_SELECTORS.layer2Reject) {
+    let btn;
+    try {
+      btn = await page.$(sel);
+    } catch {
+      continue;
+    }
+    if (!btn) continue;
+    const visible = await btn.isVisible().catch(() => false);
+    if (!visible) continue;
+    try {
+      await btn.click({ timeout: 5000 });
+      return { rejected: true, method: "layer2-direct-reject" };
+    } catch {
+      continue;
+    }
+  }
+
+  // Deep path: uncheck non-essential toggles, then save
+  const toggleResult = await page.evaluate((essentialPattern) => {
+    const essentialRe = new RegExp(essentialPattern, "i");
+    const toggles = Array.from(document.querySelectorAll('input[type="checkbox"], [role="switch"]'));
+    let toggleCount = 0;
+    let togglesUnchecked = 0;
+    for (const t of toggles) {
+      // Skip if hidden
+      const style = window.getComputedStyle(t);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      toggleCount++;
+
+      // Pull label text from any plausible source
+      const label = (
+        (t.labels && t.labels[0] && t.labels[0].textContent) ||
+        t.getAttribute("aria-label") ||
+        (t.closest("label, [class*='row'], [class*='item'], [class*='purpose'], [class*='category']")?.textContent) ||
+        ""
+      ).trim();
+
+      // Skip essential / always-on toggles — never uncheck these
+      if (essentialRe.test(label)) continue;
+
+      // Skip disabled / locked toggles
+      if (t.disabled || t.getAttribute("aria-disabled") === "true") continue;
+
+      const checked = t.checked || t.getAttribute("aria-checked") === "true";
+      if (!checked) continue;
+
+      try {
+        t.click();
+        togglesUnchecked++;
+      } catch { /* ignore individual toggle failures */ }
+    }
+    return { toggleCount, togglesUnchecked };
+  }, ESSENTIAL_TOGGLE_KEYWORDS.source).catch(() => ({ toggleCount: 0, togglesUnchecked: 0 }));
+
+  if (toggleResult.toggleCount === 0) {
+    return { rejected: false, method: "no-reject-and-no-toggles" };
+  }
+
+  // Click save (works whether or not we unchecked anything — some sites
+  // default toggles to off and just need "Save preferences").
+  for (const sel of MULTILAYER_SELECTORS.layer2Save) {
+    let btn;
+    try {
+      btn = await page.$(sel);
+    } catch {
+      continue;
+    }
+    if (!btn) continue;
+    const visible = await btn.isVisible().catch(() => false);
+    if (!visible) continue;
+    try {
+      await btn.click({ timeout: 5000 });
+      return {
+        rejected: true,
+        method: "layer2-toggle-save",
+        toggleCount: toggleResult.toggleCount,
+        togglesUnchecked: toggleResult.togglesUnchecked,
+      };
+    } catch {
+      continue;
+    }
+  }
+  return { rejected: false, method: "save-button-not-found" };
+}
+
+// ───────────────────────────────────────────
 // Known tracker patterns — split into SDK loads vs active tracking
 //
 // KEY DISTINCTION:
@@ -1169,6 +1462,9 @@ async function scan(targetUrl, buttonHints = {}) {
         const bypassResult = await bypassCookieWall(page, wallInfo, targetUrl, variant);
         variantResult.cookieWall.bypassSuccess = bypassResult.success;
         variantResult.cookieWall.bypassMethod = bypassResult.method;
+        if (bypassResult.multiLayer) {
+          variantResult.cookieWall.multiLayer = bypassResult.multiLayer;
+        }
 
         if (bypassResult.success) {
           // Consent was given on the wall — synthesize consent result
@@ -1182,6 +1478,8 @@ async function scan(targetUrl, buttonHints = {}) {
               description: "Full-page cookie wall blocks access to content without consent — violates GDPR freely-given requirement",
             }],
             viaCookieWall: true,
+            multiLayer: bypassResult.multiLayer ? true : false,
+            rejectAccessibility: bypassResult.multiLayer ? "layer-2" : "layer-1",
           };
 
           // Now on the actual site — capture legal pages and meta tags
@@ -1220,6 +1518,12 @@ async function scan(targetUrl, buttonHints = {}) {
         // ─── Detect consent mechanism ───
         const consentInfo = await detectConsent(page, buttonHints);
         variantResult.consent = consentInfo;
+        // Default: if a layer-1 reject button was discovered, mark accessibility.
+        // Multi-layer fallback (later) will overwrite this to "layer-2" or "not-found".
+        if (consentInfo.detected) {
+          variantResult.consent.rejectAccessibility = consentInfo.rejectButton ? "layer-1" : "not-found";
+          variantResult.consent.multiLayer = false;
+        }
 
         // ─── TCF + Google Consent Mode v2 detection ───
         console.error(`[Variant: ${variant}] [Detection] Checking TCF, Consent Mode v2, consent granularity...`);
@@ -1245,6 +1549,7 @@ async function scan(targetUrl, buttonHints = {}) {
         // Determine which button to click based on the variant
         let buttonToClick = null;
         let actionName = null;
+        let multiLayerAlreadyClicked = false;
 
         if (variant === "accept" && consentInfo.detected && consentInfo.acceptButton) {
           buttonToClick = consentInfo.acceptButton;
@@ -1254,26 +1559,62 @@ async function scan(targetUrl, buttonHints = {}) {
           actionName = "reject";
         }
 
-        if (buttonToClick) {
-          console.error(`[Variant: ${variant}] [Phase 2] Clicking consent ${actionName} button...`);
-          consentClickTimestamp = Date.now();
+        // Multi-layer fallback: same-domain banner detected, reject variant, but
+        // layer 1 only exposed accept + settings. Open layer 2 and reject there.
+        if (variant === "reject" && consentInfo.detected && !buttonToClick && consentInfo.acceptButton) {
+          console.error(`[Variant: reject] [Phase 2] Layer-1 reject missing — trying multi-layer traversal...`);
+          const opened = await openLayer2(page);
+          if (opened.opened) {
+            const rej = await rejectOnLayer2(page);
+            if (rej.rejected) {
+              console.error(`[Variant: reject] [Phase 2] Multi-layer reject via ${rej.method}`);
+              consentClickTimestamp = Date.now();
+              actionName = "reject";
+              multiLayerAlreadyClicked = true;
+              variantResult.consent = variantResult.consent || {};
+              variantResult.consent.multiLayer = true;
+              variantResult.consent.rejectAccessibility = "layer-2";
+              variantResult.consent.multiLayerMethod = rej.method;
+              variantResult.consent.multiLayerSettingsSelector = opened.selector;
+            } else {
+              console.error(`[Variant: reject] [Phase 2] Multi-layer traversal: opened layer 2 but no reject path (${rej.method})`);
+              variantResult.consent = variantResult.consent || {};
+              variantResult.consent.multiLayer = true;
+              variantResult.consent.rejectAccessibility = "not-found";
+              variantResult.consent.multiLayerMethod = rej.method;
+            }
+          } else {
+            console.error(`[Variant: reject] [Phase 2] Multi-layer traversal: settings button not found`);
+            variantResult.consent = variantResult.consent || {};
+            variantResult.consent.rejectAccessibility = "not-found";
+          }
+        }
+
+        if (buttonToClick || multiLayerAlreadyClicked) {
+          if (!multiLayerAlreadyClicked) {
+            console.error(`[Variant: ${variant}] [Phase 2] Clicking consent ${actionName} button...`);
+            consentClickTimestamp = Date.now();
+          }
           try {
-            // Try clicking the first visible match (some sites have duplicate buttons)
-            const btnLocator = page.locator(buttonToClick);
-            const count = await btnLocator.count();
-            let clicked = false;
-            for (let i = 0; i < count; i++) {
-              const el = btnLocator.nth(i);
-              if (await el.isVisible().catch(() => false)) {
-                await el.click({ timeout: 5000 });
-                clicked = true;
-                break;
+            if (!multiLayerAlreadyClicked) {
+              // Try clicking the first visible match (some sites have duplicate buttons)
+              const btnLocator = page.locator(buttonToClick);
+              const count = await btnLocator.count();
+              let clicked = false;
+              for (let i = 0; i < count; i++) {
+                const el = btnLocator.nth(i);
+                if (await el.isVisible().catch(() => false)) {
+                  await el.click({ timeout: 5000 });
+                  clicked = true;
+                  break;
+                }
+              }
+              if (!clicked) {
+                // Fallback: just click the selector directly
+                await page.click(buttonToClick, { timeout: 5000 });
               }
             }
-            if (!clicked) {
-              // Fallback: just click the selector directly
-              await page.click(buttonToClick, { timeout: 5000 });
-            }
+            // (multi-layer click already happened inside rejectOnLayer2)
 
             // Register Phase 2 listener AFTER the click — only captures post-consent requests
             const phase2Networks = [];
@@ -2237,6 +2578,90 @@ async function detectCookieWall(page, targetUrl) {
 }
 
 // ───────────────────────────────────────────
+// Multi-layer wall reject
+//
+// Falls through here when the layer-1 reject button isn't present on
+// the wall. Tries to open layer 2 (settings/manage), then reject either
+// via a direct layer-2 button or by unchecking non-essential toggles
+// and saving. On success, waits for the same redirect-back behavior
+// that the single-layer bypass relies on.
+// ───────────────────────────────────────────
+async function tryMultiLayerWallReject(page, wallInfo, originalUrl, layer1Reason) {
+  const openResult = await openLayer2(page);
+  if (!openResult.opened) {
+    console.error(`[Cookie Wall] Multi-layer: settings button not found on layer 1`);
+    return {
+      success: false,
+      method: layer1Reason,
+      multiLayer: { attempted: true, settingsFound: false },
+      finalUrl: page.url(),
+    };
+  }
+  console.error(`[Cookie Wall] Multi-layer: opened layer 2 via ${openResult.selector}`);
+
+  const rejectResult = await rejectOnLayer2(page);
+  if (!rejectResult.rejected) {
+    console.error(`[Cookie Wall] Multi-layer: no reject path on layer 2 (${rejectResult.method})`);
+    return {
+      success: false,
+      method: `multilayer-${rejectResult.method}`,
+      multiLayer: { attempted: true, settingsFound: true, layer2Method: rejectResult.method },
+      finalUrl: page.url(),
+    };
+  }
+  console.error(`[Cookie Wall] Multi-layer: layer-2 reject via ${rejectResult.method}`);
+
+  // Same redirect-back wait as the single-layer path
+  await page.waitForTimeout(2000);
+  const originalDomain = new URL(originalUrl).hostname.replace(/^www\./, "");
+  let currentDomain;
+  try {
+    currentDomain = new URL(page.url()).hostname.replace(/^www\./, "");
+  } catch {
+    currentDomain = "";
+  }
+  if (currentDomain !== originalDomain) {
+    // Try manual navigation back, same as single-layer fallback
+    try {
+      await page.goto(wallInfo.returnUrl || originalUrl, {
+        waitUntil: "networkidle",
+        timeout: PAGE_TIMEOUT,
+      });
+      await page.waitForTimeout(3000);
+      currentDomain = new URL(page.url()).hostname.replace(/^www\./, "");
+    } catch (err) {
+      console.error(`[Cookie Wall] Multi-layer: manual navigation after reject failed: ${err.message}`);
+    }
+  }
+  if (currentDomain !== originalDomain) {
+    return {
+      success: false,
+      method: `multilayer-redirect-failed`,
+      multiLayer: { attempted: true, settingsFound: true, layer2Method: rejectResult.method },
+      finalUrl: page.url(),
+    };
+  }
+
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 15000 });
+  } catch { /* streaming content is fine */ }
+  await page.waitForTimeout(3000);
+
+  return {
+    success: true,
+    method: `multilayer-${rejectResult.method}`,
+    multiLayer: {
+      attempted: true,
+      settingsFound: true,
+      layer2Method: rejectResult.method,
+      toggleCount: rejectResult.toggleCount,
+      togglesUnchecked: rejectResult.togglesUnchecked,
+    },
+    finalUrl: page.url(),
+  };
+}
+
+// ───────────────────────────────────────────
 // Cookie wall bypass
 //
 // Clicks the accept or reject button on a cookie wall and handles
@@ -2251,8 +2676,8 @@ async function bypassCookieWall(page, wallInfo, originalUrl, variant = "accept")
   console.error(`[Cookie Wall] Attempting bypass via ${actionName} button...`);
 
   if (!selector && isReject) {
-    console.error(`[Cookie Wall] No reject selector defined for ${wallInfo.name}. Site may force accepting.`);
-    return { success: false, method: "no-reject-option", finalUrl: page.url() };
+    console.error(`[Cookie Wall] No reject selector defined for ${wallInfo.name} — trying multi-layer traversal.`);
+    return tryMultiLayerWallReject(page, wallInfo, originalUrl, "no-reject-selector");
   }
 
   // Find the button
@@ -2264,10 +2689,11 @@ async function bypassCookieWall(page, wallInfo, originalUrl, variant = "accept")
   }
 
   if (!btn) {
-    console.error(`[Cookie Wall] No ${actionName} button found`);
     if (isReject) {
-      return { success: false, method: "reject-button-not-found", finalUrl: page.url() };
+      console.error(`[Cookie Wall] No layer-1 reject button found — trying multi-layer traversal.`);
+      return tryMultiLayerWallReject(page, wallInfo, originalUrl, "reject-button-not-found");
     }
+    console.error(`[Cookie Wall] No ${actionName} button found`);
     return { success: false, method: "no-button", finalUrl: page.url() };
   }
 

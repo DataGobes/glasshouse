@@ -296,6 +296,18 @@ Background/subagents cannot write files or run bash in this environment. Always 
 
 Some sites redirect to a separate consent domain. The scanner detects and bypasses these automatically. The JSON includes a `cookieWall` field (`detected`, `type`, `name`, `wallDomain`, `bypassAttempted`, `bypassSuccess`, `bypassMethod`). When `cookieWall` is `null`, no wall was detected. `consent.viaCookieWall: true` means consent was accepted on the wall page. Pre-consent state is captured on the wall page, not the target.
 
+## Multi-layer banner handling
+
+Many CMPs (and walls like DPG Media's Privacy Gate) hide the "Reject all" button behind a "Manage settings" / "Instellen" / "Customize" click — the reject path only appears on layer 2. The scanner now traverses one layer deep before giving up:
+
+- **`findings.consent.rejectAccessibility`** = `"layer-1"` (reject on the first panel), `"layer-2"` (reject reached after opening settings), or `"not-found"` (no reject path discovered even after traversal). Always read this in the audit narrative — do not infer "no reject" from missing fields.
+- **`findings.consent.multiLayer`** (boolean) = `true` when reject required opening layer 2. Surface this as a dark pattern in the report ("reject required two clicks vs accept's one" — CNIL Bing precedent).
+- **`findings.consent.multiLayerMethod`** = `"layer2-direct-reject"` (clicked a reject button on layer 2) or `"layer2-toggle-save"` (unchecked non-essential toggles and saved).
+
+For cookie walls, the same fields surface on `cookieWall.multiLayer` and `consent.multiLayer`, and `bypassMethod` becomes `multilayer-layer2-direct-reject` / `multilayer-layer2-toggle-save` instead of the old `reject-button-not-found`.
+
+When writing the audit narrative for a site with `rejectAccessibility === "layer-2"`: name it as a "Hidden Defaults / Multi-Layer Consent" dark pattern, not as a missing-reject case or "pay-to-play" scheme. See `references/criteria/dark-patterns.md`.
+
 ## Error handling
 
 - **Playwright missing**: `cd $SKILL_DIR && npm install && npx playwright install firefox`
