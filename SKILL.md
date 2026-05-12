@@ -1,24 +1,35 @@
 ---
-name: glasshouse-scan
-description: "Audit any website against GDPR/ePrivacy and (optionally) turn the findings into a ready-to-file DPA complaint. Scans cookies, trackers, consent banners, fingerprinting, dark patterns, and legal pages, then generates a scored HTML presentation and markdown report. Pairs with the /glasshouse-file follow-up command to build a complete complaint dossier (letter, PDF, evidence) for a user-chosen Data Protection Authority."
+name: glasshouse
+description: "Audit any website against GDPR/ePrivacy and (optionally) turn the findings into a ready-to-file DPA complaint. The skill has two subcommands: `scan` (default — runs a privacy audit and generates a scored presentation + report) and `file` (turns an existing scan into a complaint dossier for a chosen Data Protection Authority)."
 user_invocable: true
 ---
 
 # Glasshouse — privacy audit + DPA complaint builder
 
-Automated privacy audit: scan a website, analyze findings against GDPR/ePrivacy, generate a scored presentation + report.
+Automated privacy audit: scan a website, analyze findings against GDPR/ePrivacy, generate a scored presentation + report. Optionally turn the scan into a ready-to-file complaint dossier.
 
 **Base directory**: The skill lives at the path shown in the "Base directory for this skill" message injected at invocation time. All `cd` commands and file references below use `$SKILL_DIR` as shorthand for that path.
 
-## Usage
+## Subcommand dispatch
 
-```
-/glasshouse-scan <url>
-```
+The skill has two subcommands sharing one slash command. Parse `ARGUMENTS` to route:
 
-The user only needs to provide the URL. Everything else is determined conversationally or uses smart defaults.
+| First token | Mode | Example |
+|---|---|---|
+| (URL) or `scan <url>` | **scan** (default) | `/glasshouse www.example.com`, `/glasshouse scan www.example.com` |
+| `file <scan-json-path>` | **file** (build complaint) | `/glasshouse file /tmp/glasshouse-example.com-*.json` |
 
-## Conversational Flow
+If the first token is `scan` or `file`, treat it as the mode and use the remaining arguments as the mode's input. Otherwise default to `scan` mode with the whole argument as the URL.
+
+If `ARGUMENTS` is empty, ask: "Do you want to **scan** a website (give a URL) or **file** a complaint from an existing scan (give a scan JSON path)?"
+
+---
+
+# Scan mode
+
+The user provides a URL. Everything else is determined conversationally or uses smart defaults.
+
+## Conversational flow
 
 1. **Extract the URL** — Parse from the user's message. If missing, ask: "What website should I scan?"
 2. **Check for context clues** — Look for hints like "for a client", "corporate", "executive summary", or a company name.
@@ -44,7 +55,7 @@ cd $SKILL_DIR && npm install 2>/dev/null && npx playwright install firefox 2>/de
 
 Skip if `node_modules/playwright` already exists.
 
-### Step 2: Scout the Banner
+### Step 2: Scout the banner
 
 Run a lightweight scout first to detect the consent banner and identify button text — this takes ~10s instead of a full 3-variant scan:
 
@@ -70,7 +81,7 @@ Check the screenshot for:
 - **CMP platform** — identify from visual branding if scanner didn't
 - **Cookie wall** — page content blocked behind consent dialog?
 
-### Step 3: Run the Full Scan
+### Step 3: Run the full scan
 
 Based on the scout results, run the full scan:
 
@@ -98,7 +109,7 @@ Available hint flags:
 - Stdout: JSON file path (last line). Stderr: progress messages.
 - **Failures**: Timeout = WAF, bot detection = stealth didn't help, missing Playwright = run step 1.
 
-### Step 4: Verify Full Scan Screenshots
+### Step 4: Verify full scan screenshots
 
 The full scan saves `{base}-ignore-viewport.png` and `{base}-ignore-fullpage.png`. The JSON includes a `screenshots` object with paths.
 
@@ -115,7 +126,7 @@ Also check for:
 - **CMP platform** — identify from visual branding if scanner didn't
 - **Cookie wall** — page content blocked behind consent dialog?
 
-### Step 5: Read and Analyze the JSON
+### Step 5: Read and analyze the JSON
 
 **Generate an analysis brief** — a single-pass text extraction that produces ~18-20K chars from a ~1-2MB scan JSON (98-99% reduction). This replaces the old multi-chunk JSON reading approach.
 
@@ -170,11 +181,11 @@ Then read the saved files and perform the full Art. 13/14 analysis, cookie purpo
 
 **Important**: Always prefer Playwright over WebFetch for any fallback page fetching during privacy scans. Sites with consent banners frequently have bot protection that blocks plain HTTP requests.
 
-### Step 6: Score the Findings
+### Step 6: Score the findings
 
 **Read `references/scoring.md`** for the full scoring rubric — category weights, per-category 0-100 internal scales, modifiers, and conversion to the public 1.0-10.0 score.
 
-### Step 7: Fetch Favicon
+### Step 7: Fetch favicon
 
 ```bash
 curl -sL "https://www.google.com/s2/favicons?domain={DOMAIN}&sz=128" | base64
@@ -182,7 +193,7 @@ curl -sL "https://www.google.com/s2/favicons?domain={DOMAIN}&sz=128" | base64
 
 Should be 200-4000 characters. If shorter, retry or skip.
 
-### Step 8: Generate Analysis JSON
+### Step 8: Generate analysis JSON
 
 Produce a structured JSON file. Write to `/tmp/privacy-analysis-{domain}.json`.
 
@@ -192,6 +203,7 @@ Top-level sections:
 
 **`meta`**: `domain`, `scanDate`, `episode` (check existing `*-privacy-audit*.html`), `overallScore` (1.0-10.0), `theme`, `faviconBase64`, `subtitle`. Optional: `company`, `logoBase64`, `aliasDomains`.
 
+- **`company`** is the *registered controller name* (e.g. `"DPG Media Magazines B.V."`). The complaint builder reads this directly when constructing the letter — populate it whenever you can identify it from the imprint or privacy policy.
 - **`aliasDomains`** (array of eTLD+1 strings): populate when the scanner redirects across TLDs or the site owner controls multiple domains the user traverses in one session. Check the scanner JSON: if `meta.url` differs from the cookie domains (e.g. `meta.url=https://www.dyson.com` but most cookies land on `.dyson.nl`), the redirect target is a first-party alias — set `meta.aliasDomains: ["dyson.nl"]`. Cross-check against `variants.{ignore|accept}.preConsent.cookies[].domain` — any same-owner eTLD appearing repeatedly is a likely alias. Without this, the `cookieParty` slide misclassifies same-owner cookies as third-party.
 
 **`scores`**: One entry per category (`consent`, `preConsentTracking`, `legalPages`, `crossBorder`, `securityHeaders`, `cookieManagement`, `darkPatterns`). Each has `score` (1.0-10.0).
@@ -220,7 +232,7 @@ Top-level sections:
 
 **`markdownReport`**: Prose sections — `executiveSummary`, `consentAnalysis`, `preConsentAnalysis`, `postConsentAnalysis`, `storageAnalysis`.
 
-### Step 9: Validate Analysis JSON
+### Step 9: Validate analysis JSON
 
 **MANDATORY** — run before generating to catch schema errors that cause empty/broken slides:
 
@@ -232,9 +244,9 @@ cd $SKILL_DIR && node scripts/validate-analysis.js /tmp/privacy-analysis-{domain
 - Exit code `1` = errors found — **fix the JSON before proceeding**
 - The validator catches wrong field names (`methods` vs `apiCalls`, `domain` vs `domains`, `title` vs `action`, etc.), missing required fields, invalid enums, and anti-patterns
 
-If errors are reported, fix the analysis JSON and re-run validation until it passes. Only then proceed to Step 8.
+If errors are reported, fix the analysis JSON and re-run validation until it passes. Only then proceed to Step 10.
 
-### Step 10: Generate HTML + Markdown
+### Step 10: Generate HTML + markdown
 
 ```bash
 cd $SKILL_DIR && node scripts/generate.js /tmp/privacy-analysis-{domain}.json --output-dir {CWD}
@@ -242,7 +254,7 @@ cd $SKILL_DIR && node scripts/generate.js /tmp/privacy-analysis-{domain}.json --
 
 The script reads the JSON, extracts CSS/JS from `templates/presentation-theme.md`, builds slides with auto-pagination, and generates both `.html` and `.md` files.
 
-### Step 11: Verify Output
+### Step 11: Verify output
 
 **Do not just check that the script ran — verify the key slides actually rendered data.**
 
@@ -270,23 +282,21 @@ grep -c 'rp-bar-pre\|rp-bar-post' {OUTPUT_HTML}
 2. Check `findings.auditTrail.preConsent` — data must be at `findings.auditTrail`, NOT `findings.auditTrailPre`. The slides.include keys `auditTrailPre`/`auditTrailPost` are slide identifiers only; the data lives at `findings.auditTrail.{preConsent,postConsent}`.
 3. Fix the analysis JSON and re-run `generate.js`.
 
-Report file paths and the slide count to the user once verified.
+Report file paths and the slide count to the user once verified. If they may want to file a complaint based on the findings, offer it (e.g. "Want me to turn this into a complaint dossier for the Dutch AP? Run `/glasshouse file <scan-json-path>`.").
 
----
-
-## Episode Numbering
+## Episode numbering
 
 Sequential across scans. LinkedIn = #01. Check existing `*-privacy-audit*.html` files in the working directory for the next number.
 
-## Important: Do Not Delegate Analysis JSON Generation
+## Important: do not delegate analysis JSON generation
 
 Background/subagents cannot write files or run bash in this environment. Always generate the analysis JSON, run validation, and run `generate.js` in the **main conversation context** — never delegate these steps to a subagent.
 
-## Cookie Wall Handling
+## Cookie wall handling
 
 Some sites redirect to a separate consent domain. The scanner detects and bypasses these automatically. The JSON includes a `cookieWall` field (`detected`, `type`, `name`, `wallDomain`, `bypassAttempted`, `bypassSuccess`, `bypassMethod`). When `cookieWall` is `null`, no wall was detected. `consent.viaCookieWall: true` means consent was accepted on the wall page. Pre-consent state is captured on the wall page, not the target.
 
-## Error Handling
+## Error handling
 
 - **Playwright missing**: `cd $SKILL_DIR && npm install && npx playwright install firefox`
 - **Malformed JSON**: Report scan failure, suggest manual inspection
@@ -306,30 +316,115 @@ Some sites redirect to a separate consent domain. The scanner detects and bypass
 
 ---
 
-## DPA Complaint Builder
+# File mode (DPA complaint builder)
 
-`/glasshouse-file <scan-json-path>` turns an existing scan JSON into a ready-to-submit GDPR complaint dossier for a user-chosen Data Protection Authority. The command is fully local, fully offline after the scan is loaded, and performs no automated submission — the dossier is for the user to review and file themselves.
+`/glasshouse file <scan-json-path>` turns an existing scan into a ready-to-submit GDPR complaint dossier for a user-chosen Data Protection Authority. The command is fully local, fully offline after the scan is loaded, and performs no automated submission — the dossier is for the user to review and file themselves.
 
-### Usage
+## Agent-driven curation flow
+
+The script is interactive when run in a terminal, but **inside the Claude Code conversation you must drive the curation in chat**, not via the script's stdin. The script's prompts cannot reach the user from a subprocess. Use the non-interactive flags described below.
+
+The flow:
+
+### Step 1: List findings
 
 ```bash
-cd $SKILL_DIR && node scripts/glasshouse-file.js /tmp/glasshouse-example.com-*.json
+cd $SKILL_DIR && node scripts/glasshouse-file.js <scan-json-path> --list-findings
 ```
 
-The command walks the user through: DPA selection (from the seed set — Dutch AP, French CNIL, UK ICO), controller detection (pre-filled from the scan), complainant identity (saved profile at `~/.claude/privacy-complaint/complainant.json` or `--anonymize` for placeholders), and per-finding curation. On completion it writes `dpa-complaint-{slug}-{date}/` to the working directory containing: `complaint.md`, `complaint.pdf`, `facts.md`, `articles-cited.md`, `submission-checklist.md`, `README.md`, and an `evidence/` subfolder with the raw scan JSON, tracker and cookie CSVs, timeline, and screenshots.
+This emits JSON to stdout:
+```json
+{
+  "meta": { "domain": "...", "scanDate": "..." },
+  "controller": { "registeredName": "...", "country": "...", "imprintUrl": "...", "dpoEmail": "..." },
+  "candidates": [
+    { "id": "<10-char hash>", "kind": "preConsentTracker", "headline": "...", "detail": "...", "articles": [...], "actionable": true }
+  ]
+}
+```
 
-### Flags
+Add `--include-all` if you want non-actionable findings (e.g. missing cookie policy) to appear too.
+
+### Step 2: Present and let the user pick
+
+Show the candidates to the user in chat. For each one, give a one-sentence read of why it matters legally (which article, what the enforcement risk looks like) — that's where you add value over a unix prompt. Then ask the user which to file: free-form, numbered, "all of them", or by id.
+
+Defaults are conservative: don't pick for the user. The whole point of this fix is that the previous version silently included everything.
+
+### Step 3: Confirm the controller
+
+The `controller.registeredName` comes from `meta.company` in the scan analysis JSON when present, else it tries to parse the privacy-policy excerpt. If `registeredName` is `[TO FILL]`, ask the user to confirm the company name (and country, postal address, DPO email if also `[TO FILL]`). You can pass overrides through the chat, but the script doesn't accept controller overrides via flags — instead just remind the user that they'll need to fill those in `complaint.md` before submitting.
+
+### Step 4: Pick the DPA
+
+Default to the lead supervisory authority based on controller country (the `--list-findings` output tells you the country, or you can call `node -e "console.log(require('./scripts/complaint/select-dpa').inferLeadDpa(require('<scan>')))"`).
+
+Available DPA ids (kept in sync with `references/dpa-adapters/`):
+
+| id | Authority | Country |
+|---|---|---|
+| `nl-ap` | Autoriteit Persoonsgegevens | Netherlands |
+| `fr-cnil` | CNIL | France |
+| `uk-ico` | Information Commissioner's Office | United Kingdom |
+| `ie-dpc` | Data Protection Commission | Ireland |
+| `de-bfdi` | BfDI | Germany (federal) |
+| `de-berlin` | Berliner Beauftragte | Germany (Berlin) |
+| `de-hamburg` | HmbBfDI | Germany (Hamburg) |
+| `de-bayern` | BayLDA | Germany (Bayern, private sector) |
+| `de-nrw` | LDI NRW | Germany (NRW) |
+
+### Step 5: Identity vs anonymize
+
+Two paths:
+
+- **Anonymize** — the dossier uses placeholders for the complainant. Use this when the user hasn't shared identity in the conversation, or asks for it explicitly. Pass `--anonymize`.
+- **Identified** — the dossier contains the complainant's real name, address, email. The complainant must already have a saved profile at `~/.claude/privacy-complaint/complainant.json`, or pass all six flags: `--full-name "..." --email "..." --street "..." --postal-code "..." --city "..." --country "NL"` (+ optional `--phone "..." --save-profile`).
+
+Default to `--anonymize` unless the user has clearly opted in to using their real identity.
+
+### Step 6: Build
+
+```bash
+cd $SKILL_DIR && node scripts/glasshouse-file.js <scan-json-path> \
+  --yes \
+  --dpa <id> \
+  --include <comma-separated-ids> \
+  --anonymize \
+  --output-dir <cwd> \
+  --on-collision suffix
+```
+
+The `--yes` flag is **required** for non-interactive runs. Without it the script errors out — the TTY guard prevents silently filling in defaults the user never approved.
+
+### Step 7: Verify and report
+
+The dossier folder contains:
+- `complaint.md` / `complaint.pdf` — the letter
+- `facts.md` — per-article narrative
+- `articles-cited.md` — verbatim provision text
+- `submission-checklist.md` — where + how to file
+- `README.md`
+- `evidence/` — scan.json, screenshots, trackers.csv, cookies.csv, timeline.md
+
+Verify the controller name in `complaint.md` matches what the user expects (look at the `**Concerning:**` line). If the user used `--anonymize`, remind them which placeholders they need to fill before submitting: `[COMPLAINANT NAME]`, `[STREET]`, `[POSTAL CODE]`, `[CITY]`, `[COUNTRY]`, `[COMPLAINANT EMAIL]`, and any `[TO FILL]` fields in the controller block.
+
+## Full flag reference
 
 | Flag | Effect |
-|------|--------|
-| `--dpa <id>` | Skip the DPA picker (`nl-ap`, `fr-cnil`, `uk-ico`, `ie-dpc`, `de-bfdi`, `de-berlin`, `de-hamburg`, `de-bayern`, `de-nrw`) |
-| `--anonymize` | Skip the complainant profile; dossier uses placeholders |
-| `--include-all` | Include non-actionable findings in the curation pass |
+|---|---|
+| `--list-findings` | Emit candidates as JSON, exit. No prompts, no side effects. |
+| `--include <ids>` | Comma-separated finding IDs to file. Required when `--yes` is set. |
+| `--yes` | Suppress every confirmation prompt; use defaults. Required when stdin isn't a TTY. |
+| `--dpa <id>` | Skip the DPA picker (ids listed above) |
+| `--anonymize` | Use placeholders instead of a stored complainant profile |
+| `--include-all` | Include non-actionable findings in the candidate list (default: actionable only) |
 | `--output-dir <path>` | Override the output root (default: cwd) |
 | `--inline` | Produce a single markdown file instead of a folder |
 | `--on-collision <p>` | Behaviour when folder exists: `abort` (default) / `overwrite` / `suffix` |
+| `--full-name`, `--email`, `--phone`, `--street`, `--postal-code`, `--city`, `--country` | Complainant fields for non-interactive use without `--anonymize` |
+| `--save-profile` / `--no-save-profile` | Persist (or don't) the entered complainant profile to `~/.claude/privacy-complaint/` |
 
-### Adding a DPA
+## Adding a DPA
 
 Every DPA is one JSON file in `references/dpa-adapters/`. Copy `nl-ap.json`, edit values, validate:
 
@@ -337,10 +432,10 @@ Every DPA is one JSON file in `references/dpa-adapters/`. Copy `nl-ap.json`, edi
 cd $SKILL_DIR && node scripts/validate-adapter.js references/dpa-adapters/<new>.json
 ```
 
-See `references/dpa-adapters/_schema.json` for the required shape.
+See `references/dpa-adapters/_schema.json` for the required shape. When you add a new adapter, also update the DPA table in this file (Step 4 above) and the `--dpa` line in `scripts/glasshouse-file.js`'s usage text.
 
-### Important
+## Important
 
 The dossier contains the complainant's personal data (name, address, email) unless `--anonymize` is used. **Do not commit dossier folders to public repositories.** The `.gitignore` added by the complaint builder covers `dpa-complaint-*/` by default.
 
-The complaint is the complainant's filing, not the tool's. Review `complaint.md` and `facts.md` before submitting; edit anything you do not want to defend.
+The complaint is the complainant's filing, not the tool's. Review `complaint.md` and `facts.md` before submitting; edit anything the user does not want to defend.

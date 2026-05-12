@@ -123,3 +123,53 @@ test('normalizeAnalysis derives controller from privacyPolicyAnalysis Controller
   assert.equal(out.findings.controller.country, 'IE');
   assert.equal(out.findings.controller.imprintUrl, 'https://www.linkedin.com/legal/privacy-policy');
 });
+
+test('normalizeAnalysis prefers meta.company over excerpt parsing', () => {
+  const scan = {
+    meta: { domain: 'nu.nl', company: 'DPG Media Magazines B.V.' },
+    findings: {
+      privacyPolicyAnalysis: [
+        { element: 'Controller identity', status: 'present', excerpt: 'DPG Media, Amsterdam, Netherlands' }
+      ],
+      legalPages: []
+    }
+  };
+  const out = normalizeAnalysis(scan);
+  assert.equal(out.findings.controller.registeredName, 'DPG Media Magazines B.V.');
+});
+
+test('normalizeAnalysis rejects descriptive prose as a company name', () => {
+  // The bug we are fixing: a multi-sentence analyst note ended up as
+  // registeredName because parseControllerExcerpt split on commas and took
+  // the first chunk verbatim.
+  const scan = {
+    meta: { domain: 'nu.nl' },
+    findings: {
+      privacyPolicyAnalysis: [
+        {
+          element: 'Controller identity',
+          status: 'present',
+          excerpt: 'DPG Media named throughout. Policy clarifies CMP ID 411 and use of OneTrust (28).'
+        }
+      ],
+      legalPages: []
+    }
+  };
+  const out = normalizeAnalysis(scan);
+  assert.equal(out.findings.controller, undefined, 'descriptive prose must not become a controller name');
+});
+
+test('normalizeAnalysis rejects an overlong single-segment excerpt as a name', () => {
+  const longName = 'A'.repeat(90);
+  const scan = {
+    meta: { domain: 'x.test' },
+    findings: {
+      privacyPolicyAnalysis: [
+        { element: 'Controller identity', status: 'present', excerpt: longName }
+      ],
+      legalPages: []
+    }
+  };
+  const out = normalizeAnalysis(scan);
+  assert.equal(out.findings.controller, undefined);
+});
