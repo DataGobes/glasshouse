@@ -61,7 +61,7 @@ test('rejectScenario lists post-reject trackers and excludes consent-record cook
   const { findings } = deriveFindings(scan);
   const rs = findings.rejectScenario;
   assert.equal(rs.rejectHonoured, false, 'GA fired after reject → not honoured');
-  assert.ok(rs.persistingTrackers.some(t => t.domains.split(', ').includes('analytics.google.com')));
+  assert.ok(rs.persistingTrackers.some(t => t.domains.split(', ').some(d => d === 'analytics.google.com')));
   const names = rs.persistingCookies.map(c => c.name);
   assert.ok(!names.includes('OptanonConsent'), 'CMP consent-record cookie must not be claimed as tracking persistence');
 });
