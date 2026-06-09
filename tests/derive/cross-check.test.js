@@ -50,7 +50,7 @@ test('a tracker domain never observed by the scanner is an error', () => {
   const a = goodAnalysis();
   a.findings.trackers.push({ name: 'TikTok Pixel', tier: 'active', status: 'Active pre-consent', domains: 'analytics.tiktok.com', category: 'Tracking' });
   const { errors } = crossCheck(a, scan);
-  assert.ok(errors.some(e => e.includes('analytics.tiktok.com') && e.includes('not observed')), errors.join('\n'));
+  assert.ok(errors.some(e => /analytics\.tiktok\.com.*not observed/.test(e)), errors.join('\n'));
 });
 
 test('a tracker claimed active (pre-consent) without pre-consent evidence is an error', () => {
@@ -58,7 +58,7 @@ test('a tracker claimed active (pre-consent) without pre-consent evidence is an 
   // analytics.google.com only fired post-consent in the scan
   a.findings.trackers[1].tier = 'active';
   const { errors } = crossCheck(a, scan);
-  assert.ok(errors.some(e => e.includes('analytics.google.com') && e.includes('pre-consent')), errors.join('\n'));
+  assert.ok(errors.some(e => /analytics\.google\.com.*pre-consent/.test(e)), errors.join('\n'));
 });
 
 test('a cookie name not present in the scan is an error', () => {
@@ -72,7 +72,7 @@ test('audit-trail event for a domain with no scanner requests is an error', () =
   const a = goodAnalysis();
   a.findings.auditTrail.preConsent.push({ time: 't+2.0s', title: 'Hotjar fired', domain: 'static.hotjar.com', type: 'tracking' });
   const { errors } = crossCheck(a, scan);
-  assert.ok(errors.some(e => e.includes('static.hotjar.com')), errors.join('\n'));
+  assert.ok(errors.some(e => /static\.hotjar\.com/.test(e)), errors.join('\n'));
 });
 
 test('claiming reject was honoured when trackers fired post-reject is an error', () => {
@@ -87,7 +87,7 @@ test('requestPulse counts that drift far from scanner counts produce a warning',
   a.findings.requestPulse[0].preConsent = 40;
   a.findings.requestPulse[0].total = 40;
   const { warnings } = crossCheck(a, scan);
-  assert.ok(warnings.some(w => w.includes('ad.doubleclick.net')), warnings.join('\n'));
+  assert.ok(warnings.some(w => /ad\.doubleclick\.net/.test(w)), warnings.join('\n'));
 });
 
 test('overallScore far from the weighted category blend produces a warning', () => {

@@ -40,7 +40,7 @@ test('auditTrail.rejectConsent flags click-transition requests as ambiguous', ()
 test('requestPulse counts third-party requests per phase, excluding first party', () => {
   const { findings } = deriveFindings(scan);
   const pulse = findings.requestPulse;
-  assert.ok(!pulse.some(p => p.domain.endsWith('example.com')), 'first party excluded');
+  assert.ok(!pulse.some(p => /(^|\.)example\.com$/.test(p.domain)), 'first party excluded');
   const dc = pulse.find(p => p.domain === 'ad.doubleclick.net');
   assert.deepEqual({ pre: dc.preConsent, post: dc.postConsent, total: dc.total }, { pre: 1, post: 0, total: 1 });
   const ga = pulse.find(p => p.domain === 'analytics.google.com');
@@ -61,7 +61,7 @@ test('rejectScenario lists post-reject trackers and excludes consent-record cook
   const { findings } = deriveFindings(scan);
   const rs = findings.rejectScenario;
   assert.equal(rs.rejectHonoured, false, 'GA fired after reject → not honoured');
-  assert.ok(rs.persistingTrackers.some(t => t.domains.includes('analytics.google.com')));
+  assert.ok(rs.persistingTrackers.some(t => t.domains.split(', ').includes('analytics.google.com')));
   const names = rs.persistingCookies.map(c => c.name);
   assert.ok(!names.includes('OptanonConsent'), 'CMP consent-record cookie must not be claimed as tracking persistence');
 });
