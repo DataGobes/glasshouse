@@ -138,6 +138,14 @@ Output goes to stdout. **Read it with a single Bash call**, not multiple Read ch
 
 **If legal page content is truncated or missing** and you need the full text for Art. 13/14 analysis, fetch it separately (see below).
 
+**Then derive the machine findings** — every count, timestamp and timeline in the data-heavy sections must come from the scanner, not from your transcription:
+
+```bash
+cd $SKILL_DIR && node scripts/derive-findings.js /tmp/glasshouse-{domain}-*.json --out /tmp/glasshouse-derived-{domain}.json
+```
+
+The output's `findings` object contains machine-derived `auditTrail` (pre/post/reject with real request timestamps), `requestPulse`, `variantComparison`, `rejectScenario`, `storageAnalysis`, `piggybackingChains`, `beforeAfter`, and `methodology`. **Merge these into your analysis JSON verbatim.** You may *add* prose (e.g. better event titles, a sharper verdict sentence, category breakdowns for `beforeAfter`) but never change a count, a `time` value, or add/remove events or domains. Events carrying `ambiguousTiming: true` fired during the consent click — never present them as definite post-consent (or post-reject) activity.
+
 Legacy alternative (JSON, larger output — use only if you need machine-parseable data):
 ```bash
 cd $SKILL_DIR && node scripts/extract-summary.js /tmp/glasshouse-{domain}-*.json
@@ -213,16 +221,16 @@ Top-level sections:
 - `consent`: Banner details, annotations, button asymmetry
 - `darkPatterns`: Fairness scale (tilt class, factors, verdict)
 - `beforeAfter`: Pre/post cookie counts and pill breakdowns
-- `auditTrail`: Pre-consent and post-consent timeline events — **always reconstruct manually** from scanner data. The scanner does NOT produce this. **Slide keys are `auditTrailPre` and `auditTrailPost`** — never use `auditTrail` as a slide key.
+- `auditTrail`: Pre-consent and post-consent timeline events — **take verbatim from the derive-findings output** (Step 5). Do not hand-write timestamps. **Slide keys are `auditTrailPre` and `auditTrailPost`** — never use `auditTrail` as a slide key.
 - `trackers`, `cookies`, `thirdPartyDomains`, `securityHeaders`, `legalPages`, `gdprCompliance`
-- `requestPulse`: **Always reconstruct manually** from `summary.thirdPartyDomains[].requests`. Never skip this slide.
+- `requestPulse`: **take verbatim from the derive-findings output**. Never skip this slide.
 - `recommendations`: Max 8 prioritised actions, optional `enforcementRef` (see `references/enforcement.md`)
 - `privacyPolicyAnalysis`, `fingerprinting`, `tcf`, `googleConsentMode`, `gpc`, `consentRevocation`, `formLeakage`, `dataSubjectRights`, `cookiePurposeMatching`, `consentGranularity`
-- `rejectScenario`: Construct from reject variant data — list trackers/cookies that persist despite rejection, set `rejectHonoured` based on whether tracking meaningfully decreases
-- `variantComparison`: Aggregate tracker/cookie/domain counts from each variant's summary for the side-by-side comparison chart
-- `auditTrail.rejectConsent`: Timeline events after reject — reconstruct from reject variant significant events (same format as `postConsent`)
-- `piggybackingChains`: Build from trackers where `is4thParty: true` — trace `loadedBy` chains
-- `storageAnalysis`: Consolidate from summary's `preConsentLocalStorage`, `postConsentLocalStorage`, `preConsentIndexedDB`, `postConsentIndexedDB`
+- `rejectScenario`: **take verbatim from the derive-findings output** — it lists post-reject tracker fires and persisting cookies (consent-record cookies like `OptanonConsent` already excluded) and sets `rejectHonoured` deterministically. You may refine the `summary` prose; never flip `rejectHonoured` or edit the lists.
+- `variantComparison`: **take verbatim from the derive-findings output** (counts + a deterministic verdict you may rephrase without changing its direction)
+- `auditTrail.rejectConsent`: **take verbatim from the derive-findings output** (same format as `postConsent`)
+- `piggybackingChains`: **take verbatim from the derive-findings output** (built from `loadedBy` attribution)
+- `storageAnalysis`: **take verbatim from the derive-findings output**
 - `cookiePurposeMatching`: Cross-reference scanner-classified cookie purposes with privacy policy declarations
 - `cookieParty`: Derived slide — no data needed. Auto-splits `findings.cookies[]` into first-party vs third-party by eTLD+1 match against `meta.domain` + `meta.aliasDomains[]`. Just make sure `meta.aliasDomains` is set for redirect-chain sites.
 
@@ -234,15 +242,17 @@ Top-level sections:
 
 ### Step 9: Validate analysis JSON
 
-**MANDATORY** — run before generating to catch schema errors that cause empty/broken slides:
+**MANDATORY** — run before generating, and always pass the raw scan so factual claims are cross-checked, not just field names:
 
 ```bash
-cd $SKILL_DIR && node scripts/validate-analysis.js /tmp/privacy-analysis-{domain}.json
+cd $SKILL_DIR && node scripts/validate-analysis.js /tmp/privacy-analysis-{domain}.json --scan-json /tmp/glasshouse-{domain}-*.json
 ```
 
 - Exit code `0` = pass (warnings are informational only)
 - Exit code `1` = errors found — **fix the JSON before proceeding**
-- The validator catches wrong field names (`methods` vs `apiCalls`, `domain` vs `domains`, `title` vs `action`, etc.), missing required fields, invalid enums, and anti-patterns
+- The schema layer catches wrong field names (`methods` vs `apiCalls`, `domain` vs `domains`, `title` vs `action`, etc.), missing required fields, invalid enums, and anti-patterns
+- The `--scan-json` cross-check layer catches **unjustified claims**: trackers/cookies/audit-trail domains the scanner never observed, `tier: "active"` without pre-consent evidence, `rejectHonoured` contradicted by the reject variant, request-pulse counts drifting from the scanner's, and an `overallScore` inconsistent with the weighted category scores
+- A cross-check **error means the analysis asserts something the scan cannot back** — fix the analysis, never argue with the scan data
 
 If errors are reported, fix the analysis JSON and re-run validation until it passes. Only then proceed to Step 10.
 
@@ -325,6 +335,8 @@ When writing the audit narrative for a site with `rejectAccessibility === "layer
 - Cookie values truncated to 200 chars
 - Bot detection may prevent some features from loading
 - The HTML generator handles all layout, pagination, and theming — you only produce the analysis JSON
+- Post-consent requests tagged `duringConsentTransition: true` (and derived events tagged `ambiguousTiming: true`) fired while the consent click was being dispatched — their consent-state attribution is uncertain; never count them as evidence that tracking continued after accept/reject
+- WebGL `getParameter(VENDOR/RENDERER)` and `getShaderPrecisionFormat` are tier-2 signals (frameworks call them routinely); only `UNMASKED_*` reads and the debug-renderer extension are tier-1 on their own. Don't report "fingerprinting" beyond what `stackedSignals` verdicts support
 
 ---
 
@@ -411,12 +423,12 @@ The `--yes` flag is **required** for non-interactive runs. Without it the script
 ### Step 7: Verify and report
 
 The dossier folder contains:
-- `complaint.md` / `complaint.pdf` — the letter
-- `facts.md` — per-article narrative
+- `complaint.md` / `complaint.pdf` — the letter (frames findings as *potential* infringements and includes a methodology-and-limitations section — keep that framing if you edit)
+- `facts.md` — per-article narrative, each finding qualified with the observation date
 - `articles-cited.md` — verbatim provision text
 - `submission-checklist.md` — where + how to file
 - `README.md`
-- `evidence/` — scan.json, screenshots, trackers.csv, cookies.csv, timeline.md
+- `evidence/` — scan.json, scan-summary.md (with scanner version + variants), screenshots, trackers.csv, cookies.csv, timeline.md, and `manifest.json` (SHA-256 checksum of every evidence file fixed at generation time, plus the finding-id → evidence mapping)
 
 Verify the controller name in `complaint.md` matches what the user expects (look at the `**Concerning:**` line). If the user used `--anonymize`, remind them which placeholders they need to fill before submitting: `[COMPLAINANT NAME]`, `[STREET]`, `[POSTAL CODE]`, `[CITY]`, `[COUNTRY]`, `[COMPLAINANT EMAIL]`, and any `[TO FILL]` fields in the controller block.
 

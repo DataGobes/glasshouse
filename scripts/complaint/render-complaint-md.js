@@ -53,7 +53,10 @@ function renderFacts(state) {
         article,
         headline: it.headline,
         detail: it.detail,
-        evidencePointers: it.evidencePointers || []
+        evidencePointers: it.evidencePointers || [],
+        // Qualifiers: every asserted fact is tied to the scan date and target.
+        scanDate: state.scanDate,
+        controllerDomain: state.controller && state.controller.domain
       }));
     }
   }

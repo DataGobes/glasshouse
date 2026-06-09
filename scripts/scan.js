@@ -797,11 +797,21 @@ async function scan(targetUrl, buttonHints = {}) {
       url: targetUrl,
       domain,
       scannedAt: new Date().toISOString(),
-      scanner: "glasshouse/2.1",
+      scanner: "glasshouse/2.2",
       browser: "Firefox (Playwright)",
       phases: ["pre-consent", "post-consent"], // Keep for legacy scripts, but variants is what matters now
       variants: ["ignore", "accept", "reject"],
       cleanSession: true, // Fresh context per variant
+      // Reproducibility: the exact wait/interaction config this run used.
+      config: {
+        postConsentWaitMs: POST_CONSENT_WAIT,
+        scrollPauseMs: SCROLL_PAUSE,
+        buttonHints: {
+          acceptText: buttonHints.acceptText || null,
+          rejectText: buttonHints.rejectText || null,
+          saveText: buttonHints.saveText || null,
+        },
+      },
     },
     tls: null,
     // We store the run results for each variant here.
@@ -1035,16 +1045,24 @@ async function scan(targetUrl, buttonHints = {}) {
         // extension. Legitimate rendering calls getParameter/getExtension constantly for
         // texture setup, capability checks, etc. — those are not fingerprinting.
         try {
-          const HARDWARE_PARAMS = new Set([
-            0x1F00, // VENDOR
-            0x1F01, // RENDERER
+          // UNMASKED_* params expose the real GPU model (high entropy, only
+          // reachable via the debug_renderer_info extension) — tier 1.
+          // Masked VENDOR/RENDERER return generic strings in Firefox and are
+          // read once by mainstream 3D frameworks for driver workarounds —
+          // tier 2, so they only count when stacked with other signals.
+          const UNMASKED_PARAMS = new Set([
             0x9245, // UNMASKED_VENDOR_WEBGL (via WEBGL_debug_renderer_info)
             0x9246, // UNMASKED_RENDERER_WEBGL (via WEBGL_debug_renderer_info)
+          ]);
+          const MASKED_ID_PARAMS = new Set([
+            0x1F00, // VENDOR
+            0x1F01, // RENDERER
           ]);
           const wrapGL = (proto, name) => {
             const origGetParam = proto.getParameter;
             proto.getParameter = function (param, ...rest) {
-              if (HARDWARE_PARAMS.has(param)) logFP(name, "getParameter", TIER1);
+              if (UNMASKED_PARAMS.has(param)) logFP(name, "getParameter(UNMASKED_*)", TIER1);
+              else if (MASKED_ID_PARAMS.has(param)) logFP(name, "getParameter(VENDOR/RENDERER)", TIER2);
               return origGetParam.apply(this, [param, ...rest]);
             };
             const origGetExt = proto.getExtension;
@@ -1054,10 +1072,13 @@ async function scan(targetUrl, buttonHints = {}) {
               }
               return origGetExt.apply(this, [extName, ...rest]);
             };
+            // getShaderPrecisionFormat is called routinely by WebGL frameworks
+            // (three.js, babylon.js) during context setup — an entropy source,
+            // but never proof of fingerprinting on its own. Tier 2.
             const origGetShaderPrecisionFormat = proto.getShaderPrecisionFormat;
             if (origGetShaderPrecisionFormat) {
               proto.getShaderPrecisionFormat = function (...rest) {
-                logFP(name, "getShaderPrecisionFormat", TIER1);
+                logFP(name, "getShaderPrecisionFormat", TIER2);
                 return origGetShaderPrecisionFormat.apply(this, rest);
               };
             }
@@ -1592,6 +1613,23 @@ async function scan(targetUrl, buttonHints = {}) {
         }
 
         if (buttonToClick || multiLayerAlreadyClicked) {
+          // Arm the Phase 2 listener BEFORE clicking so requests fired while the
+          // click is being dispatched are not silently lost (they previously fell
+          // into a gap between click and listener registration). Requests that
+          // arrive before the click completes are tagged duringConsentTransition:
+          // their pre/post-consent attribution is ambiguous and they must not be
+          // reported as definite post-consent activity.
+          const phase2Networks = [];
+          let clickCompletedAt = multiLayerAlreadyClicked ? Date.now() : null;
+          page.on("request", (req) => {
+            phase2Networks.push({
+              url: req.url(),
+              method: req.method(),
+              resourceType: req.resourceType(),
+              timestamp: Date.now(),
+              duringConsentTransition: clickCompletedAt === null,
+            });
+          });
           if (!multiLayerAlreadyClicked) {
             console.error(`[Variant: ${variant}] [Phase 2] Clicking consent ${actionName} button...`);
             consentClickTimestamp = Date.now();
@@ -1616,17 +1654,7 @@ async function scan(targetUrl, buttonHints = {}) {
               }
             }
             // (multi-layer click already happened inside rejectOnLayer2)
-
-            // Register Phase 2 listener AFTER the click — only captures post-consent requests
-            const phase2Networks = [];
-            page.on("request", (req) => {
-              phase2Networks.push({
-                url: req.url(),
-                method: req.method(),
-                resourceType: req.resourceType(),
-                timestamp: Date.now(),
-              });
-            });
+            clickCompletedAt = Date.now();
 
             console.error(`[Variant: ${variant}] [Phase 2] Waiting for post-interaction activity...`);
             await page.waitForTimeout(POST_CONSENT_WAIT);
@@ -1643,8 +1671,10 @@ async function scan(targetUrl, buttonHints = {}) {
               phase: `post-consent-${actionName}-click`,
               error: err.message,
             });
-            // Still capture post state even if click failed
+            // Still capture post state even if click failed — keep whatever
+            // requests the armed listener observed.
             variantResult.postConsent = await captureState(page, "post-consent");
+            variantResult.postConsent.networkRequests = phase2Networks;
           }
         } else {
           // 'ignore' variant, or missing banner, or missing button for this variant
@@ -2087,7 +2117,7 @@ function classifyFindings(phaseData, firstPartyDomain) {
           const initDomain = new URL(req.initiatorUrl).hostname;
           const fpBase = (firstPartyDomain || "").replace(/^www\./, "");
           is4thParty = fpBase && !initDomain.includes(fpBase) && initDomain !== reqDomain;
-          if (is44thParty) loadedBy = initDomain;
+          if (is4thParty) loadedBy = initDomain;
         } catch { }
       }
 
@@ -2995,6 +3025,41 @@ function extractCallerDomain(callerUrl) {
   try { return new URL(urlMatch[1]).hostname; } catch { return "<unknown>"; }
 }
 
+// Deduplicate by (api, method, callerDomain, pre/post) so the per-caller
+// breakdown is preserved for the aggregator's stacking pass. First/last
+// timestamps are kept per group so burst patterns (hundreds of calls in a
+// short window — characteristic of fingerprinting scripts) remain visible
+// as evidence after deduplication.
+function dedupeFpCalls(fpCalls, consentTimestamp) {
+  const callMap = new Map();
+  for (const call of fpCalls) {
+    const callerDomain = extractCallerDomain(call.callerUrl);
+    const isPreConsent = consentTimestamp ? call.timestamp < consentTimestamp : true;
+    const key = `${call.api}:${call.method}:${callerDomain}:${isPreConsent ? "pre" : "post"}`;
+    if (!callMap.has(key)) {
+      callMap.set(key, {
+        api: call.api,
+        method: call.method,
+        tier: call.tier || "tier1",
+        count: 1,
+        timestamp: call.timestamp,
+        firstTimestamp: call.timestamp,
+        lastTimestamp: call.timestamp,
+        callerUrl: call.callerUrl,
+        callerDomain,
+        inWorker: !!call.inWorker,
+        preConsent: isPreConsent,
+      });
+    } else {
+      const entry = callMap.get(key);
+      entry.count++;
+      if (call.timestamp < entry.firstTimestamp) entry.firstTimestamp = call.timestamp;
+      if (call.timestamp > entry.lastTimestamp) entry.lastTimestamp = call.timestamp;
+    }
+  }
+  return Array.from(callMap.values());
+}
+
 async function collectFingerprintingResult(page, consentTimestamp) {
   try {
     const fpCalls = await page.evaluate(() => window.__fpCalls || []);
@@ -3002,31 +3067,7 @@ async function collectFingerprintingResult(page, consentTimestamp) {
       return { detected: false, apiCalls: [], preConsent: false, callerDomains: [] };
     }
 
-    // Deduplicate by (api, method, callerDomain) so per-caller breakdown is
-    // preserved for the aggregator's stacking pass.
-    const callMap = new Map();
-    for (const call of fpCalls) {
-      const callerDomain = extractCallerDomain(call.callerUrl);
-      const isPreConsent = consentTimestamp ? call.timestamp < consentTimestamp : true;
-      const key = `${call.api}:${call.method}:${callerDomain}:${isPreConsent ? "pre" : "post"}`;
-      if (!callMap.has(key)) {
-        callMap.set(key, {
-          api: call.api,
-          method: call.method,
-          tier: call.tier || "tier1",
-          count: 1,
-          timestamp: call.timestamp,
-          callerUrl: call.callerUrl,
-          callerDomain,
-          inWorker: !!call.inWorker,
-          preConsent: isPreConsent,
-        });
-      } else {
-        callMap.get(key).count++;
-      }
-    }
-
-    const apiCalls = Array.from(callMap.values());
+    const apiCalls = dedupeFpCalls(fpCalls, consentTimestamp);
     const preConsent = consentTimestamp
       ? fpCalls.some(c => c.timestamp < consentTimestamp)
       : true;
@@ -4555,6 +4596,21 @@ function buildOverallDiffSummary(result) {
 // Entry point
 // ───────────────────────────────────────────
 
+// Exports for unit tests and downstream scripts (derive-findings, validators).
+// Requiring this module does NOT start a scan — the CLI only runs when
+// invoked directly (see require.main guard below).
+module.exports = {
+  classifyFindings,
+  aggregateFingerprinting,
+  dedupeFpCalls,
+  detectConsentMode,
+  buildOverallDiffSummary,
+  SDK_PATTERNS,
+  TRACKER_PATTERNS,
+};
+
+if (require.main === module) {
+
 // Parse CLI args: node scan.js <url> [--scout] [--accept-text "..."] [--reject-text "..."] [--save-text "..."]
 const args = process.argv.slice(2);
 const isScoutMode = args.includes("--scout");
@@ -4610,3 +4666,5 @@ if (isScoutMode) {
     process.exit(1);
   });
 }
+
+} // end require.main guard

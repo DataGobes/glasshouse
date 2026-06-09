@@ -25,7 +25,7 @@ I am the data subject whose personal data is processed by {{controller.registere
 
 ## 2. Summary
 
-On {{scanDate}}, an automated privacy audit of {{controller.domain}} identified {{violationCount}} infringement{{#if (eq violationCount 1)}}{{else}}s{{/if}} of the General Data Protection Regulation and related ePrivacy provisions. Evidence is attached in the accompanying dossier. The articles I allege are infringed are:
+On {{scanDate}}, an automated privacy audit of {{controller.domain}} produced {{violationCount}} finding{{#if (eq violationCount 1)}}{{else}}s{{/if}} indicating potential infringements of the General Data Protection Regulation and related ePrivacy provisions. Evidence is attached in the accompanying dossier. The articles I allege are infringed are:
 
 {{#each articleList}}
 - {{this}}
@@ -46,10 +46,22 @@ I respectfully ask the {{dpa.name}} to investigate whether {{controller.register
 - `articles-cited.md` — verbatim text of cited provisions
 - `evidence/scan.json` — full output of the automated audit
 - `evidence/scan-summary.md` — human-readable digest
+- `evidence/manifest.json` — SHA-256 checksums of every evidence file, fixed at generation time, with the finding-to-evidence mapping
 - `evidence/screenshots/` — banner and page screenshots
 - `evidence/trackers.csv` — trackers observed
 - `evidence/cookies.csv` — cookies observed
 - `evidence/timeline.md` — audit trail of pre- and post-consent events
+
+## 6. Methodology and limitations
+
+The findings derive from a point-in-time automated scan of the publicly accessible pages of {{controller.domain}} performed on {{scanDate}}{{#if scanMeta.scanner}} using {{scanMeta.scanner}}{{#if scanMeta.browser}} ({{scanMeta.browser}}){{/if}}{{/if}}. The scan loads the site in a clean browser session and records network requests, cookies, browser storage, and consent-banner behaviour before any consent interaction, after accepting consent, and after rejecting consent where those options were available.
+
+Limitations the authority should be aware of:
+
+- The observations reflect the site's behaviour at the time of the scan; the site may behave differently now.
+- The scan covers publicly accessible pages only — no logged-in areas, checkout flows, or native applications.
+- Server-side processing (including server-to-server data sharing) is not observable from the browser and is not covered by these findings.
+- An automated scan may not trigger all tracking present on the site; the findings are a lower bound on the observed processing, not an exhaustive inventory.
 
 ---
 

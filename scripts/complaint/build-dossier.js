@@ -35,9 +35,12 @@ async function buildDossier({ scan, state, outputRoot, renderPdf = defaultRender
   const evidenceDir = path.join(dossierDir, 'evidence');
   writeEvidence(evidenceDir, scan, state.selections);
 
-  const letter = renderLetter(state);
+  // Surface scan provenance (scanner version, browser) in the letter's
+  // methodology section when the scan recorded it.
+  const renderState = { ...state, scanMeta: (scan && scan.meta) || {} };
+  const letter = renderLetter(renderState);
   fs.writeFileSync(path.join(dossierDir, 'complaint.md'), letter);
-  fs.writeFileSync(path.join(dossierDir, 'facts.md'), renderFacts(state));
+  fs.writeFileSync(path.join(dossierDir, 'facts.md'), renderFacts(renderState));
   fs.writeFileSync(path.join(dossierDir, 'articles-cited.md'), renderArticlesCited(state));
 
   const evidenceFiles = fs.readdirSync(evidenceDir).map(f => {

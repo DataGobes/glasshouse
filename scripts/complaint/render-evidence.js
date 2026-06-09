@@ -1,3 +1,4 @@
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -43,21 +44,27 @@ function writeTimeline(dir, scan) {
         return `- ${time}: ${title}${where ? ` — ${where}` : ''}${type}`;
       })
     : ['_No pre-consent timeline events recorded by the scanner._'];
-  fs.writeFileSync(path.join(dir, 'timeline.md'), `# Audit trail (pre-consent)\n\n${lines.join('\n')}\n`);
+  const note = '_Times are relative to the first observed request in the phase. Events derive from the scan\'s request log; the full machine-readable log is in `scan.json`._';
+  fs.writeFileSync(path.join(dir, 'timeline.md'), `# Audit trail (pre-consent)\n\n${note}\n\n${lines.join('\n')}\n`);
 }
 
 function writeSummary(dir, scan) {
   const meta = scan.meta || {};
   const scores = scan.scores || {};
+  // Score entries may be bare numbers (legacy) or { score } objects.
+  const scoreVal = (v) => (v && typeof v === 'object' ? v.score : v);
   const lines = [
     `# Scan summary`,
     ``,
     `Domain: ${meta.domain}`,
-    `Scan date: ${meta.scanDate}`,
+    `Scan date: ${meta.scanDate || meta.scannedAt || 'unknown'}`,
+    `Scan tool: ${meta.scanner || 'glasshouse (version not recorded in scan)'}`,
+    `Browser: ${meta.browser || 'not recorded'}`,
+    `Scan variants: ${(meta.variants || []).join(', ') || 'not recorded'}`,
     `Overall score: ${meta.overallScore}`,
     ``,
     `## Scores`,
-    ...Object.entries(scores).map(([k, v]) => `- ${k}: ${v}`)
+    ...Object.entries(scores).map(([k, v]) => `- ${k}: ${scoreVal(v)}`)
   ];
   fs.writeFileSync(path.join(dir, 'scan-summary.md'), lines.join('\n') + '\n');
 }
@@ -78,6 +85,55 @@ function copyScreenshots(dir, scan) {
   }
 }
 
+// Walk the evidence dir and record a SHA-256 + size for every file, plus the
+// scan provenance and the finding→evidence mapping. This gives the dossier a
+// verifiable chain: each complaint claim references a finding id, each finding
+// references evidence files, and each file has a checksum fixed at generation
+// time. The manifest cannot include a hash of itself.
+function writeManifest(evidenceDir, scan, selections) {
+  const files = [];
+  const walk = (dir, prefix) => {
+    for (const name of fs.readdirSync(dir).sort()) {
+      const p = path.join(dir, name);
+      const rel = prefix ? path.join(prefix, name) : name;
+      if (fs.statSync(p).isDirectory()) {
+        walk(p, rel);
+      } else if (rel !== 'manifest.json') {
+        const buf = fs.readFileSync(p);
+        files.push({
+          file: rel,
+          bytes: buf.length,
+          sha256: crypto.createHash('sha256').update(buf).digest('hex'),
+        });
+      }
+    }
+  };
+  walk(evidenceDir, '');
+
+  const meta = scan.meta || {};
+  const manifest = {
+    generatedAt: new Date().toISOString(),
+    generator: 'glasshouse complaint builder',
+    scan: {
+      domain: meta.domain || null,
+      url: meta.url || null,
+      scanDate: meta.scanDate || meta.scannedAt || null,
+      scanner: meta.scanner || null,
+      browser: meta.browser || null,
+      variants: meta.variants || null,
+    },
+    findings: (selections || []).map((s) => ({
+      id: s.id || null,
+      kind: s.kind || null,
+      headline: s.headline || null,
+      articles: s.articles || [],
+      evidencePointers: s.evidencePointers || [],
+    })),
+    files,
+  };
+  fs.writeFileSync(path.join(evidenceDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+}
+
 function writeEvidence(evidenceDir, scan, selections) {
   fs.mkdirSync(evidenceDir, { recursive: true });
   copyRawScan(evidenceDir, scan);
@@ -86,6 +142,7 @@ function writeEvidence(evidenceDir, scan, selections) {
   writeCookies(evidenceDir, scan, selections);
   writeTimeline(evidenceDir, scan);
   copyScreenshots(evidenceDir, scan);
+  writeManifest(evidenceDir, scan, selections);
 }
 
 module.exports = { writeEvidence };
