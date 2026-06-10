@@ -2577,7 +2577,21 @@ ${js}
 // ───────────────────────────────────────────
 function generateMarkdown() {
   const mr = markdownReport || {};
-  const categories = [
+  // Phase D weights (references/scoring.md). The two newer categories are
+  // listed only when scored, with the legacy 7-category weights as fallback
+  // so old analyses keep summing to 100%.
+  const hasPhaseD = scores.dsar || scores.processorTransparency;
+  const categories = hasPhaseD ? [
+    { key: "consent", label: "Consent Mechanism", weight: 22 },
+    { key: "preConsentTracking", label: "Pre-Consent Tracking", weight: 20 },
+    { key: "legalPages", label: "Legal Pages", weight: 12 },
+    { key: "crossBorder", label: "Cross-Border Transfers", weight: 11 },
+    { key: "securityHeaders", label: "Security Headers", weight: 10 },
+    { key: "cookieManagement", label: "Cookie Management", weight: 8 },
+    { key: "processorTransparency", label: "Processor Transparency", weight: 7 },
+    { key: "dsar", label: "DSAR / Rights Mechanism", weight: 5 },
+    { key: "darkPatterns", label: "Dark Patterns", weight: 5 },
+  ] : [
     { key: "consent", label: "Consent Mechanism", weight: 25 },
     { key: "preConsentTracking", label: "Pre-Consent Tracking", weight: 20 },
     { key: "legalPages", label: "Legal Pages", weight: 15 },
@@ -2591,6 +2605,39 @@ function generateMarkdown() {
     const s = scores[cat.key] || { score: 1.0 };
     return `| ${cat.label} | ${s.score} | ${cat.weight}% |`;
   }).join("\n");
+
+  // Audit-trail evidence tables: timestamps and domains for every recorded
+  // event, so the markdown report carries evidence, not just conclusions.
+  const trailTable = (events) => {
+    if (!Array.isArray(events) || events.length === 0) return null;
+    const rows = events.map((ev) =>
+      `| ${ev.time || "?"} | ${ev.domain || "—"} | ${ev.title} | ${ev.type || "—"} |`
+    ).join("\n");
+    return `| Time | Domain | Event | Type |\n|------|--------|-------|------|\n${rows}`;
+  };
+  const trail = findings.auditTrail || {};
+  const trailSections = [
+    ["Pre-Consent Timeline", trailTable(trail.preConsent)],
+    ["Post-Consent Timeline (after accept)", trailTable(trail.postConsent)],
+    ["Post-Reject Timeline", trailTable(trail.rejectConsent)],
+  ].filter(([, t]) => t)
+   .map(([title, t]) => `### ${title}\n${t}`)
+   .join("\n\n");
+  const auditTrailSection = trailSections
+    ? `## Audit Trail (observed events)\n\nTimes are relative to the first observed request in each phase. Events marked "timing ambiguous" fired while the consent click was being dispatched and cannot be attributed to a consent state with certainty.\n\n${trailSections}\n`
+    : "";
+
+  const rs = findings.rejectScenario;
+  const rejectSection = rs ? `## Reject Scenario
+
+${rs.rejectHonoured
+    ? "No tracker fires or new non-consent cookies were observed after rejecting consent."
+    : `Rejection was **not fully honoured** in this scan: ${rs.summary || "see details below."}`}
+${(rs.persistingTrackers || []).length ? `
+| Tracker persisting after reject | Domain | Category |
+|--------------------------------|--------|----------|
+${rs.persistingTrackers.map((t) => `| ${t.name}${t.ambiguousTiming ? " *(timing ambiguous)*" : ""} | ${t.domains || t.domain || "—"} | ${t.category || "—"} |`).join("\n")}` : ""}
+` : "";
 
   const trackerRows = (findings.trackers || []).map((t) =>
     `| ${t.name} | ${t.category} | ${t.domains} | ${t.jurisdiction || "Unknown"} | ${t.risk || "medium"} |`
@@ -2625,7 +2672,7 @@ function generateMarkdown() {
 
 **Scan Date**: ${meta.scanDate}
 **Overall Score**: ${meta.overallScore}/10
-**Scanner**: glasshouse/1.0 (Firefox, two-phase)
+**Scanner**: ${meta.scanner || "glasshouse"} (Firefox via Playwright)
 ${companyLine}
 ## Executive Summary
 
@@ -2633,9 +2680,11 @@ ${mr.executiveSummary || "No executive summary provided."}
 
 ## Methodology
 
-- Two-phase scan: pre-consent capture \u2192 consent acceptance \u2192 post-consent capture
+- Point-in-time scan: the findings reflect the site's behaviour at the scan date above and may not reflect its current behaviour
+- Three variants in clean browser sessions: no interaction (ignore), accept-all, and reject-all where available; each captures pre- and post-interaction state
 - Browser: Firefox with stealth settings (masked webdriver, realistic UA)
-- Categories captured: network requests, cookies, localStorage, sessionStorage, security headers, TLS, consent mechanisms, legal pages, meta tags
+- Categories captured: network requests, cookies, localStorage, sessionStorage, IndexedDB, security headers, TLS, consent mechanisms, fingerprinting API usage, legal pages, meta tags
+- Scope limits: public pages only; server-side processing is not observable from the browser; findings are a lower bound on observed processing, not an exhaustive inventory
 
 ## Findings
 
@@ -2669,6 +2718,7 @@ ${headerRows}
 ### Legal Pages
 ${legalList}
 
+${auditTrailSection}${rejectSection}
 ## GDPR Compliance Checklist
 
 ${gdprChecklist}

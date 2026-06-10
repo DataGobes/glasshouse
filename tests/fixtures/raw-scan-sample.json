@@ -1,0 +1,149 @@
+{
+  "meta": {
+    "schemaVersion": "1",
+    "url": "https://www.example.com",
+    "domain": "example.com",
+    "scannedAt": "2026-06-01T10:00:00.000Z",
+    "scanner": "glasshouse/2.2",
+    "browser": "Firefox (Playwright)",
+    "variants": ["ignore", "accept", "reject"],
+    "config": { "postConsentWaitMs": 8000, "scrollPauseMs": 1500 }
+  },
+  "variants": {
+    "ignore": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": { "ab_test_group": "B" },
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [] },
+        "networkRequests": [
+          { "url": "https://www.example.com/", "method": "GET", "resourceType": "document", "timestamp": 1000 },
+          { "url": "https://cdn.example.net/app.js", "method": "GET", "resourceType": "script", "timestamp": 1200 },
+          { "url": "https://ad.doubleclick.net/ddm/activity/src=1", "method": "GET", "resourceType": "image", "timestamp": 1530, "initiatorUrl": "https://pagead2.googlesyndication.com/tag.js" }
+        ],
+        "trackers": [
+          { "name": "DoubleClick Ad", "category": "advertising", "domain": "ad.doubleclick.net", "url": "https://ad.doubleclick.net/ddm/activity/src=1", "resourceType": "image", "is4thParty": true, "loadedBy": "pagead2.googlesyndication.com" }
+        ],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          { "domain": "cdn.example.net", "requestCount": 1, "categories": [] },
+          { "domain": "ad.doubleclick.net", "requestCount": 1, "categories": ["advertising"] }
+        ],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": { "ab_test_group": "B" },
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [] },
+        "networkRequests": [],
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [],
+        "trackingPixels": []
+      },
+      "consent": { "detected": true, "platform": "OneTrust" }
+    },
+    "accept": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": { "ab_test_group": "B" },
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [] },
+        "networkRequests": [
+          { "url": "https://www.example.com/", "method": "GET", "resourceType": "document", "timestamp": 2000 },
+          { "url": "https://ad.doubleclick.net/ddm/activity/src=1", "method": "GET", "resourceType": "image", "timestamp": 2400, "initiatorUrl": "https://pagead2.googlesyndication.com/tag.js" }
+        ],
+        "trackers": [
+          { "name": "DoubleClick Ad", "category": "advertising", "domain": "ad.doubleclick.net", "url": "https://ad.doubleclick.net/ddm/activity/src=1", "resourceType": "image", "is4thParty": true, "loadedBy": "pagead2.googlesyndication.com" }
+        ],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          { "domain": "ad.doubleclick.net", "requestCount": 1, "categories": ["advertising"] }
+        ],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" },
+          { "name": "_fbp", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": { "ab_test_group": "B", "user_prefs": "{}" },
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [{ "name": "firebaseLocalStorage", "version": 1 }] },
+        "networkRequests": [
+          { "url": "https://analytics.google.com/g/collect?v=2", "method": "POST", "resourceType": "xhr", "timestamp": 9000 },
+          { "url": "https://www.facebook.com/tr/?id=1", "method": "GET", "resourceType": "image", "timestamp": 9300 }
+        ],
+        "trackers": [
+          { "name": "Google Analytics 4 (collect)", "category": "analytics", "domain": "analytics.google.com", "url": "https://analytics.google.com/g/collect?v=2", "resourceType": "xhr", "is4thParty": false, "loadedBy": null },
+          { "name": "Meta Pixel Fire", "category": "tracking", "domain": "www.facebook.com", "url": "https://www.facebook.com/tr/?id=1", "resourceType": "image", "is4thParty": false, "loadedBy": null }
+        ],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          { "domain": "analytics.google.com", "requestCount": 1, "categories": ["analytics"] },
+          { "domain": "www.facebook.com", "requestCount": 1, "categories": ["tracking"] }
+        ],
+        "trackingPixels": []
+      },
+      "consent": { "detected": true, "platform": "OneTrust" }
+    },
+    "reject": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": {},
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [] },
+        "networkRequests": [
+          { "url": "https://www.example.com/", "method": "GET", "resourceType": "document", "timestamp": 3000 }
+        ],
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [
+          { "name": "_ga", "domain": ".example.com", "expires": 1812345678, "path": "/" },
+          { "name": "OptanonConsent", "domain": ".example.com", "expires": 1812345678, "path": "/" }
+        ],
+        "localStorage": {},
+        "sessionStorage": {},
+        "indexedDB": { "supported": true, "databases": [] },
+        "networkRequests": [
+          { "url": "https://analytics.google.com/g/collect?v=2&gtm=x", "method": "POST", "resourceType": "xhr", "timestamp": 9100, "duringConsentTransition": false },
+          { "url": "https://cdn.example.net/late.js", "method": "GET", "resourceType": "script", "timestamp": 9050, "duringConsentTransition": true }
+        ],
+        "trackers": [
+          { "name": "Google Analytics 4 (collect)", "category": "analytics", "domain": "analytics.google.com", "url": "https://analytics.google.com/g/collect?v=2&gtm=x", "resourceType": "xhr", "is4thParty": false, "loadedBy": null }
+        ],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          { "domain": "analytics.google.com", "requestCount": 1, "categories": ["analytics"] }
+        ],
+        "trackingPixels": []
+      },
+      "consent": { "detected": true, "platform": "OneTrust", "rejectAccessibility": "layer-1" }
+    }
+  }
+}

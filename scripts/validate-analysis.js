@@ -3,16 +3,29 @@
  * Validates a privacy-analysis JSON against the field contract.
  * Run before generate.js to catch schema issues early.
  *
- * Usage: node scripts/validate-analysis.js /tmp/privacy-analysis-domain.json
+ * Usage: node scripts/validate-analysis.js /tmp/privacy-analysis-domain.json [--scan-json <raw-scan.json>]
+ *
+ * With --scan-json, the analysis is also cross-checked against the RAW
+ * scanner output (scripts/cross-check.js): tracker/cookie/audit-trail claims
+ * must be backed by captured scan data, and the overall score must be
+ * consistent with the weighted category scores. Always pass --scan-json when
+ * the raw scan is available — it is the only check that catches factually
+ * wrong (rather than mis-shaped) analysis content.
+ *
  * Exit code 0 = pass (warnings only), 1 = errors found
  */
 
 const fs = require("fs");
 const path = require("path");
+const { crossCheck } = require("./cross-check.js");
 
-const file = process.argv[2];
+const argv = process.argv.slice(2);
+const scanIdx = argv.indexOf("--scan-json");
+const scanFile = scanIdx !== -1 ? argv[scanIdx + 1] : null;
+const positional = argv.filter((a, i) => !a.startsWith("--") && (scanIdx === -1 || i !== scanIdx + 1));
+const file = positional[0];
 if (!file) {
-  console.error("Usage: node validate-analysis.js <analysis.json>");
+  console.error("Usage: node validate-analysis.js <analysis.json> [--scan-json <raw-scan.json>]");
   process.exit(1);
 }
 
@@ -378,6 +391,25 @@ if (isObj(data.slides) && isArr(data.slides.include)) {
     else if (!VALID_SLIDES.has(s)) warn(`slides.include`, `"${s}" is not a recognized slide key`);
   }
   if (!data.slides.include.includes("riskSummary")) warn("slides.include", "missing 'riskSummary' — should always be included");
+}
+
+// ── Cross-check against raw scan (semantic validation) ───────────
+if (scanFile) {
+  let scanData = null;
+  try {
+    scanData = JSON.parse(fs.readFileSync(scanFile, "utf8"));
+  } catch (e) {
+    err("--scan-json", `cannot parse ${scanFile}: ${e.message}`);
+  }
+  if (scanData && !scanData.variants) {
+    err("--scan-json", `${scanFile} has no \`variants\` — pass the RAW scanner output, not another analysis JSON`);
+  } else if (scanData) {
+    const result = crossCheck(data, scanData);
+    errors.push(...result.errors);
+    warnings.push(...result.warnings);
+  }
+} else {
+  warnings.push("  ⚠ no --scan-json given — factual cross-check against the raw scan was skipped; schema-only validation cannot catch unjustified claims");
 }
 
 // ── Output ────────────────────────────────────────────────────────
