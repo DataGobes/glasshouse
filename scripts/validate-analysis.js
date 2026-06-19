@@ -325,7 +325,7 @@ if (isObj(f.fingerprinting) && f.fingerprinting.detected) {
 // ── riskSummaryNotes ──────────────────────────────────────────────
 if (isArr(f.riskSummaryNotes)) {
   f.riskSummaryNotes.forEach((n, i) => {
-    checkEnum(`findings.riskSummaryNotes[${i}].category`, n.category, SCORE_CATS);
+    checkEnum(`findings.riskSummaryNotes[${i}].category`, n.category, [...SCORE_CATS, ...NEW_OPTIONAL_SCORE_CATS]);
     if (!isStr(n.note)) err(`findings.riskSummaryNotes[${i}].note`, "required string");
   });
 }

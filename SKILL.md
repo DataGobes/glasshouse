@@ -66,7 +66,8 @@ cd $SKILL_DIR && node scripts/scan.js {URL} --scout
 **Output**: JSON to stdout with:
 - `screenshot` — path to viewport screenshot
 - `cmpDetected` — CMP platform name or null
-- `bannerDetected` — whether a consent banner was found
+- `bannerDetected` — whether a consent banner was found (also `true` when a cookie wall is detected)
+- `cookieWallDetected` — `true` when a full-page/iframe cookie wall (e.g. DPG Media Privacy Gate) was found; the wall's buttons live across the redirect/iframe boundary, so `recommendHints` is set and the full scan will need `--accept-text`/`--reject-text` hints
 - `acceptButtonFound` / `rejectButtonFound` — whether the scanner can click them
 - `candidateButtons[]` — all visible buttons in the banner area with `{text, selector, visible}`
 - `recommendHints` — `true` if the scanner needs text hints for the full scan

@@ -208,6 +208,7 @@ Derived slide — no dedicated `findings` key. Reuses `findings.cookies[]`, `met
 { "element": "Controller identity", "status": "present", "excerpt": "LinkedIn Ireland Unlimited Company..." }
 ```
 - Use `element` (not `item`) — the generator reads `item.element`
+- **`status`** must be one of `"present"` | `"absent"` | `"vague"`. Do **NOT** use `"missing"` (use `"absent"`) or `"partial"` (use `"vague"`) — the validator rejects them.
 
 ## `findings.rejectScenario` (Reject Scenario slide)
 ```json
@@ -323,11 +324,11 @@ Same format as `auditTrail.postConsent`. Use slide key `"auditTrailReject"`.
   { "category": "preConsentTracking", "note": "7 trackers and 38 cookies fire before any consent interaction" }
 ]
 ```
-- `category` (REQUIRED): must match a `scores` key (`consent`, `preConsentTracking`, `legalPages`, `crossBorder`, `securityHeaders`, `cookieManagement`, `darkPatterns`)
+- `category` (REQUIRED): must match a `scores` key. The 9 scoring categories (see `scoring.md`) are valid: `consent`, `preConsentTracking`, `legalPages`, `crossBorder`, `securityHeaders`, `cookieManagement`, `darkPatterns`, plus the Phase-D additions `processorTransparency` and `dsar`.
 - `note` (REQUIRED): 1-2 sentence insight explaining *why* this category scored the way it did
 - When present, the Risk Summary slide switches to a 2-column layout (bars left, notes right)
 - When absent, the slide renders as before (bars only, full width) — backward compatible
-- Include notes for all 7 categories for best visual balance
+- Include notes for all 9 categories for best visual balance
 
 ## `findings.scriptIntegrity` (Security Headers slide)
 ```json

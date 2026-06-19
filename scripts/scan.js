@@ -635,6 +635,7 @@ async function scout(targetUrl) {
     screenshot: null,
     cmpDetected: null,
     bannerDetected: false,
+    cookieWallDetected: false,
     acceptButtonFound: false,
     rejectButtonFound: false,
     candidateButtons: [],
@@ -694,6 +695,38 @@ async function scout(targetUrl) {
     result.bannerDetected = consentInfo.detected;
     result.acceptButtonFound = !!consentInfo.acceptButton;
     result.rejectButtonFound = !!consentInfo.rejectButton;
+
+    // Cookie-wall detection. detectConsent only sees same-domain banner
+    // overlays; walls like DPG Media's Privacy Gate either full-page
+    // redirect to a consent domain or embed it in an iframe, so the CMP
+    // pass reports "no banner". Reuse the wall registry so the scout
+    // surfaces them and flags that the full scan will need button hints
+    // (the wall's buttons live across the redirect/iframe boundary and
+    // won't appear in candidateButtons).
+    if (!result.bannerDetected) {
+      let wall = await detectCookieWall(page, targetUrl); // catches cross-domain redirect walls
+      if (!wall.detected) {
+        // Also check for a known wall served inside an iframe over the target page.
+        for (const frame of page.frames()) {
+          let host;
+          try { host = new URL(frame.url()).hostname; } catch { continue; }
+          for (const [type, w] of Object.entries(COOKIE_WALL_SELECTORS)) {
+            if (w.domainPattern && w.domainPattern.test(host)) {
+              wall = { detected: true, type, name: w.name };
+              break;
+            }
+          }
+          if (wall.detected) break;
+        }
+      }
+      if (wall.detected) {
+        result.bannerDetected = true;
+        result.cookieWallDetected = true;
+        result.cmpDetected = result.cmpDetected || wall.name;
+        result.recommendHints = true;
+        console.error(`[Scout] Cookie wall detected: ${wall.name}`);
+      }
+    }
 
     // Enumerate all candidate buttons in the banner area
     const candidates = await page.evaluate(() => {
