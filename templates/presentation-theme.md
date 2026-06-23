@@ -584,6 +584,65 @@ p { font-size: var(--body-size); line-height: 1.6; color: var(--text-secondary);
 .pill-yellow { background: rgba(234,179,8,0.15); color: #eab308; }
 .pill-green { background: rgba(34,197,94,0.15); color: #22c55e; }
 .pill-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+/* Flex-wrap container for a chip cloud of .pill items */
+.pill-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.3rem, 0.6vw, 0.5rem);
+    margin-top: var(--element-gap);
+}
+```
+
+### Callout
+
+General-purpose aside / "why it matters" note. Severity is tokenised so it
+adapts across themes — never hardcode the colour inline. Mirrors the `.rs-note`
+surface treatment so it sits naturally next to the score notes.
+
+```css
+.callout {
+    margin-top: var(--content-gap);
+    padding: clamp(0.55rem, 1.1vw, 0.85rem) clamp(0.75rem, 1.4vw, 1.15rem);
+    background: rgba(28,25,23,0.025);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+.callout strong { color: var(--text-primary); }
+.callout + .callout { margin-top: var(--element-gap); }
+.callout-bad { border-left-color: var(--accent-red); }
+.callout-good { border-left-color: var(--accent-green); }
+.callout-info { border-left-color: var(--accent-blue); }
+.callout-label {
+    font-family: var(--font-mono);
+    font-size: var(--mono-size);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-right: 0.5em;
+}
+.callout-bad .callout-label { color: var(--accent-red); }
+.callout-good .callout-label { color: var(--accent-green); }
+.callout-info .callout-label { color: var(--accent-blue); }
+```
+
+### Custom Slide Body
+
+Wrapper for custom-slide content. No heavy card box of its own, so the inner
+components (`.tracker-grid`, `.split-compare`, `.callout`, …) own their
+structure. `finding-highlight` adds an accent rail.
+
+```css
+.custom-body {
+    width: 100%;
+}
+.custom-body-highlight {
+    border-left: 3px solid var(--accent);
+    padding-left: clamp(0.75rem, 1.5vw, 1.25rem);
+}
 ```
 
 ### Code Block
