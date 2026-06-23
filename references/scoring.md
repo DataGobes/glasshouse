@@ -30,8 +30,9 @@ Total: **100%**.
 - 0: No consent mechanism at all
 
 **Modifiers:**
-- Binary accept/reject only (no category toggles via `consentGranularity`): cap at 75
-- Granular toggles present: eligible for 100
+- Binary accept/reject with **no granular controls anywhere** — not on layer 1 and not behind a settings/preference link (`consentGranularity.hasToggles === false && consentGranularity.settingsLinkFound === false`): cap at 75.
+- **Binary first layer but granular category controls reachable via a settings link** (`consentGranularity.settingsLinkFound === true`): **no cap.** First-layer toggles are not legally required; a one-click layer-1 reject plus granular controls one click deeper is compliant. Treat the lack of first-layer toggles as an at-most informational note, never a scored deduction. (Reproduced bug: the 2026-06 miele.nl scan capped consent at 75 here despite OneTrust granular controls behind "Cookie-instellingen".)
+- Granular toggles present on layer 1: eligible for 100.
 - TCF detected but malformed consent string: −5
 - Site uses Google advertising but no TCF: −10
 - No consent revocation mechanism (`consentRevocation.mechanismFound` = false): −15

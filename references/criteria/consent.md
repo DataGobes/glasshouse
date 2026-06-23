@@ -87,7 +87,7 @@ A scanner-detected GPC signal can constitute valid objection. Sites should read 
 
 ## Scoring Impact (see scoring.md)
 Base 0–100 by CMP quality. Modifiers:
-- Binary-only (no granularity): cap at 75
+- Binary on layer 1 **and** no granular controls behind a settings link (`consentGranularity.settingsLinkFound === false`): cap at 75. If granular controls exist one click deeper (`settingsLinkFound === true`), do **not** cap.
 - TCF malformed string: −5
 - Google ads but no TCF: −10
 - No revocation mechanism: −15
