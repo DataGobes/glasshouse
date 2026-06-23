@@ -693,6 +693,43 @@ const TRACKER_PATTERNS = [
   { pattern: /omtrdc\.net/, category: "tracking", name: "Adobe Analytics" },
 ];
 
+// Distinguish advertiser-side MEASUREMENT (conversions/remarketing) from
+// publisher-side PROGRAMMATIC inventory (RTB/SSP/header-bidding). Only the
+// latter implies a TCF requirement. Peer-review root cause: "programmatic"
+// was inferred from doubleclick/floodlight domains alone.
+const AD_MEASUREMENT_PATTERNS = [
+  /\/pagead\/viewthroughconversion\//i,
+  /\/pagead\/1p-user-list\//i,
+  /\/rmkt\/collect/i,
+  /[?;&]cat=/i,                       // Floodlight activity tag (activity;cat=...)
+  /\/activity[;?]/i,
+  /google-analytics\.com\/(g\/)?collect/i,
+];
+const AD_PUBLISHER_PATTERNS = [
+  /securepubads\.g\.doubleclick\.net/i,
+  /googlesyndication\.com/i,
+  /\/gampad\/ads/i,
+  /\bprebid(\.min)?\.js\b/i,
+  /\/openrtb2\//i,
+  /\.(pubmatic|rubiconproject|openx|appnexus|adnxs|criteo|indexexchange|sharethrough)\./i,
+];
+
+function classifyAdServing(networkRequests) {
+  const measurementSignals = new Set();
+  const publisherSignals = new Set();
+  for (const r of networkRequests || []) {
+    const url = r && r.url ? String(r.url) : '';
+    if (!url) continue;
+    for (const re of AD_MEASUREMENT_PATTERNS) if (re.test(url)) measurementSignals.add(re.source);
+    for (const re of AD_PUBLISHER_PATTERNS) if (re.test(url)) publisherSignals.add(re.source);
+  }
+  return {
+    programmaticPublisher: publisherSignals.size > 0,
+    measurementSignals: Array.from(measurementSignals),
+    publisherSignals: Array.from(publisherSignals),
+  };
+}
+
 // ───────────────────────────────────────────
 // Main scan function
 // ───────────────────────────────────────────
@@ -2407,6 +2444,7 @@ function classifyFindings(phaseData, firstPartyDomain) {
     }
   }
 
+  phaseData.adServing = classifyAdServing(phaseData.networkRequests);
   phaseData.trackers = trackers;               // Tier 3: clear violations
   phaseData.consentModePings = consentModePings; // Tier 2: debatable
   phaseData.sdkLoads = sdkLoads;               // Tier 1: not violations
@@ -4885,6 +4923,7 @@ function buildOverallDiffSummary(result) {
 // invoked directly (see require.main guard below).
 module.exports = {
   classifyFindings,
+  classifyAdServing,
   aggregateFingerprinting,
   dedupeFpCalls,
   detectConsentMode,

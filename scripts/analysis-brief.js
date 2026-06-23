@@ -276,6 +276,8 @@ if (fp.stackedSignals?.length || fp.commercialSdks?.length) {
   ln(`\n>>> LLM analyst: fill stackedSignals[*].rationale, .legitimateBasisClaim, and .purposeDisclosed`);
   ln(`>>> by reading the privacy policy. Same for commercialSdks[*].`);
 }
+const adServing = details.adServing || (raw.variants && raw.variants.accept && raw.variants.accept.postConsent && raw.variants.accept.postConsent.adServing);
+if (adServing) ln(`Ad serving: programmaticPublisher=${adServing.programmaticPublisher} | measurement=[${(adServing.measurementSignals||[]).length}] publisher=[${(adServing.publisherSignals||[]).length}]`);
 const fl = details.formLeakage || {};
 ln(`Form leakage: ${fl.leaks?.length ? `YES (${fl.leaks.length} leaks)` : "none"}`);
 const cr = details.consentRevocation || {};
