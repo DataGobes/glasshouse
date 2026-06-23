@@ -3712,6 +3712,15 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     { name: "SEON", patterns: [/seon\.io/i], jurisdiction: "HU" },
     { name: "Optimizely", patterns: [/optimizely|episerver/i], jurisdiction: "US" },
     { name: "Bloomreach / Exponea", patterns: [/bloomreach|exponea/i], jurisdiction: "US/SK" },
+    // NOTE: the bare brand tokens below (\bmicrosoft\b, \bbing\b, \blinkedin\b,
+    // \bpinterest\b, "sap cc") are intentionally broad. Real CMP cookieverklaringen
+    // (e.g. miele.nl's OneTrust) name these processors as plain brand words inside
+    // collapsed category descriptions, which the narrower "<brand> ads/insight/tag"
+    // patterns missed — the systematic under-disclosure the peer review flagged
+    // (#02/#12). Tradeoff: an incidental mention ("Microsoft Azure/Teams") can clear
+    // the related ads entry from `undisclosed`. Bounded — this only feeds
+    // namedInPolicy, not the score directly, and the CMP text is now the primary
+    // disclosure corpus where these brands appear as actual processor entries.
     { name: "SAP CDC / Gigya", patterns: [/gigya|sap (customer data cloud|cdc|cc)\b/i], jurisdiction: "US/EU" },
     { name: "Microsoft Advertising / Bing", patterns: [/microsoft advertising|bing ads|\buet\b|\bbing\b|\bmicrosoft\b/i], jurisdiction: "US" },
     { name: "LinkedIn Insight", patterns: [/linkedin insight|linkedin (ads|pixel)|\blinkedin\b/i], jurisdiction: "US/IE" },
