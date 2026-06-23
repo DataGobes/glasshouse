@@ -1694,6 +1694,9 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         variantResult.googleConsentMode = await detectConsentModeV2(page);
         variantResult.consent.granularity = await detectConsentGranularity(page, consentInfo);
 
+        // ─── CMP per-vendor list (banner still open) ───
+        variantResult.cmpVendorList = await extractCmpVendorList(page, (variantResult.consent && variantResult.consent.platform) || null);
+
         // ─── Scan for legal pages ───
         variantResult.legalPages = await findLegalPages(page, url.origin);
 
@@ -1875,6 +1878,10 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
       } else {
         variantResult.legalPageContent = null; // Save space
         variantResult.securityTxt = null;
+      }
+
+      if (variantResult.legalPageContent && variantResult.cmpVendorList) {
+        variantResult.legalPageContent.cmpVendorList = variantResult.cmpVendorList;
       }
 
       // Consent revocation testing (only if consent was detected and accepted, and ONLY during ACCEPT variant)
