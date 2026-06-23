@@ -70,4 +70,4 @@ A DPIA without Art. 25 implementation is a paper exercise. The scanner flags bot
 - `findings.dpia.triggeredCriteria[]` — which Art. 35 criteria are met by observable processing
 
 ## Scoring Impact
-DPIA is a context-aware modifier rather than a top-line category. When indicators detected without disclosure: −10 from overall, surface as escalation flag in the dark-patterns / fingerprinting / cross-border slides as appropriate.
+No score modifier applies for a missing DPIA *mention* — Art. 35 mandates conducting, not publishing. Surface high-risk processing descriptively and, if warranted, as a recommendation to confirm a DPIA exists.

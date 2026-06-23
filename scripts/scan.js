@@ -23,6 +23,7 @@ const tls = require("tls");
 const { URL } = require("url");
 const fs = require("fs");
 const path = require("path");
+const dns = require("dns/promises");
 
 // ───────────────────────────────────────────
 // Configuration
@@ -54,6 +55,20 @@ function registrableDomain(host) {
   const lastTwo = parts.slice(-2).join(".");
   if (MULTI_PART_TLDS.has(lastTwo)) return parts.slice(-3).join(".");
   return lastTwo;
+}
+
+// A first-party-looking subdomain that CNAMEs to a different registrable
+// domain is cloaking a third party (e.g. smetrics.*.com -> adobedc.demdex.net).
+async function detectCnameCloaking(hosts, baseDomain, resolver) {
+  const resolveCname = resolver || ((h) => dns.resolveCname(h).catch(() => []));
+  const out = [];
+  for (const host of hosts || []) {
+    if (!host.endsWith('.' + baseDomain) && host !== baseDomain) continue;
+    const targets = await resolveCname(host);
+    const cloaked = targets.some((t) => registrableDomain(t) !== registrableDomain(host));
+    out.push({ host, cnameCloaked: cloaked, cnameTarget: cloaked ? targets[0] : null });
+  }
+  return out;
 }
 
 // Pick up to maxPages same-registrable-domain links, preferring campaign/tracking
@@ -692,6 +707,43 @@ const TRACKER_PATTERNS = [
   { pattern: /demdex\.net/, category: "tracking", name: "Adobe Audience Manager" },
   { pattern: /omtrdc\.net/, category: "tracking", name: "Adobe Analytics" },
 ];
+
+// Distinguish advertiser-side MEASUREMENT (conversions/remarketing) from
+// publisher-side PROGRAMMATIC inventory (RTB/SSP/header-bidding). Only the
+// latter implies a TCF requirement. Peer-review root cause: "programmatic"
+// was inferred from doubleclick/floodlight domains alone.
+const AD_MEASUREMENT_PATTERNS = [
+  /\/pagead\/viewthroughconversion\//i,
+  /\/pagead\/1p-user-list\//i,
+  /\/rmkt\/collect/i,
+  /[?;&]cat=/i,                       // Floodlight activity tag (activity;cat=...)
+  /\/activity[;?]/i,
+  /google-analytics\.com\/(g\/)?collect/i,
+];
+const AD_PUBLISHER_PATTERNS = [
+  /securepubads\.g\.doubleclick\.net/i,
+  /googlesyndication\.com/i,
+  /\/gampad\/ads/i,
+  /\bprebid(\.min)?\.js\b/i,
+  /\/openrtb2\//i,
+  /\.(pubmatic|rubiconproject|openx|appnexus|adnxs|criteo|indexexchange|sharethrough)\./i,
+];
+
+function classifyAdServing(networkRequests) {
+  const measurementSignals = new Set();
+  const publisherSignals = new Set();
+  for (const r of networkRequests || []) {
+    const url = r && r.url ? String(r.url) : '';
+    if (!url) continue;
+    for (const re of AD_MEASUREMENT_PATTERNS) if (re.test(url)) measurementSignals.add(re.source);
+    for (const re of AD_PUBLISHER_PATTERNS) if (re.test(url)) publisherSignals.add(re.source);
+  }
+  return {
+    programmaticPublisher: publisherSignals.size > 0,
+    measurementSignals: Array.from(measurementSignals),
+    publisherSignals: Array.from(publisherSignals),
+  };
+}
 
 // ───────────────────────────────────────────
 // Main scan function
@@ -1657,6 +1709,9 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         variantResult.googleConsentMode = await detectConsentModeV2(page);
         variantResult.consent.granularity = await detectConsentGranularity(page, consentInfo);
 
+        // ─── CMP per-vendor list (banner still open) ───
+        variantResult.cmpVendorList = await extractCmpVendorList(page, (variantResult.consent && variantResult.consent.platform) || null);
+
         // ─── Scan for legal pages ───
         variantResult.legalPages = await findLegalPages(page, url.origin);
 
@@ -1840,6 +1895,10 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         variantResult.securityTxt = null;
       }
 
+      if (variantResult.legalPageContent && variantResult.cmpVendorList) {
+        variantResult.legalPageContent.cmpVendorList = variantResult.cmpVendorList;
+      }
+
       // Consent revocation testing (only if consent was detected and accepted, and ONLY during ACCEPT variant)
       if (variant === "accept" && variantResult.consent?.detected && variantResult.consent?.acceptButton && !variantResult.cookieWall?.detected) {
         console.error(`[Variant: ${variant}] [Phase 3] Testing consent revocation...`);
@@ -1922,6 +1981,28 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
       // Clean up internal fields before serialization
       if (v.preConsent) delete v.preConsent._requestHandler;
       if (v.postConsent) delete v.postConsent._requestHandler;
+
+      // Best-effort CNAME-cloaking enrichment: check first-party-looking subdomains
+      // for CNAMEs that resolve to a different registrable domain.
+      // Time-boxed to 3 s; DNS failures or timeouts never break the scan.
+      const baseDomain = (result.meta.domain || "").replace(/^www\./, "");
+      if (baseDomain && v.preConsent && Array.isArray(v.preConsent.thirdPartyDomains)) {
+        try {
+          const candidateHosts = v.preConsent.thirdPartyDomains.map((d) => d.domain);
+          const CNAME_TIMEOUT_MS = 3000;
+          // Best-effort, time-boxed: only first-party-looking subdomains that surfaced as third-party are checked; DNS hangs/failures can never break or stall the scan.
+          const cloakingResults = await Promise.race([
+            detectCnameCloaking(candidateHosts, baseDomain),
+            new Promise((resolve) => setTimeout(() => resolve([]), CNAME_TIMEOUT_MS)),
+          ]).catch(() => []);
+          const cloakMap = new Map((cloakingResults || []).map((r) => [r.host, r]));
+          v.preConsent.thirdPartyDomains = v.preConsent.thirdPartyDomains.map((d) => {
+            const r = cloakMap.get(d.domain);
+            if (!r || !r.cnameCloaked) return d;
+            return { ...d, cnameCloaked: true, cnameTarget: r.cnameTarget };
+          });
+        } catch { /* CNAME detection is best-effort; never break a scan */ }
+      }
     }
   }
 
@@ -2407,6 +2488,7 @@ function classifyFindings(phaseData, firstPartyDomain) {
     }
   }
 
+  phaseData.adServing = classifyAdServing(phaseData.networkRequests);
   phaseData.trackers = trackers;               // Tier 3: clear violations
   phaseData.consentModePings = consentModePings; // Tier 2: debatable
   phaseData.sdkLoads = sdkLoads;               // Tier 1: not violations
@@ -3581,7 +3663,8 @@ function isSecurityTxtExpired(expires) {
 function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
   const privacy = legalPageContent?.privacyPolicy?.text || "";
   const cookie = legalPageContent?.cookiePolicy?.text || "";
-  const combined = (privacy + "\n\n" + cookie).toLowerCase();
+  const cmpVendors = legalPageContent?.cmpVendorList?.text || "";
+  const combined = (privacy + "\n\n" + cookie + "\n\n" + cmpVendors).toLowerCase();
   const policyLen = combined.trim().length;
 
   // ── DSAR ──
@@ -3664,6 +3747,22 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     { name: "Fingerprint Pro / FingerprintJS", patterns: [/fingerprint(?:js|\s*pro)/i], jurisdiction: "US" },
     { name: "Sift", patterns: [/sift\.(?:com|science)/i], jurisdiction: "US" },
     { name: "SEON", patterns: [/seon\.io/i], jurisdiction: "HU" },
+    { name: "Optimizely", patterns: [/optimizely|episerver/i], jurisdiction: "US" },
+    { name: "Bloomreach / Exponea", patterns: [/bloomreach|exponea/i], jurisdiction: "US/SK" },
+    // NOTE: the bare brand tokens below (\bmicrosoft\b, \bbing\b, \blinkedin\b,
+    // \bpinterest\b, "sap cc") are intentionally broad. Real CMP cookieverklaringen
+    // (e.g. miele.nl's OneTrust) name these processors as plain brand words inside
+    // collapsed category descriptions, which the narrower "<brand> ads/insight/tag"
+    // patterns missed — the systematic under-disclosure the peer review flagged
+    // (#02/#12). Tradeoff: an incidental mention ("Microsoft Azure/Teams") can clear
+    // the related ads entry from `undisclosed`. Bounded — this only feeds
+    // namedInPolicy, not the score directly, and the CMP text is now the primary
+    // disclosure corpus where these brands appear as actual processor entries.
+    { name: "SAP CDC / Gigya", patterns: [/gigya|sap (customer data cloud|cdc|cc)\b/i], jurisdiction: "US/EU" },
+    { name: "Microsoft Advertising / Bing", patterns: [/microsoft advertising|bing ads|\buet\b|\bbing\b|\bmicrosoft\b/i], jurisdiction: "US" },
+    { name: "LinkedIn Insight", patterns: [/linkedin insight|linkedin (ads|pixel)|\blinkedin\b/i], jurisdiction: "US/IE" },
+    { name: "Pinterest Tag", patterns: [/pinterest tag|\bpinterest\b/i], jurisdiction: "US" },
+    { name: "Comscore", patterns: [/comscore|scorecardresearch/i], jurisdiction: "US" },
   ];
 
   // Domain → name lookup (rough)
@@ -3694,6 +3793,13 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     "didomi.io": "Didomi",
     "usercentrics.eu": "Usercentrics",
     "fpjs.io": "Fingerprint Pro / FingerprintJS",
+    "optimizely.com": "Optimizely",
+    "gigya.com": "SAP CDC / Gigya",
+    "bing.com": "Microsoft Advertising / Bing",
+    "exponea.com": "Bloomreach / Exponea",
+    "licdn.com": "LinkedIn Insight",
+    "scorecardresearch.com": "Comscore",
+    "pinimg.com": "Pinterest Tag",
   };
 
   const namedInPolicy = [];
@@ -4832,6 +4938,9 @@ function buildSummary(variantResult, parentResult) {
     // Post-consent cookie count (total, not just new)
     postConsentCookieCount: (post.cookies || []).length,
 
+    // Ad-serving signals (post-consent is authoritative for TCF scoring; fall back to pre)
+    adServing: post?.adServing || pre?.adServing || null,
+
     // Errors
     errors: parentResult.errors || [],
   };
@@ -4877,6 +4986,56 @@ function buildOverallDiffSummary(result) {
 }
 
 // ───────────────────────────────────────────
+// CMP vendor list capture
+// ───────────────────────────────────────────
+
+// Pull candidate vendor/processor names out of a CMP preference-centre text dump.
+// Heuristic: lines that look like proper nouns / brand tokens, minus the CMP's
+// own category labels. Kept conservative — it feeds the disclosure corpus, it
+// does not score on its own.
+const CMP_CATEGORY_NOISE = /^(strictly necessary|performance|functional|targeting|advertising|analyt|social media|essential|always active|cookie|cookies|host|description|expiry|lifespan|type|name)\b/i;
+function parseCmpVendorText(text, source) {
+  const vendors = [];
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.length > 60 || CMP_CATEGORY_NOISE.test(line)) continue;
+    if (/^[A-Z0-9][A-Za-z0-9.&/ -]{1,58}$/.test(line)) vendors.push(line);
+  }
+  return { source: source || 'generic', vendors: Array.from(new Set(vendors)), text: String(text || '') };
+}
+
+async function extractCmpVendorList(page, platform) {
+  try {
+    const openers = ['#onetrust-pc-btn-handler', '.ot-sdk-show-settings', '#CybotCookiebotDialogBodyButtonDetails', '#didomi-notice-learn-more-button'];
+    for (const sel of openers) { try { await page.click(sel, { timeout: 2500 }); break; } catch {} }
+    await page.waitForTimeout(1200);
+    // Expand category accordions AND best-effort vendor/host-detail toggles so per-category cookie tables lazy-load.
+    for (const sel of ['.ot-cat-header', '.ot-acc-hdr', '.category-menu-switch-handler', '.category-host-list-handler']) {
+      for (const el of await page.locator(sel).all()) { try { await el.click({ timeout: 600 }); await page.waitForTimeout(150); } catch {} }
+    }
+    // Best-effort: scroll any host-list container to lazy-load all entries.
+    for (let i = 0; i < 8; i++) {
+      try { await page.evaluate(() => { const c = document.querySelector('#ot-lst-cnt, #ot-pc-lst .ot-host-cnt'); if (c) c.scrollTop = c.scrollHeight; }); } catch {}
+      await page.waitForTimeout(120);
+    }
+    // Capture BOTH innerText (line-structured, for vendor parsing) and textContent
+    // (includes collapsed/hidden category descriptions where processors are named).
+    const cap = await page.evaluate(() => {
+      const el = document.querySelector('#onetrust-pc-sdk, #CybotCookiebotDialogDetail, #didomi-host, .cc-window');
+      if (!el) return null;
+      return { innerText: el.innerText || '', textContent: el.textContent || '' };
+    });
+    if (!cap || (!cap.innerText && !cap.textContent)) return null;
+    const source = platform && /onetrust/i.test(platform) ? 'onetrust'
+      : platform && /cookiebot/i.test(platform) ? 'cookiebot'
+      : platform && /didomi/i.test(platform) ? 'didomi' : 'generic';
+    // Corpus text = union of visible + hidden so brand names in collapsed descriptions reach disclosure analysis.
+    const parsed = parseCmpVendorText(cap.innerText, source);
+    return { source, vendors: parsed.vendors, text: (cap.innerText + '\n\n' + cap.textContent) };
+  } catch { return null; }
+}
+
+// ───────────────────────────────────────────
 // Entry point
 // ───────────────────────────────────────────
 
@@ -4885,15 +5044,20 @@ function buildOverallDiffSummary(result) {
 // invoked directly (see require.main guard below).
 module.exports = {
   classifyFindings,
+  classifyAdServing,
   aggregateFingerprinting,
   dedupeFpCalls,
   detectConsentMode,
   buildOverallDiffSummary,
   selectCrawlLinks,
   registrableDomain,
+  detectCnameCloaking,
   CAMPAIGN_PARAM_RE,
   SDK_PATTERNS,
   TRACKER_PATTERNS,
+  analyzePolicyText,
+  parseCmpVendorText,
+  extractCmpVendorList,
 };
 
 if (require.main === module) {

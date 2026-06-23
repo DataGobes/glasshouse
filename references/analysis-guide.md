@@ -11,6 +11,17 @@ Reference for Steps 4–8 of the glasshouse scan workflow. Read this during the 
 5. `field-contract.md` immediately before writing the analysis JSON
 6. `scoring.md` when calculating the score
 
+## Voice & Tone (neutral, not advocacy)
+
+The report contrasts what the law requires with what was observed — it is **not** privacy advocacy. Lawful behaviour is described neutrally.
+
+- Tracking that fires **after** an explicit "Accept all" is lawful and expected. Never frame it as a violation or a gotcha ("meet the whole marketing stack", "the moment you accept"). State counts factually.
+- A large accept-vs-baseline cookie ratio (e.g. 5×) is a **consequence of good pre-consent hygiene** — the baseline is near zero precisely because the site holds everything until consent. Never present a high ratio as a red flag; it corroborates a high pre-consent score.
+- A category bar rendered red marks a *category*, not a verdict. Don't narrate "red = bad".
+- Reject labels like "Alleen essentiële cookies" / "Only essential cookies" are legitimate and arguably clearer than "Reject all". Do not score or describe them as "softer framing".
+- When the scanner cannot measure something (`buttonStyling === null`), say nothing about it. Never infer colour/size from a screenshot. Silence beats invention.
+- Distinguish operator-controllable from vendor-set items in recommendations (see "Recommendation scoping" below).
+
 ## Reject-Path Accessibility (Multi-Layer Banners)
 
 The scanner now traverses one layer deep when the reject button is missing on layer 1. Read these fields from `raw.variants.reject.consent` (the brief surfaces them as "Reject path"):
@@ -33,6 +44,12 @@ Present each tier separately with appropriate severity language. Do NOT lump con
 | 1 | `sdkLoads` | Script/library loads (gtm.js, fbevents.js, bat.js). Not tracking by themselves | **Not a violation** alone |
 
 See `criteria/pre-consent-tracking.md` for the full classification + EDPB Guidelines 2/2023 framing.
+
+### Measurement vs Ad-Serving (before any TCF judgement)
+Read `findings...adServing` before deciding whether a TCF string is required.
+- `programmaticPublisher: false` + measurement signals = advertiser-side conversion/remarketing (Google Ads, Floodlight reporting, Meta CAPI-style pixels). **No TCF needed** — these report on the site's own ad spend, they do not auction third-party inventory.
+- `programmaticPublisher: true` = the site sells/serves third-party ad inventory (prebid, GAM `gampad/ads`, SSP/RTB). TCF (or a documented Additional Consent equivalent) is expected.
+Never infer "programmatic" from the presence of `doubleclick.net`/`floodlight` domains — those are used by both.
 
 ## Art. 12 / 13 / 14 Privacy Policy Content Analysis
 
@@ -89,7 +106,7 @@ See `criteria/dsar.md` for the contact / 30-day commitment / verification-burden
 ## NEW Analysis Sections (post-2026-04 wiki migration)
 
 ### Processor Transparency Audit (criteria/processor-transparency.md)
-After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, parse **both the privacy policy and the cookie policy** for **named** processor mentions (named processors are often listed only in the cookie policy or the CMP vendor table — checking the privacy policy alone over-reports "undisclosed"):
+After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, search **three** corpora for **named** processor mentions — (1) the privacy-policy prose, (2) the cookie policy, and (3) `legalPageContent.cmpVendorList` (the JS-rendered CMP per-vendor list behind "Cookie settings", surfaced in the brief as "CMP vendor list"). The CMP vendor list is the most complete and is a *separate* corpus from the policy prose — it commonly names processors (Optimizely, SAP CDC/Gigya, Microsoft, LinkedIn, Pinterest, Comscore) that the prose omits. Searching the prose alone systematically over-reports "undisclosed" (peer-review root cause 02/12: the prose was read, the cookieverklaring never opened). Do **not** call the policy prose "the cookie policy".
 
 1. For each detected processor (Google Analytics, Meta Pixel, Hotjar, Optimizely, Exponea/Bloomreach, etc.), check whether the **specific name or a known brand alias** appears in *either* policy text before marking it undisclosed. Record where you found it (`disclosureSource`).
 2. Output as `findings.processors.namedInPolicy[]` (named) and `findings.processors.undisclosed[]` (detected but not named)
@@ -153,3 +170,9 @@ dataset:
 sqlite3 <path/to/your>/fines.db \
   "SELECT etid, controller, date_iso, fine_amount_eur, violation_type FROM fines WHERE etid='ETid-1844';"
 ```
+
+### Recommendation scoping (operator vs vendor)
+Separate what the site operator controls from what the vendor sets, especially for `Secure`-flag and cookie-attribute recommendations:
+- **Operator-controllable**: first-party cookies and tags the site configures — e.g. Google's `_ga` accepts `cookie_flags: 'SameSite=None;Secure'`. Recommend the concrete config change.
+- **Vendor-set**: cookies written by a third party the operator cannot directly re-flag — e.g. `OptanonConsent` (OneTrust), `_uetsid`/`_uetvid` (Microsoft). The realistic ask is "raise it with the vendor / enable any available setting", not "set the Secure flag".
+Never issue a blanket "add Secure to all cookies" recommendation across both classes.

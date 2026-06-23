@@ -2504,9 +2504,10 @@ Top-down flow: origin card at top, SVG arrow, 2-column grid of destination cards
             </div>
         </div>
         <div class="tc-legend reveal">
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green)"></span> Adequate</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow)"></span> DPF Certified</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red)"></span> No Safeguards</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green)"></span> EU / Adequate</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow)"></span> DPF-Certified US</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red)"></span> Unverified Transfer</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
         </div>
     </div>
     <div class="datagobes-watermark"><a href="https://datagobes.dev"><span style="color:var(--brand-ember, #c75c2c); -webkit-text-fill-color:var(--brand-ember, #c75c2c)">&gt;_</span> datagobes.dev</a></div>

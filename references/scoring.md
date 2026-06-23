@@ -30,10 +30,11 @@ Total: **100%**.
 - 0: No consent mechanism at all
 
 **Modifiers:**
-- Binary accept/reject only (no category toggles via `consentGranularity`): cap at 75
-- Granular toggles present: eligible for 100
+- Binary accept/reject with **no granular controls anywhere** — not on layer 1 and not behind a settings/preference link (`consentGranularity.hasToggles === false && consentGranularity.settingsLinkFound === false`): cap at 75.
+- **Binary first layer but granular category controls reachable via a settings link** (`consentGranularity.settingsLinkFound === true`): **no cap.** First-layer toggles are not legally required; a one-click layer-1 reject plus granular controls one click deeper is compliant. Treat the lack of first-layer toggles as an at-most informational note, never a scored deduction. (Reproduced bug: the 2026-06 miele.nl scan capped consent at 75 here despite OneTrust granular controls behind "Cookie-instellingen".)
+- Granular toggles present on layer 1: eligible for 100.
 - TCF detected but malformed consent string: −5
-- Site uses Google advertising but no TCF: −10
+- Site runs **publisher-side programmatic advertising** without a TCF string (`adServing.programmaticPublisher === true` — prebid.js, googlesyndication, securepubads/`gampad/ads`, or an SSP/RTB call): −10. Do **NOT** apply this when the only ad calls are **advertiser-side measurement** (`adServing.programmaticPublisher === false`): view-through conversions, remarketing collects (`rmkt/collect`, `1p-user-list`), and Floodlight reporting tags (`activity;cat=`) are conversion/remarketing measurement, not ad slots, and need no TCF. The presence of `doubleclick.net`/`floodlight` domains alone is **not** evidence of programmatic publishing.
 - No consent revocation mechanism (`consentRevocation.mechanismFound` = false): −15
 - Revocation found but **non-essential processing continues** after revocation — tracking scripts still fire (`consentRevocation.newRequestsAfterRevocation > 0`): −10. Note: `consentRevocation.trackingCookiesRemaining` being non-empty while `newRequestsAfterRevocation === 0` (cookies persist but nothing reads them) is **not** this penalty — the law requires stopping processing, not deleting cookies (see cookie-hygiene.md).
 - **Withdrawal harder than granting (Art. 7(3))** — judge by *channel and effort*, not raw click count. EDPB Guidelines 05/2020 require withdrawal to be "equally straightforward" via the *same interface*, **not** identical to the number of clicks used to consent:
@@ -111,7 +112,7 @@ Base score = `(present_headers / total_checked) × 100` covering HSTS, CSP, X-Co
 
 **Modifiers:**
 - Cookie purpose mismatch (`cookiePurposeMatching`): −5 each, capped at −20
-- Cookie expires after 13 months without functional justification: −5 each
+- Cookie expiry **materially beyond** the ~13-month convention (> ~24 months) without functional justification: −5 each. Do **not** penalise standard durations at or near the 13-month ceiling (≤ ~400 days), including Google Analytics' 13-month / 400-day default — these are conventional, not excessive. The legitimate cookie-management marks are an excessive cookie *count* and missing `Secure` flags on operator-controllable cookies (see Task C in analysis-guide). (Reproduced bug: the 2026-06 miele.nl scan scored cookies 6.4 partly by treating ~400-day GA cookies as deductions.)
 - Pixel fires after reject (FAIL flag, separate from score): always surface in TLDR
 
 ### Processor Transparency (6%)
@@ -168,8 +169,7 @@ These do not have their own weighted slot but adjust the overall score:
   - Biometric SDK detected without DPIA mention: −15
   - Identity verification SDK (Jumio, Onfido, Veriff) without explicit consent: −15
 
-- **DPIA gap** (criteria/dpia.md) — when high-risk indicators detected (session replay, fingerprinting SDK, large-scale ad pixels, AI/ML profiling):
-  - DPIA not mentioned in policy: −10 from overall
+- **DPIA gap** (criteria/dpia.md) — Art. 35 requires *conducting* a DPIA for high-risk processing; it does **not** require publishing or referencing one in the privacy policy. The absence of a DPIA *mention* is **not** evidence the DPIA was not done — **apply no score modifier for it.** When high-risk indicators are present (session replay, fingerprinting SDK, large-scale ad pixels, AI/ML profiling), describe them factually in the report and, where relevant, recommend confirming a DPIA exists — but do not deduct. (Reproduced bug: the 2026-06 miele.nl scan applied −10 here and dropped 6.7 vs the verified 8.0.)
 
 ## Score Calculation
 

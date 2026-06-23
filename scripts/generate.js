@@ -30,8 +30,60 @@ const MAX = {
 };
 
 // ───────────────────────────────────────────
+// Opt-out / consent cookie detector — pure helper, usable without CLI setup
+// ───────────────────────────────────────────
+function isOptOutCookie(name) {
+  return /(opt-?out|consent|optanon|cookieconsent|euconsent|gdpr)/i.test(String(name || ''));
+}
+
+// ───────────────────────────────────────────
+// eTLD+1 and party-classification — pure helpers, usable without CLI setup
+// ───────────────────────────────────────────
+const COMPOUND_TLDS = new Set([
+  "co.uk", "co.jp", "co.nz", "co.kr", "co.in", "co.za", "co.il",
+  "com.au", "com.br", "com.mx", "com.cn", "com.tw", "com.sg", "com.hk", "com.tr",
+  "net.au", "net.nz", "org.uk", "ac.uk", "gov.uk", "org.au",
+]);
+function eTLDplus1(domain) {
+  const clean = (domain || "").replace(/^\./, "").toLowerCase().trim();
+  if (!clean) return "";
+  const parts = clean.split(".");
+  if (parts.length <= 2) return clean;
+  const last2 = parts.slice(-2).join(".");
+  if (COMPOUND_TLDS.has(last2)) return parts.slice(-3).join(".");
+  return last2;
+}
+
+/**
+ * Classify a host relative to a site's meta:
+ *   'first-party'  — eTLD+1 matches meta.domain's eTLD+1
+ *   'affiliated'   — eTLD+1 is listed in meta.aliasDomains (same owner, different eTLD)
+ *   'third-party'  — everything else
+ *
+ * @param {string} host   — the hostname to classify (e.g. "media.miele.com")
+ * @param {{ domain: string, aliasDomains?: string[] }} meta
+ * @returns {'first-party'|'affiliated'|'third-party'}
+ */
+function classifyParty(host, meta) {
+  const hostEtld = eTLDplus1(host);
+  if (!hostEtld) return 'third-party';
+  const siteEtld = eTLDplus1(meta.domain);
+  if (hostEtld === siteEtld) return 'first-party';
+  const aliasEtlds = Array.isArray(meta.aliasDomains)
+    ? meta.aliasDomains.map(eTLDplus1).filter(Boolean)
+    : [];
+  if (aliasEtlds.includes(hostEtld)) return 'affiliated';
+  return 'third-party';
+}
+
+// ───────────────────────────────────────────
 // CLI
 // ───────────────────────────────────────────
+if (require.main !== module) {
+  // When required as a module (e.g. by tests), skip CLI setup.
+  // Exports are defined at the bottom of this file.
+} else {
+
 const args = process.argv.slice(2);
 if (!args.length) {
   console.error("Usage: node generate.js <analysis.json> [--output-dir <dir>]");
@@ -716,12 +768,16 @@ function buildCookies(slideNum, totalSlides) {
       }
 
       const widthPct = c.durationDays > 0 ? Math.max((c.durationDays / maxDays) * 100, 1) : 0;
-      const barClass = `persist-bar-${purpose}${c.durationDays === 0 ? " persist-bar-session" : ""}`;
+      const optOut = isOptOutCookie(c.name);
+      const barClass = optOut
+        ? `persist-bar-essential${c.durationDays === 0 ? " persist-bar-session" : ""}`
+        : `persist-bar-${purpose}${c.durationDays === 0 ? " persist-bar-session" : ""}`;
       const domain = esc(c.domain || "");
       rows.push(`<div class="persist-row reveal">
         <div class="persist-name-col">
           <span class="persist-name">${esc(c.name)}</span>
           ${domain ? `<span class="persist-domain">${domain}</span>` : ""}
+          ${optOut ? `<span class="persist-note" style="color:var(--accent-green);font-size:0.7em;margin-left:0.3em;">opt-out</span>` : ""}
         </div>
         <div class="persist-bar-track">
           <div class="persist-bar ${barClass}" style="width:${widthPct.toFixed(1)}%;"></div>
@@ -760,21 +816,8 @@ function buildCookies(slideNum, totalSlides) {
 
 let _cookiePartyWarned = false;
 
-// eTLD+1 extraction — covers common compound TLDs without a PSL dependency
-const COMPOUND_TLDS = new Set([
-  "co.uk", "co.jp", "co.nz", "co.kr", "co.in", "co.za", "co.il",
-  "com.au", "com.br", "com.mx", "com.cn", "com.tw", "com.sg", "com.hk", "com.tr",
-  "net.au", "net.nz", "org.uk", "ac.uk", "gov.uk", "org.au",
-]);
-function eTLDplus1(domain) {
-  const clean = (domain || "").replace(/^\./, "").toLowerCase().trim();
-  if (!clean) return "";
-  const parts = clean.split(".");
-  if (parts.length <= 2) return clean;
-  const last2 = parts.slice(-2).join(".");
-  if (COMPOUND_TLDS.has(last2)) return parts.slice(-3).join(".");
-  return last2;
-}
+// eTLDplus1 / COMPOUND_TLDS are defined at module scope above — visible here via outer-scope lookup.
+// classifyParty is also defined there as a module-level pure helper.
 
 function buildCookieParty(slideNum, totalSlides) {
   const cookies = findings.cookies || [];
@@ -782,23 +825,24 @@ function buildCookieParty(slideNum, totalSlides) {
   const siteEtld = eTLDplus1(meta.domain);
   if (!siteEtld) return null;
 
-  // First-party = meta.domain eTLD+1 OR any domain in meta.aliasDomains
-  // (use aliasDomains when the scanned URL redirects across TLDs — e.g. dyson.com → dyson.nl —
-  //  or when the site owner controls multiple eTLDs that should share a browsing context)
+  // Classify cookies via classifyParty: first-party, affiliated (same-owner different eTLD),
+  // or third-party. aliasDomains lists eTLD+1 values (or hostnames) the site owner also controls
+  // (e.g. dyson.com → dyson.nl redirect chain, or multi-TLD brands like miele.*).
   const aliasEtlds = Array.isArray(meta.aliasDomains)
     ? meta.aliasDomains.map(eTLDplus1).filter(Boolean)
     : [];
-  const firstPartyEtlds = new Set([siteEtld, ...aliasEtlds]);
 
   const firstParty = [];
+  const affiliated = [];
   const thirdParty = [];
   for (const c of cookies) {
-    const cEtld = eTLDplus1(c.domain);
-    if (cEtld && firstPartyEtlds.has(cEtld)) firstParty.push(c);
+    const party = classifyParty(c.domain, meta);
+    if (party === 'first-party') firstParty.push(c);
+    else if (party === 'affiliated') affiliated.push(c);
     else thirdParty.push(c);
   }
 
-  const total = firstParty.length + thirdParty.length;
+  const total = firstParty.length + affiliated.length + thirdParty.length;
   if (total === 0) return null;
 
   // Heuristic warning: if 0 cookies match meta.domain and aliasDomains is empty, the author
@@ -816,7 +860,8 @@ function buildCookieParty(slideNum, totalSlides) {
     }
   }
   const firstPct = (firstParty.length / total) * 100;
-  const thirdPct = 100 - firstPct;
+  const affiliatedPct = (affiliated.length / total) * 100;
+  const thirdPct = (thirdParty.length / total) * 100;
 
   const COL_CAP = 14;
   const PURPOSE_ORDER = { marketing: 0, tracking: 0, analytics: 1, functional: 2, essential: 3, unknown: 4 };
@@ -864,32 +909,38 @@ function buildCookieParty(slideNum, totalSlides) {
     return acc;
   }, {});
 
-  const fpLabelList = [siteEtld, ...aliasEtlds].join(" + ");
+  const fpLabelList = siteEtld;
   const firstPartyLabel = `First-Party <span class="cp-col-sub">${esc(fpLabelList)}</span>`;
+  const affiliatedLabel = `Affiliated <span class="cp-col-sub">${esc(aliasEtlds.join(", ") || "same owner")}</span>`;
   const thirdPartyLabel = `Third-Party <span class="cp-col-sub">other domains</span>`;
   const descExtra = aliasEtlds.length
-    ? ` (incl. alias ${aliasEtlds.map(esc).join(", ")} from the scanned redirect chain)`
+    ? ` Affiliated domains (${aliasEtlds.map(esc).join(", ")}) are same-owner different eTLDs.`
     : "";
 
   return `<section class="slide" data-title="First-Party vs Third-Party">
   <div class="slide-content">
     <span class="badge reveal">Cookie Ownership</span>
     <h2 class="reveal">First-Party vs Third-Party</h2>
-    <p class="slide-desc reveal">Cookies whose domain matches ${esc(fpLabelList)} count as first-party${descExtra}; every other domain is third-party regardless of who actually controls the tracker.</p>
-    <div class="cp-bar reveal" role="img" aria-label="First-party ${firstParty.length}, third-party ${thirdParty.length}">
+    <p class="slide-desc reveal">Cookies whose domain matches ${esc(fpLabelList)} count as first-party.${descExtra} Every other domain is third-party regardless of who actually controls the tracker.</p>
+    <div class="cp-bar reveal" role="img" aria-label="First-party ${firstParty.length}, affiliated ${affiliated.length}, third-party ${thirdParty.length}">
       <div class="cp-bar-seg cp-bar-first" style="width:${firstPct.toFixed(1)}%;">
         ${firstPct >= 8 ? `<span class="cp-bar-count">${firstParty.length}</span>` : ""}
       </div>
+      ${affiliated.length ? `<div class="cp-bar-seg cp-bar-affiliated" style="width:${affiliatedPct.toFixed(1)}%;">
+        ${affiliatedPct >= 8 ? `<span class="cp-bar-count">${affiliated.length}</span>` : ""}
+      </div>` : ""}
       <div class="cp-bar-seg cp-bar-third" style="width:${thirdPct.toFixed(1)}%;">
         ${thirdPct >= 8 ? `<span class="cp-bar-count">${thirdParty.length}</span>` : ""}
       </div>
     </div>
     <div class="cp-bar-legend reveal">
       <div class="cp-legend-item"><span class="cp-legend-swatch cp-swatch-first"></span>First-party <b>${firstParty.length}</b> (${firstPct.toFixed(0)}%)</div>
+      ${affiliated.length ? `<div class="cp-legend-item"><span class="cp-legend-swatch cp-swatch-affiliated"></span>Affiliated <b>${affiliated.length}</b> (${affiliatedPct.toFixed(0)}%)</div>` : ""}
       <div class="cp-legend-item"><span class="cp-legend-swatch cp-swatch-third"></span>Third-party <b>${thirdParty.length}</b> (${thirdPct.toFixed(0)}%)</div>
     </div>
     <div class="cp-grid reveal">
       ${renderColumn(firstPartyLabel, firstParty, "cp-col-first", "var(--accent-green)")}
+      ${affiliated.length ? renderColumn(affiliatedLabel, affiliated, "cp-col-affiliated", "var(--accent-yellow)") : ""}
       ${renderColumn(thirdPartyLabel, thirdParty, "cp-col-third", "var(--accent-red)")}
     </div>
     ${thirdParty.length ? `<div class="cp-footnote reveal">Third-party purpose mix: ${Object.entries(tpPurpose).map(([k,v]) => `<span class="cp-foot-pill cp-foot-${k}">${k} ${v}</span>`).join(" ")}</div>` : ""}
@@ -953,9 +1004,10 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
       <div class="tc-dest-grid">${cards}</div>
     </div>
     <div class="tc-legend reveal">
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> Adequate</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF Certified</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> No Safeguards</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> EU / Adequate</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF-Certified US</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> Unverified Transfer</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
     </div>
   </div>
   ${watermark()}
@@ -2753,3 +2805,13 @@ fs.writeFileSync(mdPath, generateMarkdown(), "utf-8");
 console.log(`HTML: ${htmlPath}`);
 console.log(`Markdown: ${mdPath}`);
 console.log(`Slides: ${allSlideHtml.length}`);
+
+} // end require.main === module guard
+
+// ───────────────────────────────────────────
+// Module exports (available when required as a library, e.g. by tests)
+// ───────────────────────────────────────────
+module.exports = {
+  classifyParty,
+  isOptOutCookie,
+};
