@@ -11,6 +11,17 @@ Reference for Steps 4–8 of the glasshouse scan workflow. Read this during the 
 5. `field-contract.md` immediately before writing the analysis JSON
 6. `scoring.md` when calculating the score
 
+## Voice & Tone (neutral, not advocacy)
+
+The report contrasts what the law requires with what was observed — it is **not** privacy advocacy. Lawful behaviour is described neutrally.
+
+- Tracking that fires **after** an explicit "Accept all" is lawful and expected. Never frame it as a violation or a gotcha ("meet the whole marketing stack", "the moment you accept"). State counts factually.
+- A large accept-vs-baseline cookie ratio (e.g. 5×) is a **consequence of good pre-consent hygiene** — the baseline is near zero precisely because the site holds everything until consent. Never present a high ratio as a red flag; it corroborates a high pre-consent score.
+- A category bar rendered red marks a *category*, not a verdict. Don't narrate "red = bad".
+- Reject labels like "Alleen essentiële cookies" / "Only essential cookies" are legitimate and arguably clearer than "Reject all". Do not score or describe them as "softer framing".
+- When the scanner cannot measure something (`buttonStyling === null`), say nothing about it. Never infer colour/size from a screenshot. Silence beats invention.
+- Distinguish operator-controllable from vendor-set items in recommendations (see "Recommendation scoping" below).
+
 ## Reject-Path Accessibility (Multi-Layer Banners)
 
 The scanner now traverses one layer deep when the reject button is missing on layer 1. Read these fields from `raw.variants.reject.consent` (the brief surfaces them as "Reject path"):

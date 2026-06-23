@@ -222,6 +222,7 @@ Top-level sections:
 
 **`findings`**: All structured data for slides:
 - `tldr`: 3 takeaways (positive, negative, surprising) — `emoji`, `headline`, `detail`, `sentiment`
+  - **Tone**: write `tldr` and `markdownReport` per the "Voice & Tone" section of analysis-guide.md — neutral, no advocacy, lawful post-consent behaviour described factually.
 - `consent`: Banner details, annotations, button asymmetry
 - `darkPatterns`: Fairness scale (tilt class, factors, verdict)
 - `beforeAfter`: Pre/post cookie counts and pill breakdowns
