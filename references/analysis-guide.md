@@ -164,3 +164,9 @@ dataset:
 sqlite3 <path/to/your>/fines.db \
   "SELECT etid, controller, date_iso, fine_amount_eur, violation_type FROM fines WHERE etid='ETid-1844';"
 ```
+
+### Recommendation scoping (operator vs vendor)
+Separate what the site operator controls from what the vendor sets, especially for `Secure`-flag and cookie-attribute recommendations:
+- **Operator-controllable**: first-party cookies and tags the site configures — e.g. Google's `_ga` accepts `cookie_flags: 'SameSite=None;Secure'`. Recommend the concrete config change.
+- **Vendor-set**: cookies written by a third party the operator cannot directly re-flag — e.g. `OptanonConsent` (OneTrust), `_uetsid`/`_uetvid` (Microsoft). The realistic ask is "raise it with the vendor / enable any available setting", not "set the Secure flag".
+Never issue a blanket "add Secure to all cookies" recommendation across both classes.
