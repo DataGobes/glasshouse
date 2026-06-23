@@ -4870,6 +4870,9 @@ function buildSummary(variantResult, parentResult) {
     // Post-consent cookie count (total, not just new)
     postConsentCookieCount: (post.cookies || []).length,
 
+    // Ad-serving signals (post-consent is authoritative for TCF scoring; fall back to pre)
+    adServing: post?.adServing || pre?.adServing || null,
+
     // Errors
     errors: parentResult.errors || [],
   };
