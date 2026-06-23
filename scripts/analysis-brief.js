@@ -314,15 +314,18 @@ if (lpc.privacyPolicy?.text || lpc.cookiePolicy?.text) {
   section("LEGAL PAGE CONTENT");
   if (lpc.privacyPolicy?.text) {
     ln(`Privacy policy (${lpc.privacyPolicy.charCount} chars, from ${lpc.privacyPolicy.url}):`);
-    // First 3000 chars — enough for Art. 13 analysis
-    ln(lpc.privacyPolicy.text.substring(0, 3000));
-    if (lpc.privacyPolicy.text.length > 3000) ln(`... (truncated, ${lpc.privacyPolicy.text.length - 3000} more chars)`);
+    // First 6000 chars — enough for Art. 13 analysis including cookie sections in long single-page policies
+    ln(lpc.privacyPolicy.text.substring(0, 6000));
+    if (lpc.privacyPolicy.text.length > 6000) ln(`... (truncated, ${lpc.privacyPolicy.text.length - 6000} more chars)`);
   }
   if (lpc.cookiePolicy?.text) {
     ln();
     ln(`Cookie policy (${lpc.cookiePolicy.charCount} chars, from ${lpc.cookiePolicy.url}):`);
-    ln(lpc.cookiePolicy.text.substring(0, 3000));
-    if (lpc.cookiePolicy.text.length > 3000) ln(`... (truncated, ${lpc.cookiePolicy.text.length - 3000} more chars)`);
+    ln(lpc.cookiePolicy.text.substring(0, 6000));
+    if (lpc.cookiePolicy.text.length > 6000) ln(`... (truncated, ${lpc.cookiePolicy.text.length - 6000} more chars)`);
+  }
+  if (lpc.cmpVendorList?.vendors?.length) {
+    ln(`\nCMP vendor list (${lpc.cmpVendorList.source}, ${lpc.cmpVendorList.vendors.length} vendors): ${lpc.cmpVendorList.vendors.slice(0, 40).join(", ")}`);
   }
 }
 

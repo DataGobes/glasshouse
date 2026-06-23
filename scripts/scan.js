@@ -3626,7 +3626,8 @@ function isSecurityTxtExpired(expires) {
 function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
   const privacy = legalPageContent?.privacyPolicy?.text || "";
   const cookie = legalPageContent?.cookiePolicy?.text || "";
-  const combined = (privacy + "\n\n" + cookie).toLowerCase();
+  const cmpVendors = legalPageContent?.cmpVendorList?.text || "";
+  const combined = (privacy + "\n\n" + cookie + "\n\n" + cmpVendors).toLowerCase();
   const policyLen = combined.trim().length;
 
   // ── DSAR ──

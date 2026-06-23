@@ -36,3 +36,11 @@ test('brand-name-only prose discloses Microsoft and SAP CC / Gigya', () => {
   assert.ok(!out.processors.undisclosed.includes('Microsoft Advertising / Bing'));
   assert.ok(!out.processors.undisclosed.includes('SAP CDC / Gigya'));
 });
+
+test('cmpVendorList text counts as disclosure', () => {
+  const tpd = [{ domain: 'logx.optimizely.com' }];
+  const lpc = { privacyPolicy: { text: '' }, cookiePolicy: { text: '' }, cmpVendorList: { source: 'onetrust', text: 'Optimizely\nSAP CDC / Gigya', vendors: ['Optimizely','SAP CDC / Gigya'] } };
+  const out = require('../../scripts/scan.js').analyzePolicyText(lpc, tpd, null);
+  assert.ok(out.processors.namedInPolicy.some(p => p.name === 'Optimizely'));
+  assert.ok(!out.processors.undisclosed.includes('Optimizely'));
+});
