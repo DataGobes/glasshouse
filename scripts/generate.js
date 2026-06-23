@@ -976,7 +976,6 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
   // Cap then sort worst-risk first so the eye lands on the red destinations.
   const visibleDomains = domains
     .slice(0, MAX.DOMAIN_NODES)
-    .slice()
     .sort((a, b) => riskOf(a).rank - riskOf(b).rank);
 
   const cards = visibleDomains.map((d) => {

@@ -2615,41 +2615,50 @@ A network diagram showing data flowing from the scanned site to third-party juri
 
 #### Transfer Circuit HTML
 
-Top-down flow: origin card at top, SVG arrow, 2-column grid of destination cards below.
+Top-down flow: a plain-language explainer, the origin card, an SVG "sends data to" arrow,
+then a risk-sorted (worst-first) grid of colour-coded destination cards below. Each card's
+risk class (`tc-dest-safe|dpf|risk|neutral`) drives a visible left bar, tinted surface, and
+pill — no inline colour overrides.
 
 ```html
 <section class="slide" data-title="Cross-Border Transfers">
     <div class="slide-content">
         <span class="badge reveal">Data Transfers</span>
         <h2 class="reveal">Transfer Circuit</h2>
+        <p class="tc-explainer reveal">A <strong>cross-border transfer</strong> happens whenever your data leaves the EU. Jurisdiction decides the safeguard: <span class="tc-key tc-key-safe">EU / adequate countries</span> are protected by default, a <span class="tc-key tc-key-dpf">DPF-certified US recipient</span> is conditionally allowed, and an <span class="tc-key tc-key-risk">unverified or non-adequate destination</span> (e.g. RU, CN) needs Standard Contractual Clauses — or it is a high-risk transfer.</p>
         <div class="transfer-circuit reveal">
             <div class="tc-origin reveal">
                 <span class="tc-origin-icon">🌐</span>
                 <span class="tc-origin-label">{DOMAIN}</span>
             </div>
             <div class="tc-flow-line reveal">
-                <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <polyline points="19 12 12 19 5 12"></polyline>
                 </svg>
+                <span class="tc-flow-label">sends data to</span>
             </div>
             <div class="tc-dest-grid">
                 <div class="tc-dest-card tc-dest-{RISK} reveal">
                     <div class="tc-dest-header">
                         <span class="tc-dest-flag">{FLAG}</span>
                         <span class="tc-dest-jurisdiction">{JURISDICTION}</span>
+                        <span class="tc-dest-pill">{RISK_LABEL}</span>
                     </div>
+                    <div class="tc-dest-company">{COMPANY}</div>
                     <div class="tc-dest-domains">{DOMAIN_LIST}</div>
-                    <div class="tc-dest-count">{N} reqs</div>
+                    <div class="tc-dest-meta">
+                        <span class="tc-dest-safeguard">{SAFEGUARD}</span>
+                        <span class="tc-dest-count">{N} reqs</span>
+                    </div>
                 </div>
-                <!-- More destination cards -->
+                <!-- More destination cards, worst-risk first -->
             </div>
         </div>
         <div class="tc-legend reveal">
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green)"></span> EU / Adequate</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow)"></span> DPF-Certified US</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red)"></span> Unverified Transfer</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-safe"></span> EU / Adequate</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-dpf"></span> DPF-Certified US</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-risk"></span> Unverified / High-risk</div>
         </div>
     </div>
     <div class="datagobes-watermark"><a href="https://datagobes.dev"><span style="color:var(--brand-ember, #c75c2c); -webkit-text-fill-color:var(--brand-ember, #c75c2c)">&gt;_</span> datagobes.dev</a></div>
