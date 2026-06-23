@@ -106,7 +106,7 @@ See `criteria/dsar.md` for the contact / 30-day commitment / verification-burden
 ## NEW Analysis Sections (post-2026-04 wiki migration)
 
 ### Processor Transparency Audit (criteria/processor-transparency.md)
-After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, parse **both the privacy policy and the cookie policy** for **named** processor mentions (named processors are often listed only in the cookie policy or the CMP vendor table — checking the privacy policy alone over-reports "undisclosed"):
+After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, search **three** corpora for **named** processor mentions — (1) the privacy-policy prose, (2) the cookie policy, and (3) `legalPageContent.cmpVendorList` (the JS-rendered CMP per-vendor list behind "Cookie settings", surfaced in the brief as "CMP vendor list"). The CMP vendor list is the most complete and is a *separate* corpus from the policy prose — it commonly names processors (Optimizely, SAP CDC/Gigya, Microsoft, LinkedIn, Pinterest, Comscore) that the prose omits. Searching the prose alone systematically over-reports "undisclosed" (peer-review root cause 02/12: the prose was read, the cookieverklaring never opened). Do **not** call the policy prose "the cookie policy".
 
 1. For each detected processor (Google Analytics, Meta Pixel, Hotjar, Optimizely, Exponea/Bloomreach, etc.), check whether the **specific name or a known brand alias** appears in *either* policy text before marking it undisclosed. Record where you found it (`disclosureSource`).
 2. Output as `findings.processors.namedInPolicy[]` (named) and `findings.processors.undisclosed[]` (detected but not named)
