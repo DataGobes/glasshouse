@@ -964,30 +964,49 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
 </section>`;
 
-  const visibleDomains = domains.slice(0, MAX.DOMAIN_NODES);
+  // Defensive risk mapping: schema enum is safe | dpf | risk; anything else → neutral.
+  const RISK = {
+    risk: { cls: "risk", rank: 0, label: "High risk", safeguard: "No SCCs / non-adequate" },
+    dpf: { cls: "dpf", rank: 1, label: "Conditional", safeguard: "DPF-certified" },
+    safe: { cls: "safe", rank: 2, label: "Adequate", safeguard: "EU / adequate" },
+  };
+  const NEUTRAL = { cls: "neutral", rank: 3, label: "Unknown", safeguard: "Status unknown" };
+  const riskOf = (d) => RISK[d.risk] || NEUTRAL;
+
+  // Cap then sort worst-risk first so the eye lands on the red destinations.
+  const visibleDomains = domains
+    .slice(0, MAX.DOMAIN_NODES)
+    .slice()
+    .sort((a, b) => riskOf(a).rank - riskOf(b).rank);
 
   const cards = visibleDomains.map((d) => {
+    const rk = riskOf(d);
     const flagMatch = (d.jurisdiction || "").match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\S+\s)/u);
     const flag = d.flag || (flagMatch ? flagMatch[1].trim() : "🌍");
     const juris = d.flag ? esc(d.jurisdiction) : esc((d.jurisdiction || "").replace(/^\S+\s+/, "").trim());
     const rawDomains = Array.isArray(d.domains) ? d.domains : (d.domains || "").split(",").map(s => s.trim()).filter(Boolean);
     const domainsStr = rawDomains.join(", ");
-    const riskClass = `tc-dest-${d.risk || "safe"}`;
-    return `<div class="tc-dest-card ${riskClass} reveal" style="background:rgba(28,25,23,0.025);border-color:transparent;box-shadow:none;">
+    return `<div class="tc-dest-card tc-dest-${rk.cls} reveal">
       <div class="tc-dest-header">
         <span class="tc-dest-flag">${flag}</span>
         <span class="tc-dest-jurisdiction">${juris}</span>
+        <span class="tc-dest-pill">${rk.label}</span>
       </div>
+      ${d.company ? `<div class="tc-dest-company">${esc(d.company)}</div>` : ""}
       <div class="tc-dest-domains">${esc(domainsStr)}</div>
-      ${d.requestCount ? `<div class="tc-dest-count">${d.requestCount} req${d.requestCount !== 1 ? "s" : ""}</div>` : ""}
+      <div class="tc-dest-meta">
+        <span class="tc-dest-safeguard">${rk.safeguard}</span>
+        ${d.requestCount ? `<span class="tc-dest-count">${d.requestCount} req${d.requestCount !== 1 ? "s" : ""}</span>` : ""}
+      </div>
     </div>`;
   }).join("\n");
 
   const arrow = `<div class="tc-flow-line reveal">
-    <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="5" x2="12" y2="19"></line>
       <polyline points="19 12 12 19 5 12"></polyline>
     </svg>
+    <span class="tc-flow-label">sends data to</span>
   </div>`;
 
   return `<section class="slide" data-title="Cross-Border Transfers">
@@ -995,6 +1014,7 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
     <span class="badge reveal">Data Transfers</span>
     <h2 class="reveal">Transfer Circuit</h2>
     ${slideDesc("thirdPartyDomains")}
+    <p class="tc-explainer reveal">A <strong>cross-border transfer</strong> happens whenever your data leaves the EU. Jurisdiction decides the safeguard: <span class="tc-key tc-key-safe">EU / adequate countries</span> are protected by default, a <span class="tc-key tc-key-dpf">DPF-certified US recipient</span> is conditionally allowed, and an <span class="tc-key tc-key-risk">unverified or non-adequate destination</span> (e.g. RU, CN) needs Standard Contractual Clauses — or it is a high-risk transfer.</p>
     <div class="transfer-circuit reveal">
       <div class="tc-origin reveal">
         <span class="tc-origin-icon">&#x1F310;</span>
@@ -1004,10 +1024,9 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
       <div class="tc-dest-grid">${cards}</div>
     </div>
     <div class="tc-legend reveal">
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> EU / Adequate</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF-Certified US</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> Unverified Transfer</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-safe"></span> EU / Adequate</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-dpf"></span> DPF-Certified US</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-risk"></span> Unverified / High-risk</div>
     </div>
   </div>
   ${watermark()}

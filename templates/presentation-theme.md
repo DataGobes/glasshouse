@@ -2416,14 +2416,33 @@ A network diagram showing data flowing from the scanned site to third-party juri
 #### Transfer Circuit CSS
 
 ```css
-/* Circuit board container */
+/* Plain-language explainer above the flow */
+.tc-explainer {
+    max-width: 52rem;
+    margin: var(--element-gap) auto 0;
+    text-align: center;
+    font-size: var(--small-size);
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.tc-explainer strong { color: var(--text-primary); }
+.tc-key {
+    font-weight: 700;
+    white-space: nowrap;
+}
+.tc-key-safe { color: var(--accent-green); }
+.tc-key-dpf { color: var(--accent-yellow); }
+.tc-key-risk { color: var(--accent-red); }
+
+/* Circuit board container — vertical top-to-bottom flow:
+   origin → downward arrow → destination grid. */
 .transfer-circuit {
     position: relative;
     margin-top: var(--content-gap);
-    min-height: clamp(10rem, 22vh, 16rem);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 /* Origin card — the scanned site at top */
@@ -2437,8 +2456,7 @@ A network diagram showing data flowing from the scanned site to third-party juri
     border: 2px solid var(--accent);
     border-radius: 10px;
     box-shadow: var(--card-shadow-accent);
-    max-width: 20rem;
-    margin: 0 auto;
+    max-width: 24rem;
 }
 .tc-origin-icon {
     font-size: clamp(1rem, 2vw, 1.5rem);
@@ -2453,37 +2471,61 @@ A network diagram showing data flowing from the scanned site to third-party juri
 /* Flow arrow between origin and destinations */
 .tc-flow-line {
     display: flex;
-    justify-content: center;
-    padding: clamp(0.3rem, 0.6vh, 0.5rem) 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: clamp(0.3rem, 0.8vh, 0.6rem) 0;
 }
 .tc-flow-arrow {
-    opacity: 0.4;
+    opacity: 0.85;
+}
+.tc-flow-label {
+    font-family: var(--font-mono);
+    font-size: var(--mono-size);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 /* Destination cards grid */
 .tc-dest-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: clamp(0.4rem, 0.8vw, 0.6rem);
-    max-width: 36rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.5rem, 1vw, 0.85rem);
+    width: 100%;
+    max-width: 60rem;
     margin: 0 auto;
 }
 .tc-dest-card {
+    position: relative;
+    overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--bg-card-border);
-    border-left: 3px solid var(--text-muted);
-    border-radius: 8px;
-    padding: clamp(0.4rem, 0.8vw, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
+    border-left: 5px solid var(--text-muted);
+    border-radius: 10px;
+    padding: clamp(0.55rem, 1vw, 0.8rem) clamp(0.7rem, 1.3vw, 0.95rem);
     box-shadow: var(--card-shadow);
 }
-.tc-dest-safe { border-left-color: var(--accent-green); }
-.tc-dest-dpf { border-left-color: var(--accent-yellow); }
-.tc-dest-risk { border-left-color: var(--accent-red); }
+/* Risk colour — driven entirely by these classes (no inline overrides).
+   Strong left accent bar + tinted surface so the coding reads at a glance. */
+.tc-dest-safe {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(90deg, rgba(5,150,105,0.07), var(--bg-card) 60%);
+}
+.tc-dest-dpf {
+    border-left-color: var(--accent-yellow);
+    background: linear-gradient(90deg, rgba(217,119,6,0.08), var(--bg-card) 60%);
+}
+.tc-dest-risk {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(220,38,38,0.09), var(--bg-card) 60%);
+}
+.tc-dest-neutral { border-left-color: var(--text-muted); }
 .tc-dest-header {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    margin-bottom: 0.2rem;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
 }
 .tc-dest-flag {
     font-size: clamp(0.9rem, 1.5vw, 1.2rem);
@@ -2491,43 +2533,84 @@ A network diagram showing data flowing from the scanned site to third-party juri
 }
 .tc-dest-jurisdiction {
     font-size: var(--small-size);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.2;
+}
+/* Risk pill — coloured chip, pinned to the right of the header */
+.tc-dest-pill {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: var(--mono-size);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    color: var(--bg-card);
+    background: var(--text-muted);
+}
+.tc-dest-safe .tc-dest-pill { background: var(--accent-green); }
+.tc-dest-dpf .tc-dest-pill { background: var(--accent-yellow); }
+.tc-dest-risk .tc-dest-pill { background: var(--accent-red); }
+.tc-dest-company {
+    font-size: var(--small-size);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.15rem;
 }
 .tc-dest-domains {
     font-family: var(--font-mono);
-    font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+    font-size: clamp(0.5rem, 0.7vw, 0.62rem);
     color: var(--text-muted);
     line-height: 1.4;
     word-break: break-all;
 }
+.tc-dest-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--bg-card-border);
+}
+.tc-dest-safeguard {
+    font-size: var(--mono-size);
+    color: var(--text-muted);
+}
 .tc-dest-count {
     font-family: var(--font-mono);
     font-size: var(--mono-size);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-secondary);
-    margin-top: 0.2rem;
+    flex-shrink: 0;
 }
 
 /* Transfer risk legend */
 .tc-legend {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: clamp(1rem, 2vw, 1.5rem);
-    margin-top: clamp(0.5rem, 1vh, 0.75rem);
+    margin-top: clamp(0.5rem, 1.2vh, 0.85rem);
     font-size: var(--small-size);
     color: var(--text-secondary);
 }
 .tc-legend-item {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 .tc-legend-swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
+.tc-legend-safe { background: var(--accent-green); }
+.tc-legend-dpf { background: var(--accent-yellow); }
+.tc-legend-risk { background: var(--accent-red); }
 ```
 
 #### Transfer Circuit HTML
