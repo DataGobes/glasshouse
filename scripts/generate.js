@@ -30,6 +30,13 @@ const MAX = {
 };
 
 // ───────────────────────────────────────────
+// Opt-out / consent cookie detector — pure helper, usable without CLI setup
+// ───────────────────────────────────────────
+function isOptOutCookie(name) {
+  return /(opt-?out|consent|optanon|cookieconsent|euconsent|gdpr)/i.test(String(name || ''));
+}
+
+// ───────────────────────────────────────────
 // eTLD+1 and party-classification — pure helpers, usable without CLI setup
 // ───────────────────────────────────────────
 const COMPOUND_TLDS = new Set([
@@ -761,12 +768,16 @@ function buildCookies(slideNum, totalSlides) {
       }
 
       const widthPct = c.durationDays > 0 ? Math.max((c.durationDays / maxDays) * 100, 1) : 0;
-      const barClass = `persist-bar-${purpose}${c.durationDays === 0 ? " persist-bar-session" : ""}`;
+      const optOut = isOptOutCookie(c.name);
+      const barClass = optOut
+        ? `persist-bar-essential${c.durationDays === 0 ? " persist-bar-session" : ""}`
+        : `persist-bar-${purpose}${c.durationDays === 0 ? " persist-bar-session" : ""}`;
       const domain = esc(c.domain || "");
       rows.push(`<div class="persist-row reveal">
         <div class="persist-name-col">
           <span class="persist-name">${esc(c.name)}</span>
           ${domain ? `<span class="persist-domain">${domain}</span>` : ""}
+          ${optOut ? `<span class="persist-note" style="color:var(--accent-green);font-size:0.7em;margin-left:0.3em;">opt-out</span>` : ""}
         </div>
         <div class="persist-bar-track">
           <div class="persist-bar ${barClass}" style="width:${widthPct.toFixed(1)}%;"></div>
@@ -2802,4 +2813,5 @@ console.log(`Slides: ${allSlideHtml.length}`);
 // ───────────────────────────────────────────
 module.exports = {
   classifyParty,
+  isOptOutCookie,
 };
