@@ -1707,6 +1707,7 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         console.error(`[Variant: ${variant}] [Detection] Checking TCF, Consent Mode v2, consent granularity...`);
         variantResult.tcf = await detectTCF(page);
         variantResult.googleConsentMode = await detectConsentModeV2(page);
+        variantResult.vendorConsentModes = await collectVendorConsentSignals(page);
         variantResult.consent.granularity = await detectConsentGranularity(page, consentInfo);
 
         // ─── CMP per-vendor list (banner still open) ───
@@ -3257,6 +3258,128 @@ async function detectConsentModeV2(page) {
 }
 
 // ───────────────────────────────────────────
+// Microsoft UET + Amazon TAM/ats consent-mode detection (additive to GCM v2)
+// ───────────────────────────────────────────
+// Emitted as `vendorConsentModes`, a SIBLING of `googleConsentMode` — not a
+// replacement. The Google Consent Mode v2 assessment was upheld in the 2026-06
+// peer review (Note 14); this is purely additional vendor coverage. The field is
+// optional everywhere, so scans persisted before it existed still render/validate.
+const MS_UET_TAG_PATTERNS = [/bat\.bing\.com/i, /\buet\b/i];
+const AMAZON_TAG_PATTERNS = [/amazon-adsystem\.com/i, /\bapstag\b/i, /\bats(?:-secure)?\.js\b/i];
+// Microsoft UET consent mode mirrors Google's category keys; accept the full GCM
+// set so we don't drop a category if Microsoft widens support.
+const UET_CONSENT_CATEGORIES = ["ad_storage", "analytics_storage", "ad_user_data", "ad_personalization", "functionality_storage", "personalization_storage", "security_storage"];
+
+// Interpret a captured `window.uetq` queue into consent default/update states.
+// Microsoft UET consent mode is set with `uetq.push('consent','default',{...})`
+// and `uetq.push('consent','update',{...})`. Before bat.js initialises, uetq is a
+// plain Array, so a push of three args appends three *consecutive* elements
+// (flat: ['consent','default',{...}, 'consent','update',{...}]); some integrations
+// instead push a single nested array (['consent','default',{...}]). After bat.js
+// loads, window.uetq becomes a Uet instance and the queue is gone — return empty
+// then and let tag presence be the fallback signal.
+function parseUetqConsent(uetq) {
+  if (!Array.isArray(uetq)) return { defaultState: {}, updateEvents: [] };
+
+  // Normalise both shapes into one flat token stream: a nested-array push
+  // (['consent','update',{...}]) flattens one level to sit beside the flat-triple
+  // form, so a single scan handles both. Payload objects are not arrays, so
+  // flattening never disturbs them.
+  const stream = uetq.flat();
+
+  // Keep only recognised consent categories; ignore everything else in the payload.
+  const pickCategories = (obj) => {
+    const out = {};
+    for (const cat of UET_CONSENT_CATEGORIES) {
+      if (obj[cat] !== undefined) out[cat] = obj[cat];
+    }
+    return out;
+  };
+
+  let lastDefault = null; // last 'consent','default' wins
+  const updateEvents = [];
+  for (let i = 0; i + 2 < stream.length; i++) {
+    if (stream[i] !== "consent") continue;
+    const kind = stream[i + 1];
+    const payload = stream[i + 2];
+    if (kind !== "default" && kind !== "update") continue;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) continue;
+    if (kind === "default") lastDefault = payload;
+    else updateEvents.push(pickCategories(payload));
+    i += 2; // consume the matched triple
+  }
+
+  return {
+    defaultState: lastDefault ? pickCategories(lastDefault) : {},
+    updateEvents,
+  };
+}
+
+// Pure classifier over a plain snapshot collected from the page — mirrors the
+// classifyAdServing / analyzePolicyText pattern so it is unit-testable without a
+// live browser. snapshot = { uetq, apstag, ats, resourceUrls }.
+function detectVendorConsentModes(snapshot) {
+  const s = snapshot || {};
+  const resourceUrls = Array.isArray(s.resourceUrls) ? s.resourceUrls : [];
+  const anyResource = (patterns) =>
+    resourceUrls.some((u) => patterns.some((re) => re.test(String(u || ""))));
+
+  // ── Microsoft UET ──
+  const msTagPresent = anyResource(MS_UET_TAG_PATTERNS);
+  const { defaultState, updateEvents } = parseUetqConsent(s.uetq);
+  const msConsentMode = Object.keys(defaultState).length > 0 || updateEvents.length > 0;
+  const microsoft = {
+    detected: msTagPresent || msConsentMode,
+    tagPresent: msTagPresent,
+    consentMode: msConsentMode,
+    defaultState,
+    updateEvents,
+  };
+
+  // ── Amazon TAM (apstag) / ats (Amazon Advertising) ──
+  const tam = s.apstag === true;            // window.apstag = Transparent Ad Marketplace
+  const ats = s.ats === true;               // window.ats = Amazon Advertising / ATS
+  const amazonTagPresent = anyResource(AMAZON_TAG_PATTERNS);
+  const amazon = {
+    detected: tam || ats || amazonTagPresent,
+    tam,
+    ats,
+    tagPresent: amazonTagPresent,
+  };
+
+  return { microsoft, amazon };
+}
+
+// Best-effort browser collector: snapshot the consent-relevant globals + loaded
+// resources, then classify with the pure function. Never throws — a failed
+// evaluate degrades to "nothing detected".
+async function collectVendorConsentSignals(page) {
+  try {
+    const snapshot = await page.evaluate(() => {
+      let resourceUrls = [];
+      try {
+        resourceUrls = performance.getEntriesByType("resource").map((e) => e.name);
+      } catch { }
+      let uetq;
+      try {
+        // Only serialise while uetq is still the raw queue; a Uet instance (post
+        // bat.js) has no readable queued consent calls — fall back to tag presence.
+        uetq = Array.isArray(window.uetq) ? JSON.parse(JSON.stringify(window.uetq)) : undefined;
+      } catch { uetq = undefined; }
+      return {
+        uetq,
+        apstag: typeof window.apstag !== "undefined",
+        ats: typeof window.ats !== "undefined",
+        resourceUrls,
+      };
+    });
+    return detectVendorConsentModes(snapshot);
+  } catch {
+    return detectVendorConsentModes({});
+  }
+}
+
+// ───────────────────────────────────────────
 // Consent granularity verification
 // ───────────────────────────────────────────
 async function detectConsentGranularity(page, consentInfo) {
@@ -4776,6 +4899,9 @@ function buildSummary(variantResult, parentResult) {
     // Google Consent Mode v2
     googleConsentMode: variantResult.googleConsentMode || { detected: false },
 
+    // Microsoft UET + Amazon TAM/ats consent mode (additive; Google upheld in peer review)
+    vendorConsentModes: variantResult.vendorConsentModes || { microsoft: { detected: false }, amazon: { detected: false } },
+
     // GPC
     gpc: variantResult.gpc || { signalSent: true, siteReadsSignal: false },
 
@@ -5045,6 +5171,8 @@ async function extractCmpVendorList(page, platform) {
 module.exports = {
   classifyFindings,
   classifyAdServing,
+  detectVendorConsentModes,
+  parseUetqConsent,
   aggregateFingerprinting,
   dedupeFpCalls,
   detectConsentMode,
