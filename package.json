@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test 'tests/complaint/**/*.test.js' 'tests/e2e/**/*.test.js' 'tests/derive/**/*.test.js' 'tests/scan/**/*.test.js'",
-    "test:watch": "node --test --watch 'tests/complaint/**/*.test.js' 'tests/e2e/**/*.test.js' 'tests/derive/**/*.test.js' 'tests/scan/**/*.test.js'"
+    "test": "node --test 'tests/complaint/**/*.test.js' 'tests/e2e/**/*.test.js' 'tests/derive/**/*.test.js' 'tests/scan/**/*.test.js' 'tests/crawl/**/*.test.js'",
+    "test:watch": "node --test --watch 'tests/complaint/**/*.test.js' 'tests/e2e/**/*.test.js' 'tests/derive/**/*.test.js' 'tests/scan/**/*.test.js' 'tests/crawl/**/*.test.js'"
   },
   "keywords": [],
   "author": "",

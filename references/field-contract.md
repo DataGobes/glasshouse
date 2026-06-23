@@ -90,8 +90,9 @@ Do NOT use decorated values like `"Analytics (Snowplow)"` or `"Advertising (Goog
 - **`bannerText`** (REQUIRED): the consent banner paragraph text visible to the user. Reconstruct from the scout screenshot. **NOT** `bannerType`.
 - **`acceptText`** (REQUIRED): the accept button label as displayed. **NOT** `acceptButton` — the generator reads `c.acceptText`. The scanner captures CSS selectors in `acceptButton`; you must provide the human-readable label here.
 - **`rejectText`**: the reject button label. **NOT** `rejectButton`. Omit if no reject button exists.
-- **`isAsymmetric`**: `true` if accept button is visually larger/more prominent than reject
+- **`isAsymmetric`**: `true` if accept button is visually larger/more prominent than reject. **Set this only from `buttonStyling` (measured), not a screenshot impression.**
 - `acceptWidth` / `rejectWidth`: optional size descriptors for the measurement bar (e.g. `"2x larger"`, `"standard"`)
+- **`buttonStyling`** (scanner-emitted): measured computed styling of the accept/reject buttons — `{ accept:{backgroundColor,color,borderStyle,borderColor,fontWeight,areaPx,text}, reject:{…}, stylingIdentical:bool, areaRatio:number }`. **Authoritative for any colour/contrast/size claim.** When `stylingIdentical` is `true`, do NOT describe a colour difference (e.g. "red brand accept vs white reject") — say the buttons are styled identically. When it's `false`, describe the difference using the measured values only. `null` when the scanner couldn't isolate both buttons (e.g. custom banner) — then fall back to the screenshot but stay conservative and don't invent brand colours.
 - **`multiLayer`** (scanner-emitted): `true` if reject was only reachable by opening a second layer (clicking a "Settings"/"Manage" button on layer 1). `false` when reject is on layer 1, omitted when no banner.
 - **`rejectAccessibility`** (scanner-emitted): one of `"layer-1"` (reject button on the first banner), `"layer-2"` (reject was reached after opening settings), or `"not-found"` (banner detected but no reject path discovered even after layer-2 traversal). Read this in your audit narrative instead of inferring "no reject" from missing fields — the scanner now traverses one layer deep before giving up.
 - `multiLayerMethod` (scanner-emitted, optional): when `multiLayer` is `true`, the strategy used — `"layer2-direct-reject"` (clicked a reject button on layer 2) or `"layer2-toggle-save"` (unchecked non-essential toggles and saved).
@@ -332,8 +333,11 @@ Same format as `auditTrail.postConsent`. Use slide key `"auditTrailReject"`.
 
 ## `findings.scriptIntegrity` (Security Headers slide)
 ```json
-{ "totalExternal": 12, "withIntegrity": 2, "coveragePercent": 17 }
+{ "totalExternal": 12, "withIntegrity": 2, "coveragePercent": 17,
+  "eligibleExternal": 4, "eligibleCoveragePercent": 50,
+  "cannotTakeSri": ["https://www.googletagmanager.com/gtm.js"] }
 ```
+Score the SRI modifier off `eligibleCoveragePercent` (tag managers in `cannotTakeSri` cannot take a static hash and are excluded). The scan summary provides these under `summary.scriptIntegrity`; carry them through if you surface the SRI slide. See criteria/security-headers.md.
 
 ## `findings.cors` (Security Headers slide)
 ```json

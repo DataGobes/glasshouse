@@ -68,9 +68,9 @@ Positive signal: "We have Data Processing Agreements with all our processors." N
 
 ## Scanner Detection of Processors
 The scanner already identifies processors by network signature (see trackers.md). Combine with policy parsing:
-1. Tokenize processor names from the privacy policy text
-2. Cross-reference scanner-detected third-party domains
-3. Flag undisclosed processors (detected on page but not named in policy)
+1. Tokenize processor names from **both the privacy policy and the cookie policy** (and the CMP vendor table if present) — many named processors appear only in the cookie policy, so parsing the privacy policy alone over-reports "undisclosed"
+2. Cross-reference scanner-detected third-party domains, matching **brand aliases** (e.g. Exponea ↔ Bloomreach, Optimizely ↔ Episerver, Clarity ↔ Microsoft)
+3. Flag undisclosed processors **only when named in neither policy**; when disclosed, record `disclosureSource` (privacyPolicy / cookiePolicy / cmpVendorList) so the call is auditable
 4. Flag joint-controller scenarios (Meta Pixel, Like button) without Art. 26 disclosure
 
 ## Scanner Output Fields (see field-contract.md)

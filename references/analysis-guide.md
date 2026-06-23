@@ -89,9 +89,9 @@ See `criteria/dsar.md` for the contact / 30-day commitment / verification-burden
 ## NEW Analysis Sections (post-2026-04 wiki migration)
 
 ### Processor Transparency Audit (criteria/processor-transparency.md)
-After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, parse the privacy policy for **named** processor mentions:
+After identifying scanner-detected third-party domains in `summary.thirdPartyDomains`, parse **both the privacy policy and the cookie policy** for **named** processor mentions (named processors are often listed only in the cookie policy or the CMP vendor table — checking the privacy policy alone over-reports "undisclosed"):
 
-1. For each detected processor (Google Analytics, Meta Pixel, Hotjar, etc.), check if the **specific name** appears in the privacy-policy text
+1. For each detected processor (Google Analytics, Meta Pixel, Hotjar, Optimizely, Exponea/Bloomreach, etc.), check whether the **specific name or a known brand alias** appears in *either* policy text before marking it undisclosed. Record where you found it (`disclosureSource`).
 2. Output as `findings.processors.namedInPolicy[]` (named) and `findings.processors.undisclosed[]` (detected but not named)
 3. Flag joint-controller scenarios: Meta Pixel, Facebook Like/Share buttons, YouTube embeds with cookies — these require Art. 26 disclosure
 4. Generic "third-party service providers" without names = Art. 13(1)(e) violation per EDPB transparency guidance
@@ -104,17 +104,17 @@ After identifying scanner-detected third-party domains in `summary.thirdPartyDom
 5. Output as `findings.breachNotification`
 
 ### Opt-Out / Art. 7(3) Withdrawal Audit (criteria/opt-out-mechanism.md)
-1. Compare `findings.consent.acceptanceClicks` and `findings.consent.revocationClicks` from the reject-variant scan
+1. Assess withdrawal by **channel and effort**, not the raw `acceptanceClicks` vs `revocationClicks` delta. A clean footer/preference-center link that reopens the CMP is compliant (EDPB 05/2020 = "equally straightforward", not identical click count); only penalize a *different channel* (email/phone/account login) or genuinely buried/confirmshaming withdrawal. Keep this separate from banner reject-parity (that one *is* a hard line — see consent.md).
 2. Search policy for Art. 21 right-to-object disclosure (specifically marketing absolute right + legitimate-interests right)
 3. Detect pre-ticked marketing checkboxes in any signup forms
 4. Output as `findings.optOut`
 
 ### Fingerprinting Analysis (NEW tiered model — 2026-04, criteria/fingerprinting.md)
-The scanner produces `findings.fingerprinting.stackedSignals[]` (caller-domain attributed verdicts) and `findings.fingerprinting.commercialSdks[]`. For each entry, read `summary.legalPageContent.privacyPolicy` and fill:
+The scanner produces `findings.fingerprinting.stackedSignals[]` (caller-domain attributed verdicts) and `findings.fingerprinting.commercialSdks[]`. For each entry, read **both `summary.legalPageContent.privacyPolicy` and `summary.legalPageContent.cookiePolicy`** (profiling/processor purposes are frequently disclosed in the *cookie* policy, not the privacy policy — checking only one produces false "undisclosed" findings), plus the CMP's published vendor/cookie list if available, and fill:
 
 1. **`rationale`** — one sentence summarising what was detected and why it matters (e.g., "16 hardware probes from inline Adobe Target before consent action")
 2. **`legitimateBasisClaim`** — what Art. 6 basis the controller could plausibly invoke for this caller, IF disclosed. Examples: Riskified anti-fraud → plausible Art. 6(1)(f) for fraud prevention; Adobe Target A/B testing → typically no plausible non-consent basis; New Relic / Sentry → plausible Art. 6(1)(f) for service operation. Set to `null` if no plausible basis exists.
-3. **`purposeDisclosed`** — boolean. Did the policy actually name this processor and state its purpose? Vague "third-party providers" wording is `false`.
+3. **`purposeDisclosed`** — boolean. Did **either** the privacy policy **or** the cookie policy actually name this processor and state its purpose? Search both for the specific vendor *and its known brand names* (e.g. Exponea ↔ Bloomreach Engagement; Optimizely ↔ Episerver; GA ↔ Google Analytics) before concluding `false`. Only `false` when neither policy names it (vague "third-party providers" wording counts as `false`). When `true`, cite the source — `disclosureSource: "cookiePolicy"` and a short quoted excerpt — so the finding is auditable and not a false positive.
 
 Same three annotations apply to each `commercialSdks[]` entry. Scoring rule: when both `purposeDisclosed: true` AND `legitimateBasisClaim` is non-null, the SDK is surfaced as a disclosed finding (no penalty); otherwise −15 to overall outside the −20 pre-consent cap.
 
@@ -133,12 +133,14 @@ Each criterion file contains a verified enforcement table with ETids. Use these 
 
 ```json
 {
-  "title": "Implement post-reject cookie deletion",
+  "title": "Stop non-essential processing immediately on reject",
   "priority": "high",
-  "detail": "...",
+  "detail": "After 'Reject', block non-essential scripts from reading/writing storage and firing beacons — this is the legal requirement. Deleting already-placed cookies is good practice but not mandated (ePrivacy imposes no removal duty), and is often infeasible without reliable per-vendor cookie disclosures; recommend an allow-list approach if attempted, and note partial-consent complexity.",
   "enforcementRef": "CNIL Microsoft Ireland 2022-12-19, €60M (cnil.fr)"
 }
 ```
+
+When recommending post-reject behaviour, recommend *processing cessation* as the priority and frame deletion as best-effort with the disclosure/allow-list caveat — do not recommend "delete all cookies on reject" naively.
 
 For ePrivacy-only fines (Amazon EU Core 2020, Microsoft Ireland 2022, IAB Europe 2022) — cite the DPA URL directly. They're not in the GDPR `fines.db`.
 

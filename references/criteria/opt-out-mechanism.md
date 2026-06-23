@@ -26,12 +26,15 @@ Whether the site provides functional opt-out mechanisms for direct marketing and
 Privacy policy should mention unsubscribe / opt-out for email marketing. Verify pattern: "all marketing emails contain a one-click unsubscribe link". (Scanner cannot read inbox content — verifies disclosure only.)
 
 ### 2. Withdrawal As Easy As Consent (Art. 7(3))
-Compare the click-path to **withdraw** consent vs. the click-path to **give** consent. If accept = 1 click on the banner but withdraw requires logging into account settings or emailing the DPO, that fails Art. 7(3).
+Judge withdrawal by **channel and effort**, not raw click count. EDPB Guidelines 05/2020 require withdrawal to be "equally straightforward" via the **same interface** — the Board's example of a violation is consenting with one click online but having to phone or write to withdraw. It does **not** require the identical number of clicks. A footer "cookie settings" link that reopens the CMP is compliant even though it is one click more than the banner's "Accept all".
 
-This is a behavioral check the scanner performs in the **reject variant**:
-- `findings.consent.acceptanceClicks` vs `findings.consent.revocationClicks`
-- If revocation > acceptance: −5 modifier on consent score
-- If revocation impossible from CMP: −15
+`acceptanceClicks` and `revocationClicks` are recorded for context, but the *delta alone is not a violation*. Score on substance:
+- Withdrawal needs a **different channel** than granting (account login, email/DPO, phone, postal, leaving the site): −15
+- Withdrawal on-site but genuinely buried (>3 clicks / hidden in account settings) or behind confirmshaming: −5
+- Clean footer / preference-center link that reopens the CMP in one click: **no penalty**
+- Revocation impossible from the CMP at all (`consentRevocation.mechanismFound = false`): −15
+
+This is a behavioral check the scanner performs in the **reject variant**. See consent.md "Art. 7(3)" for the banner-reject-parity check, which is separate and *is* a hard line (CNIL Bing/Google).
 
 ### 3. Right to Object Disclosed
 Policy must specifically mention Art. 21 right to object — not just a vague "you can opt out". Should distinguish:

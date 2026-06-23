@@ -8,12 +8,14 @@
 // score inconsistent with the per-category scores. Every error here is a
 // claim the report could not justify from the captured evidence.
 
-// Phase D category weights (references/scoring.md). Old 7-category fallback
-// for analyses produced before the rebalance.
+// Phase E category weights (references/scoring.md). Dark Patterns raised to
+// 15% (deceptive design invalidates consent regardless of the formal
+// mechanism — EDPB 03/2022; Opinion 08/2024). Old 7-category fallback for
+// analyses produced before the Phase D rebalance.
 const WEIGHTS_PHASE_D = {
-  consent: 22, preConsentTracking: 20, legalPages: 12, crossBorder: 11,
-  securityHeaders: 10, cookieManagement: 8, processorTransparency: 7,
-  dsar: 5, darkPatterns: 5,
+  consent: 20, preConsentTracking: 18, legalPages: 11, crossBorder: 10,
+  securityHeaders: 9, cookieManagement: 7, processorTransparency: 6,
+  dsar: 4, darkPatterns: 15,
 };
 const WEIGHTS_LEGACY = {
   consent: 25, preConsentTracking: 20, legalPages: 15, crossBorder: 15,

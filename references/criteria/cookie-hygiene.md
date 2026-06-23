@@ -20,11 +20,20 @@ After clicking "Reject" in the CMP:
 - No pixel / beacon requests to third-party adtech
 - No localStorage / sessionStorage entries written by tracking scripts
 
-### 2. Post-Rejection Deletion
-After clicking "Reject":
-- Pre-existing non-essential cookies from the session deleted
-- Tracking pixels (Facebook, TikTok, Google Ads) do not fire
-- Google Analytics ships no `collect` requests
+### 2. Post-Rejection Processing Cessation (not deletion)
+**What the law actually requires:** that the controller **stop processing** after withdrawal — i.e. non-essential scripts stop reading from and writing to storage. Neither the ePrivacy Directive nor the GDPR requires the controller to *delete* cookies already placed on the device (ePrivacy imposes no removal duty; the GDPR is silent on the artefact and addresses only the right to withdraw and stopping processing). Deleting on reject is good practice, not a legal obligation — so frame it that way.
+
+The pass/fail test after clicking "Reject":
+- **No new** non-essential cookies set, and no further writes by tracking scripts (the real test)
+- Tracking pixels (Facebook, TikTok, Google Ads) do **not** fire after reject
+- Google Analytics ships no `collect` requests after reject
+
+A pre-existing non-essential cookie that *persists on the device* after reject is **not, by itself, a violation** if processing has stopped (no reads/writes, no network calls). Surface it as a hygiene observation, not a hard fail. Reserve the FAIL for *active processing continuing* after reject.
+
+**Why deletion is hard in practice (state this nuance, don't recommend it naively):**
+- Reliable deletion depends on accurate per-cookie disclosures from every vendor — which routinely don't exist (e.g. a vendor describing a cookie only as "a UUID" or "a hash of a website + session identifier" is impossible to target automatically).
+- The alternative is a maintained allow-list of cookies to keep, but that gets complicated with partial consent (e.g. opting out of Marketing while keeping Analytics).
+- Once third-party scripts are loaded in a page they often keep running until the next navigation; vendors make mid-session cessation hard. Stopping on the *next page load* is the realistic, defensible bar.
 
 ### 3. Cookie Expiration
 - **Session cookies** — for functional needs; should expire on browser close
@@ -69,12 +78,14 @@ For users who haven't consented:
 - `findings.cookies[].purpose` — must be one of `essential|functional|analytics|tracking|marketing|unknown`
 
 ## Scoring Impact (see scoring.md)
-10% weight. Score by lifecycle behaviour:
-- 100: few cookies, ≤13mo expiry, post-reject deletion working
+7% weight (Phase E). Score by lifecycle behaviour:
+- 100: few cookies, ≤13mo expiry, **processing stops after reject** (no new tracking reads/writes)
 - 75: moderate count, some long-lived disclosed cookies
 - 50: many cookies, several 2yr+ expiry
 - 25: excessive count + long expiry + unclear purposes
 - 0: cookie chaos, pixels fire after reject
+
+Score on *processing cessation*, not cookie deletion — a non-essential cookie that merely persists on the device after reject (with no further reads/writes) is a hygiene note, not a fail.
 
 Modifiers:
 - Cookie purpose mismatch (from cookiePurposeMatching): −5 each, capped at −20
