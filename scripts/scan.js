@@ -3702,6 +3702,13 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     { name: "Fingerprint Pro / FingerprintJS", patterns: [/fingerprint(?:js|\s*pro)/i], jurisdiction: "US" },
     { name: "Sift", patterns: [/sift\.(?:com|science)/i], jurisdiction: "US" },
     { name: "SEON", patterns: [/seon\.io/i], jurisdiction: "HU" },
+    { name: "Optimizely", patterns: [/optimizely|episerver/i], jurisdiction: "US" },
+    { name: "Bloomreach / Exponea", patterns: [/bloomreach|exponea/i], jurisdiction: "US/SK" },
+    { name: "SAP CDC / Gigya", patterns: [/gigya|sap (customer data cloud|cdc)/i], jurisdiction: "US/EU" },
+    { name: "Microsoft Advertising / Bing", patterns: [/microsoft advertising|bing ads|\buet\b/i], jurisdiction: "US" },
+    { name: "LinkedIn Insight", patterns: [/linkedin insight|linkedin (ads|pixel)/i], jurisdiction: "US/IE" },
+    { name: "Pinterest Tag", patterns: [/pinterest tag/i], jurisdiction: "US" },
+    { name: "Comscore", patterns: [/comscore|scorecardresearch/i], jurisdiction: "US" },
   ];
 
   // Domain → name lookup (rough)
@@ -3732,6 +3739,13 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     "didomi.io": "Didomi",
     "usercentrics.eu": "Usercentrics",
     "fpjs.io": "Fingerprint Pro / FingerprintJS",
+    "optimizely.com": "Optimizely",
+    "gigya.com": "SAP CDC / Gigya",
+    "bing.com": "Microsoft Advertising / Bing",
+    "exponea.com": "Bloomreach / Exponea",
+    "licdn.com": "LinkedIn Insight",
+    "scorecardresearch.com": "Comscore",
+    "pinimg.com": "Pinterest Tag",
   };
 
   const namedInPolicy = [];
@@ -4918,6 +4932,45 @@ function buildOverallDiffSummary(result) {
 }
 
 // ───────────────────────────────────────────
+// CMP vendor list capture
+// ───────────────────────────────────────────
+
+// Pull candidate vendor/processor names out of a CMP preference-centre text dump.
+// Heuristic: lines that look like proper nouns / brand tokens, minus the CMP's
+// own category labels. Kept conservative — it feeds the disclosure corpus, it
+// does not score on its own.
+const CMP_CATEGORY_NOISE = /^(strictly necessary|performance|functional|targeting|advertising|analyt|social media|essential|always active|cookie|cookies|host|description|expiry|lifespan|type|name)\b/i;
+function parseCmpVendorText(text, source) {
+  const vendors = [];
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.length > 60 || CMP_CATEGORY_NOISE.test(line)) continue;
+    if (/^[A-Z0-9][A-Za-z0-9.&/ -]{1,58}$/.test(line)) vendors.push(line);
+  }
+  return { source: source || 'generic', vendors: Array.from(new Set(vendors)), text: String(text || '') };
+}
+
+async function extractCmpVendorList(page, platform) {
+  try {
+    const openers = ['#onetrust-pc-btn-handler', '.ot-sdk-show-settings', '#CybotCookiebotDialogBodyButtonDetails', '#didomi-notice-learn-more-button'];
+    for (const sel of openers) { try { await page.click(sel, { timeout: 2500 }); break; } catch {} }
+    await page.waitForTimeout(1200);
+    for (const sel of ['.ot-cat-header', '.ot-acc-hdr', '.category-menu-switch-handler']) {
+      for (const el of await page.locator(sel).all()) { try { await el.click({ timeout: 600 }); await page.waitForTimeout(150); } catch {} }
+    }
+    const panel = await page.evaluate(() => {
+      const el = document.querySelector('#onetrust-pc-sdk, #CybotCookiebotDialogDetail, #didomi-host, .cc-window');
+      return el ? (el.innerText || '') : '';
+    });
+    if (!panel) return null;
+    const source = platform && /onetrust/i.test(platform) ? 'onetrust'
+      : platform && /cookiebot/i.test(platform) ? 'cookiebot'
+      : platform && /didomi/i.test(platform) ? 'didomi' : 'generic';
+    return parseCmpVendorText(panel, source);
+  } catch { return null; }
+}
+
+// ───────────────────────────────────────────
 // Entry point
 // ───────────────────────────────────────────
 
@@ -4936,6 +4989,9 @@ module.exports = {
   CAMPAIGN_PARAM_RE,
   SDK_PATTERNS,
   TRACKER_PATTERNS,
+  analyzePolicyText,
+  parseCmpVendorText,
+  extractCmpVendorList,
 };
 
 if (require.main === module) {
