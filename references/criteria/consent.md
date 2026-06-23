@@ -89,7 +89,7 @@ A scanner-detected GPC signal can constitute valid objection. Sites should read 
 Base 0–100 by CMP quality. Modifiers:
 - Binary on layer 1 **and** no granular controls behind a settings link (`consentGranularity.settingsLinkFound === false`): cap at 75. If granular controls exist one click deeper (`settingsLinkFound === true`), do **not** cap.
 - TCF malformed string: −5
-- Google ads but no TCF: −10
+- Site runs **publisher-side programmatic advertising** without a TCF string (`adServing.programmaticPublisher === true` — prebid.js, googlesyndication, securepubads/`gampad/ads`, or an SSP/RTB call): −10. Do **NOT** apply this when the only ad calls are **advertiser-side measurement** (`adServing.programmaticPublisher === false`): view-through conversions, remarketing collects (`rmkt/collect`, `1p-user-list`), and Floodlight reporting tags (`activity;cat=`) are conversion/remarketing measurement, not ad slots, and need no TCF. The presence of `doubleclick.net`/`floodlight` domains alone is **not** evidence of programmatic publishing.
 - No revocation mechanism: −15
 - Revocation found but non-essential processing continues: −10 (see cookie-hygiene.md — the test is processing cessation, not cookie deletion)
 - Withdrawal needs a *different channel* than granting (email/phone/account login): −15; on-site but buried >3 clicks / confirmshaming: −5; clean footer preference-center link: **no penalty** (Art. 7(3) is "equally straightforward", not identical click count)

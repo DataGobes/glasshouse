@@ -45,6 +45,12 @@ Present each tier separately with appropriate severity language. Do NOT lump con
 
 See `criteria/pre-consent-tracking.md` for the full classification + EDPB Guidelines 2/2023 framing.
 
+### Measurement vs Ad-Serving (before any TCF judgement)
+Read `findings...adServing` before deciding whether a TCF string is required.
+- `programmaticPublisher: false` + measurement signals = advertiser-side conversion/remarketing (Google Ads, Floodlight reporting, Meta CAPI-style pixels). **No TCF needed** — these report on the site's own ad spend, they do not auction third-party inventory.
+- `programmaticPublisher: true` = the site sells/serves third-party ad inventory (prebid, GAM `gampad/ads`, SSP/RTB). TCF (or a documented Additional Consent equivalent) is expected.
+Never infer "programmatic" from the presence of `doubleclick.net`/`floodlight` domains — those are used by both.
+
 ## Art. 12 / 13 / 14 Privacy Policy Content Analysis
 
 If `summary.legalPageContent.privacyPolicy` contains text, score these 13 disclosures (Art. 13 + 14). Output as `findings.privacyPolicyAnalysis[]`. Each entry: `{element, status, excerpt}` where `status ∈ {present, absent, vague}`.
