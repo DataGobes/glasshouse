@@ -112,7 +112,7 @@ Base score = `(present_headers / total_checked) × 100` covering HSTS, CSP, X-Co
 
 **Modifiers:**
 - Cookie purpose mismatch (`cookiePurposeMatching`): −5 each, capped at −20
-- Cookie expires after 13 months without functional justification: −5 each
+- Cookie expiry **materially beyond** the ~13-month convention (> ~24 months) without functional justification: −5 each. Do **not** penalise standard durations at or near the 13-month ceiling (≤ ~400 days), including Google Analytics' 13-month / 400-day default — these are conventional, not excessive. The legitimate cookie-management marks are an excessive cookie *count* and missing `Secure` flags on operator-controllable cookies (see Task C in analysis-guide). (Reproduced bug: the 2026-06 miele.nl scan scored cookies 6.4 partly by treating ~400-day GA cookies as deductions.)
 - Pixel fires after reject (FAIL flag, separate from score): always surface in TLDR
 
 ### Processor Transparency (6%)

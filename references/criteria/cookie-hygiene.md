@@ -37,7 +37,7 @@ A pre-existing non-essential cookie that *persists on the device* after reject i
 
 ### 3. Cookie Expiration
 - **Session cookies** — for functional needs; should expire on browser close
-- **Persistent consent-based cookies** — max 13 months (CNIL hard rule, EDPB-aligned)
+- **Persistent consent-based cookies** — max 13 months (CNIL hard rule, EDPB-aligned). The **convention is ~13 months / ~400 days** (Google Analytics' default); do **not** penalise cookies at or near this ceiling (≤ ~400 days). Only deduct for cookies materially exceeding 13 months — typically 18+ months / 2+ years without justified functional need.
 - **Functional persistent cookies** (login, language) — may exceed 13 months but must be disclosed
 - A "session" cookie that persists across browser restarts is a violation (mislabeled lifecycle)
 
