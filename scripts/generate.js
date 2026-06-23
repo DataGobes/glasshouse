@@ -1754,10 +1754,15 @@ function buildVariantComparison(slideNum, totalSlides) {
   const vc = findings.variantComparison;
   if (!vc) return null;
 
-  const variants = ["ignore", "accept", "reject"];
-  const labels = { ignore: "No Interaction", accept: "Accept All", reject: "Reject All" };
-  const colors = { ignore: "var(--accent-yellow)", accept: "var(--accent-green)", reject: "var(--accent-red)" };
-  const dotColors = { ignore: "var(--accent-yellow)", accept: "var(--accent-green)", reject: "var(--accent-red)" };
+  // Outcome-based ordering & colour: more tracking = worse.
+  // Reject (least) = green/good, No Interaction (baseline) = yellow/neutral, Accept (most) = red/bad.
+  const variantDefs = [
+    { key: "reject", label: "Reject All", tone: "good", color: "var(--accent-green)", rgb: "5,150,105" },
+    { key: "ignore", label: "No Interaction", tone: "neutral", color: "var(--accent-yellow)", rgb: "217,119,6" },
+    { key: "accept", label: "Accept All", tone: "bad", color: "var(--accent-red)", rgb: "220,38,38" },
+  ];
+  const present = variantDefs.filter((d) => vc[d.key]);
+  const variants = (present.length ? present : variantDefs);
 
   const metrics = [
     { key: "trackerCount", label: "Trackers" },
@@ -1765,32 +1770,38 @@ function buildVariantComparison(slideNum, totalSlides) {
     { key: "thirdPartyDomainCount", label: "3rd Parties" },
   ];
 
+  // Single SHARED scale: one global max across every variant × metric.
+  // A longer bar therefore always means "more tracking", everywhere on the slide.
+  const globalMax = Math.max(
+    1,
+    ...variants.flatMap((d) => metrics.map((m) => (vc[d.key] || {})[m.key] || 0))
+  );
+
   const metricSections = metrics.map((m) => {
-    const maxVal = Math.max(...variants.map((v) => (vc[v] || {})[m.key] || 0), 1);
-    const bars = variants.map((v) => {
-      const val = (vc[v] || {})[m.key] || 0;
-      const pct = (val / maxVal * 100).toFixed(1);
-      return `<div class="vc-bar-row">
-        <span class="vc-bar-label">${labels[v]}</span>
-        <div class="vc-bar-track"><div class="vc-bar-fill" style="width:${pct}%;background:${colors[v]};"></div></div>
+    const bars = variants.map((d) => {
+      const val = (vc[d.key] || {})[m.key] || 0;
+      const pct = (val / globalMax * 100).toFixed(1);
+      return `<div class="vc-bar-row vc-tone-${d.tone}">
+        <span class="vc-bar-label">${d.label}</span>
+        <div class="vc-bar-track"><div class="vc-bar-fill" style="--vc-w:${pct}%;background:linear-gradient(90deg, rgba(${d.rgb},0.85), ${d.color});"></div></div>
         <span class="vc-bar-val">${val}</span>
       </div>`;
     }).join("\n");
-    return `<div class="rs-note reveal" style="border-left-color:var(--accent);padding:clamp(0.6rem,1vw,0.9rem) clamp(0.8rem,1.2vw,1rem);">
-      <div class="rs-note-header" style="margin-bottom:0.4rem;">
-        <span class="rs-note-dot" style="background:var(--accent);"></span>
-        <span class="rs-note-cat">${m.label}</span>
-      </div>
+    return `<div class="vc-metric-row reveal">
+      <div class="vc-metric-title">${m.label}</div>
       <div class="vc-bar-group">${bars}</div>
     </div>`;
   }).join("\n");
 
-  const legend = variants.map((v) =>
-    `<span class="vc-legend-item"><span class="vc-legend-dot" style="background:${dotColors[v]};"></span> ${labels[v]}</span>`
+  const legend = variants.map((d) =>
+    `<span class="vc-legend-item"><span class="vc-legend-dot" style="background:${d.color};"></span> ${d.label}</span>`
   ).join("\n");
+  const scaleNote = `<span class="vc-legend-scale">Shared scale — longer = more tracking (max ${globalMax})</span>`;
 
-  const verdict = vc.verdict ? `<div class="rs-note reveal" style="border-left-color:var(--accent-yellow);margin-top:var(--element-gap);">
-    <p class="rs-note-text" style="font-style:italic;">${esc(vc.verdict)}</p>
+  // Lead with the takeaway: the verdict is the hero, not a footnote.
+  const verdict = vc.verdict ? `<div class="vc-verdict-hero reveal">
+    <span class="vc-verdict-icon" aria-hidden="true">⚠</span>
+    <p class="vc-verdict-text">${esc(vc.verdict)}</p>
   </div>` : "";
 
   return `<section class="slide" data-title="Variant Comparison">
@@ -1798,9 +1809,9 @@ function buildVariantComparison(slideNum, totalSlides) {
     <span class="badge reveal">Consent Variants</span>
     <h2 class="reveal">Ignore vs Accept vs Reject</h2>
     ${slideDesc("variantComparison")}
-    <div class="vc-legend reveal">${legend}</div>
-    <div class="vc-chart">${metricSections}</div>
     ${verdict}
+    <div class="vc-legend reveal">${legend}${scaleNote}</div>
+    <div class="vc-chart">${metricSections}</div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>

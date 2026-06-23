@@ -3965,12 +3965,41 @@ All CSS for new slide types added in the gap analysis upgrade.
 
 ```css
 /* ─── Variant Comparison (variantComparison slide) ─── */
+/* Verdict hero — lead with the takeaway, not a footnote. */
+.vc-verdict-hero {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.6rem, 1.2vw, 0.9rem);
+    margin-top: var(--element-gap);
+    padding: clamp(0.6rem, 1.2vw, 0.9rem) clamp(0.9rem, 1.8vw, 1.25rem);
+    background: linear-gradient(90deg, rgba(199,92,44,0.08), var(--bg-card) 70%);
+    border: 1px solid var(--bg-card-border);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+}
+.vc-verdict-icon {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    color: var(--accent);
+    flex-shrink: 0;
+    line-height: 1;
+}
+.vc-verdict-text {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 1.25vw, 1rem);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text-primary);
+}
 .vc-legend {
     display: flex;
-    gap: clamp(1rem, 2vw, 1.5rem);
+    flex-wrap: wrap;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    align-items: center;
     justify-content: center;
-    margin-top: var(--element-gap);
-    margin-bottom: var(--content-gap);
+    margin-top: var(--content-gap);
+    margin-bottom: var(--element-gap);
     font-size: var(--small-size);
     color: var(--text-secondary);
 }
@@ -3980,72 +4009,89 @@ All CSS for new slide types added in the gap analysis upgrade.
     gap: 0.35rem;
 }
 .vc-legend-dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
 }
+.vc-legend-scale {
+    font-family: var(--font-mono);
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    margin-left: auto;
+    padding-left: clamp(0.5rem, 1vw, 1rem);
+}
 .vc-chart {
-    display: flex;
-    flex-direction: column;
-    gap: var(--content-gap);
-    max-width: 600px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.6rem, 1.2vw, 1rem);
 }
 .vc-metric-row {
     background: var(--bg-card);
     border: 1px solid var(--bg-card-border);
     border-radius: 8px;
-    padding: clamp(0.6rem, 1.2vw, 1rem) clamp(0.8rem, 1.5vw, 1.25rem);
+    padding: clamp(0.7rem, 1.3vw, 1.1rem) clamp(0.8rem, 1.5vw, 1.2rem);
     box-shadow: var(--card-shadow);
 }
 .vc-metric-title {
     font-family: var(--font-mono);
-    font-size: var(--body-size);
-    font-weight: 600;
+    font-size: clamp(0.7rem, 1vw, 0.85rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     color: var(--text-primary);
-    margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+    margin-bottom: clamp(0.5rem, 1vh, 0.75rem);
 }
 .vc-bar-group {
     display: flex;
     flex-direction: column;
-    gap: clamp(0.25rem, 0.5vh, 0.4rem);
+    gap: clamp(0.4rem, 0.9vh, 0.65rem);
 }
 .vc-bar-row {
     display: grid;
-    grid-template-columns: clamp(5rem, 10vw, 7rem) 1fr clamp(1.5rem, 3vw, 2.5rem);
-    align-items: center;
-    gap: clamp(0.4rem, 0.8vw, 0.6rem);
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.4rem;
+    row-gap: 0.2rem;
 }
 .vc-bar-label {
+    grid-column: 1;
+    grid-row: 1;
     font-size: var(--small-size);
     color: var(--text-secondary);
-    text-align: right;
     white-space: nowrap;
 }
 .vc-bar-track {
-    height: clamp(1rem, 2vw, 1.4rem);
-    background: rgba(28,25,23,0.03);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: relative;
+    height: clamp(0.9rem, 1.8vw, 1.25rem);
+    background: rgba(28,25,23,0.04);
     border-radius: 4px;
     overflow: hidden;
 }
 .vc-bar-fill {
     height: 100%;
+    width: 0;
+    min-width: 2px;
     border-radius: 4px;
-    transition: width 0.8s var(--ease-out-expo);
+    transition: width 0.9s var(--ease-out-expo);
+}
+.slide.visible .vc-bar-fill {
+    width: var(--vc-w);
 }
 .vc-bar-val {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
     font-family: var(--font-mono);
-    font-size: var(--body-size);
+    font-size: clamp(0.7rem, 1.05vw, 0.9rem);
     font-weight: 700;
-    text-align: right;
+    line-height: 1;
 }
-.vc-verdict {
-    text-align: center;
-    font-size: var(--body-size);
-    color: var(--text-secondary);
-    margin-top: var(--content-gap);
-    font-style: italic;
-}
+.vc-tone-good .vc-bar-val { color: var(--accent-green); }
+.vc-tone-neutral .vc-bar-val { color: var(--accent-yellow); }
+.vc-tone-bad .vc-bar-val { color: var(--accent-red); }
 
 /* ─── Reject Scenario ─── */
 .vc-reject-stats {
