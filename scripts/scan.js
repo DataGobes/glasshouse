@@ -5031,6 +5031,14 @@ async function extractCmpVendorList(page, platform) {
       : platform && /didomi/i.test(platform) ? 'didomi' : 'generic';
     // Corpus text = union of visible + hidden so brand names in collapsed descriptions reach disclosure analysis.
     const parsed = parseCmpVendorText(cap.innerText, source);
+    // Close the preference center before returning: leaving the OneTrust panel
+    // (or its dark-filter backdrop) open intercepts the subsequent Phase-2
+    // accept/reject click on the underlying banner. Best-effort, never throws.
+    for (const sel of ['#close-pc-btn-handler', '#onetrust-pc-sdk .ot-close-icon', '#onetrust-pc-sdk button[aria-label="Close"]']) {
+      try { await page.click(sel, { timeout: 800 }); break; } catch {}
+    }
+    try { await page.keyboard.press('Escape'); } catch {}
+    try { await page.waitForSelector('.onetrust-pc-dark-filter', { state: 'hidden', timeout: 2500 }); } catch {}
     return { source, vendors: parsed.vendors, text: (cap.innerText + '\n\n' + cap.textContent) };
   } catch { return null; }
 }
