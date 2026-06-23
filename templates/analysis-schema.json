@@ -571,9 +571,11 @@
         "type": "object",
         "required": ["title", "content"],
         "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string", "description": "Raw HTML wrapped in standard slide chrome" },
-          "style": { "type": "string", "enum": ["finding-highlight", "evidence", "analysis", "comparison"] }
+          "title": { "type": "string", "description": "Short eyebrow label (rendered uppercase) + slide nav title" },
+          "heading": { "type": "string", "description": "Optional big <h2> heading, like every native slide. Omit to keep just the eyebrow." },
+          "subtitle": { "type": "string", "description": "Optional one-line slide-desc shown under the heading" },
+          "content": { "type": "string", "description": "Raw HTML body. Use the shared component classes (.tracker-grid, .split-compare, .callout, .pill-*) so it reads as a native slide — do not hardcode colours inline." },
+          "style": { "type": "string", "enum": ["default", "finding-highlight", "evidence", "analysis", "comparison"] }
         }
       }
     },

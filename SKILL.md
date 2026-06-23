@@ -241,7 +241,7 @@ Top-level sections:
 
 **`slides`**: `include` array of slide type names in display order. Omit slides with no meaningful content.
 
-**`customSlides`** (optional): Named slots — `after-overview`, `after-consent`, `after-tracking`, `after-details`, `before-recommendations`. Each has `title`, `content` (raw HTML), `style`.
+**`customSlides`** (optional): Named slots — `after-overview`, `after-consent`, `after-tracking`, `after-details`, `before-recommendations`. Each has `title` (short eyebrow + nav label), optional `heading` (big `<h2>`, like every native slide), optional `subtitle` (one-line `slide-desc`), `content` (raw HTML body), and `style`. **Always set `heading` and build `content` from the shared component classes** — `.tracker-grid`/`.tracker-card`, `.split-compare` (2-col), `.pill`/`.pill-green`/`.pill-red` chips (wrap many in `.pill-cloud`), and `.callout`/`.callout-bad`/`.callout-good`/`.callout-info` for asides — so a custom slide is indistinguishable from a built-in one. Never hardcode hex colours inline; use the `var(--accent-*)` tokens.
 
 **`markdownReport`**: Prose sections — `executiveSummary`, `consentAnalysis`, `preConsentAnalysis`, `postConsentAnalysis`, `storageAnalysis`.
 

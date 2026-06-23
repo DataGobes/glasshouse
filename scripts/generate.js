@@ -2414,11 +2414,19 @@ function buildFormLeakage(slideNum, totalSlides) {
 function buildCustomSlide(slot, slideNum, totalSlides) {
   if (!customSlides || !customSlides[slot]) return null;
   const cs = customSlides[slot];
-  const borderStyle = cs.style === "finding-highlight" ? "border-left:3px solid var(--accent);" : "";
+  // Custom slides get the same chrome as native slides: a short eyebrow (title),
+  // an optional big heading, an optional subtitle, then the body. `content` is
+  // raw maintainer-authored HTML — it should use the shared component classes
+  // (.tracker-grid, .split-compare, .callout, .pill-*) so it reads as native.
+  const heading = cs.heading ? `\n    <h2 class="reveal">${esc(cs.heading)}</h2>` : "";
+  const subtitle = cs.subtitle ? `\n    <p class="slide-desc reveal">${esc(cs.subtitle)}</p>` : "";
+  const bodyClass = cs.style === "finding-highlight"
+    ? "custom-body custom-body-highlight reveal"
+    : "custom-body reveal";
   return `<section class="slide" data-title="${esc(cs.title)}">
   <div class="slide-content">
-    <span class="badge reveal">${esc(cs.title)}</span>
-    <div class="card reveal" style="${borderStyle}">${cs.content}</div>
+    <span class="badge reveal">${esc(cs.title)}</span>${heading}${subtitle}
+    <div class="${bodyClass}">${cs.content}</div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
