@@ -34,7 +34,12 @@ const links = [
 test("selectCrawlLinks excludes entry page, third-party, and non-http", () => {
   const picked = selectCrawlLinks(links, baseHost, basePath, 5);
   assert.ok(!picked.includes("https://www.miele.nl/"));
-  assert.ok(!picked.some((u) => u.includes("facebook.com")));
+  assert.ok(
+    !picked.some((u) => {
+      const { hostname } = new URL(u);
+      return hostname === "facebook.com" || hostname.endsWith(".facebook.com");
+    }),
+  );
   assert.ok(!picked.some((u) => u.startsWith("mailto") || u.startsWith("javascript")));
 });
 
