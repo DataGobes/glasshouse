@@ -3711,10 +3711,10 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     { name: "SEON", patterns: [/seon\.io/i], jurisdiction: "HU" },
     { name: "Optimizely", patterns: [/optimizely|episerver/i], jurisdiction: "US" },
     { name: "Bloomreach / Exponea", patterns: [/bloomreach|exponea/i], jurisdiction: "US/SK" },
-    { name: "SAP CDC / Gigya", patterns: [/gigya|sap (customer data cloud|cdc)/i], jurisdiction: "US/EU" },
-    { name: "Microsoft Advertising / Bing", patterns: [/microsoft advertising|bing ads|\buet\b/i], jurisdiction: "US" },
-    { name: "LinkedIn Insight", patterns: [/linkedin insight|linkedin (ads|pixel)/i], jurisdiction: "US/IE" },
-    { name: "Pinterest Tag", patterns: [/pinterest tag/i], jurisdiction: "US" },
+    { name: "SAP CDC / Gigya", patterns: [/gigya|sap (customer data cloud|cdc|cc)\b/i], jurisdiction: "US/EU" },
+    { name: "Microsoft Advertising / Bing", patterns: [/microsoft advertising|bing ads|\buet\b|\bbing\b|\bmicrosoft\b/i], jurisdiction: "US" },
+    { name: "LinkedIn Insight", patterns: [/linkedin insight|linkedin (ads|pixel)|\blinkedin\b/i], jurisdiction: "US/IE" },
+    { name: "Pinterest Tag", patterns: [/pinterest tag|\bpinterest\b/i], jurisdiction: "US" },
     { name: "Comscore", patterns: [/comscore|scorecardresearch/i], jurisdiction: "US" },
   ];
 
@@ -4962,18 +4962,29 @@ async function extractCmpVendorList(page, platform) {
     const openers = ['#onetrust-pc-btn-handler', '.ot-sdk-show-settings', '#CybotCookiebotDialogBodyButtonDetails', '#didomi-notice-learn-more-button'];
     for (const sel of openers) { try { await page.click(sel, { timeout: 2500 }); break; } catch {} }
     await page.waitForTimeout(1200);
-    for (const sel of ['.ot-cat-header', '.ot-acc-hdr', '.category-menu-switch-handler']) {
+    // Expand category accordions AND best-effort vendor/host-detail toggles so per-category cookie tables lazy-load.
+    for (const sel of ['.ot-cat-header', '.ot-acc-hdr', '.category-menu-switch-handler', '.category-host-list-handler']) {
       for (const el of await page.locator(sel).all()) { try { await el.click({ timeout: 600 }); await page.waitForTimeout(150); } catch {} }
     }
-    const panel = await page.evaluate(() => {
+    // Best-effort: scroll any host-list container to lazy-load all entries.
+    for (let i = 0; i < 8; i++) {
+      try { await page.evaluate(() => { const c = document.querySelector('#ot-lst-cnt, #ot-pc-lst .ot-host-cnt'); if (c) c.scrollTop = c.scrollHeight; }); } catch {}
+      await page.waitForTimeout(120);
+    }
+    // Capture BOTH innerText (line-structured, for vendor parsing) and textContent
+    // (includes collapsed/hidden category descriptions where processors are named).
+    const cap = await page.evaluate(() => {
       const el = document.querySelector('#onetrust-pc-sdk, #CybotCookiebotDialogDetail, #didomi-host, .cc-window');
-      return el ? (el.innerText || '') : '';
+      if (!el) return null;
+      return { innerText: el.innerText || '', textContent: el.textContent || '' };
     });
-    if (!panel) return null;
+    if (!cap || (!cap.innerText && !cap.textContent)) return null;
     const source = platform && /onetrust/i.test(platform) ? 'onetrust'
       : platform && /cookiebot/i.test(platform) ? 'cookiebot'
       : platform && /didomi/i.test(platform) ? 'didomi' : 'generic';
-    return parseCmpVendorText(panel, source);
+    // Corpus text = union of visible + hidden so brand names in collapsed descriptions reach disclosure analysis.
+    const parsed = parseCmpVendorText(cap.innerText, source);
+    return { source, vendors: parsed.vendors, text: (cap.innerText + '\n\n' + cap.textContent) };
   } catch { return null; }
 }
 

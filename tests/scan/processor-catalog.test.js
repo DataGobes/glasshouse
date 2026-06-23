@@ -25,3 +25,14 @@ test('a processor named in the cookie text is not undisclosed', () => {
   assert.ok(out.processors.namedInPolicy.some(p => p.name === 'Optimizely'));
   assert.ok(!out.processors.undisclosed.includes('Optimizely'));
 });
+
+test('brand-name-only prose discloses Microsoft and SAP CC / Gigya', () => {
+  const tpd = [{ domain: 'bat.bing.com' }, { domain: 'cdns.eu1.gigya.com' }];
+  const cookieText = 'Wij delen gegevens met o.a. LinkedIn, Pinterest en Microsoft. Essentiële cookies van SAP CC.';
+  const out = require('../../scripts/scan.js').analyzePolicyText({ privacyPolicy: { text: '' }, cookiePolicy: { text: cookieText } }, tpd, null);
+  const named = out.processors.namedInPolicy.map(p => p.name);
+  assert.ok(named.includes('Microsoft Advertising / Bing'), 'Microsoft via brand name');
+  assert.ok(named.includes('SAP CDC / Gigya'), 'Gigya via SAP CC');
+  assert.ok(!out.processors.undisclosed.includes('Microsoft Advertising / Bing'));
+  assert.ok(!out.processors.undisclosed.includes('SAP CDC / Gigya'));
+});
