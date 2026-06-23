@@ -1102,8 +1102,9 @@ function buildSecurityHeaders(slideNum, totalSlides) {
 
   const sri = findings.scriptIntegrity || {};
   const sriLine = (sri.totalExternal > 0)
-    ? `<div class="cm-summary-item reveal" style="margin-top:0.5rem;">
-         <strong>SRI Coverage:</strong> ${sri.coveragePercent || 0}% (${sri.withIntegrity || 0}/${sri.totalExternal} external scripts)
+    ? `<div class="sri-advisory reveal">
+         <span class="sri-advisory-label">SRI Coverage · advisory (not scored)</span>
+         <span class="sri-advisory-value">${sri.coveragePercent || 0}% (${sri.withIntegrity || 0}/${sri.totalExternal} external scripts)</span>
        </div>`
     : "";
 

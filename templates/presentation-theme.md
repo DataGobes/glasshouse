@@ -2725,6 +2725,23 @@ Concentric defense rings around a core. Each security header is a ring — prese
 .sr-score-good strong { color: var(--accent-green); }
 .sr-score-mid strong { color: var(--accent-yellow); }
 .sr-score-bad strong { color: var(--accent-red); }
+
+/* SRI advisory line — not scored, visually secondary */
+.sri-advisory {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    margin-top: clamp(0.3rem, 0.5vh, 0.4rem);
+    font-family: var(--font-mono);
+    font-size: var(--small-size);
+    color: var(--text-muted);
+}
+.sri-advisory-label {
+    font-style: italic;
+}
+.sri-advisory-value {
+    color: var(--text-secondary);
+}
 ```
 
 #### Shield Rings HTML

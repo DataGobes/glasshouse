@@ -86,8 +86,15 @@ When you write an SRI recommendation:
 9% weight (Phase E). Score = `(present_headers / total_checked) × 100`.
 
 Modifiers:
-- SRI **eligible** coverage 0% with 5+ eligible external scripts: −10 (use `eligibleCoveragePercent`; tag managers in `cannotTakeSri[]` don't count toward the penalty)
-- SRI eligible coverage > 80%: +5
 - CORS wildcard with credentials: −10
 - CSP `'unsafe-inline'` in script-src: −5
 - Session cookie missing `Secure`: −5
+
+### SRI — advisory only (not scored)
+
+SRI coverage is **reported but does not affect the score** (no penalty, no bonus). Subresource
+Integrity is a sound Art. 32 hardening measure, but it is not a privacy/ePrivacy signal a DPA
+enforces in a GDPR/ePrivacy audit. Continue to surface `scriptIntegrity.eligibleCoveragePercent`
+and recommend SRI for static third-party scripts (tag managers in `cannotTakeSri[]` cannot take
+a static hash and are excluded from any recommendation). See the "Recommending SRI (don't be
+naive)" guidance above and `scoring.md` for the rationale.

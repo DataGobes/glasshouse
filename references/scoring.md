@@ -90,11 +90,15 @@ DSAR mechanism is now scored separately (see DSAR / Rights Mechanism below) — 
 Base score = `(present_headers / total_checked) × 100` covering HSTS, CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy.
 
 **Modifiers — security baseline:**
-- SRI coverage 0% across **5+ SRI-eligible external scripts**: −10. Score off `scriptIntegrity.eligibleCoveragePercent` / `eligibleExternal`, **not** raw `coveragePercent`. Tag managers and republishing loaders (GTM, gtag, Tealium, Adobe Launch, Segment — listed in `scriptIntegrity.cannotTakeSri`) **cannot take a static hash** and are excluded from the eligible set; do not penalize a site whose only un-hashed externals are these. (Security tools like SecurityScorecard/Bitsight exclude them too, as of 2026-03.)
-- SRI coverage > 80% of eligible scripts: +5 bonus
 - CORS wildcard with credentials: −10
 - CSP `'unsafe-inline'` in script-src: −5
 - Session cookie missing `Secure` flag: −5
+
+> **SRI is advisory and does NOT affect the score (neither penalty nor bonus).** Subresource
+> Integrity is a sound Art. 32 hardening measure, but it is not a privacy/ePrivacy signal a DPA
+> enforces in this kind of audit. Report SRI coverage and recommend it where it genuinely helps
+> (static third-party scripts; tag managers in `scriptIntegrity.cannotTakeSri[]` cannot take a
+> static hash and are excluded) — but do not add or subtract any points for it.
 
 **Modifiers — breach-notification governance (NEW):**
 - `security.txt` present and current: +5 bonus

@@ -337,7 +337,7 @@ Same format as `auditTrail.postConsent`. Use slide key `"auditTrailReject"`.
   "eligibleExternal": 4, "eligibleCoveragePercent": 50,
   "cannotTakeSri": ["https://www.googletagmanager.com/gtm.js"] }
 ```
-Score the SRI modifier off `eligibleCoveragePercent` (tag managers in `cannotTakeSri` cannot take a static hash and are excluded). The scan summary provides these under `summary.scriptIntegrity`; carry them through if you surface the SRI slide. See criteria/security-headers.md.
+SRI is **advisory and does not affect the score** — report `eligibleCoveragePercent` and recommend SRI for static third-party scripts, but apply no score modifier (see criteria/security-headers.md and scoring.md). The scan summary provides these under `summary.scriptIntegrity`; carry them through if you surface the SRI slide.
 
 ## `findings.cors` (Security Headers slide)
 ```json
