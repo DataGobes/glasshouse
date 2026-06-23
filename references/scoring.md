@@ -168,8 +168,7 @@ These do not have their own weighted slot but adjust the overall score:
   - Biometric SDK detected without DPIA mention: −15
   - Identity verification SDK (Jumio, Onfido, Veriff) without explicit consent: −15
 
-- **DPIA gap** (criteria/dpia.md) — when high-risk indicators detected (session replay, fingerprinting SDK, large-scale ad pixels, AI/ML profiling):
-  - DPIA not mentioned in policy: −10 from overall
+- **DPIA gap** (criteria/dpia.md) — Art. 35 requires *conducting* a DPIA for high-risk processing; it does **not** require publishing or referencing one in the privacy policy. The absence of a DPIA *mention* is **not** evidence the DPIA was not done — **apply no score modifier for it.** When high-risk indicators are present (session replay, fingerprinting SDK, large-scale ad pixels, AI/ML profiling), describe them factually in the report and, where relevant, recommend confirming a DPIA exists — but do not deduct. (Reproduced bug: the 2026-06 miele.nl scan applied −10 here and dropped 6.7 vs the verified 8.0.)
 
 ## Score Calculation
 
