@@ -2416,14 +2416,33 @@ A network diagram showing data flowing from the scanned site to third-party juri
 #### Transfer Circuit CSS
 
 ```css
-/* Circuit board container */
+/* Plain-language explainer above the flow */
+.tc-explainer {
+    max-width: 52rem;
+    margin: var(--element-gap) auto 0;
+    text-align: center;
+    font-size: var(--small-size);
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.tc-explainer strong { color: var(--text-primary); }
+.tc-key {
+    font-weight: 700;
+    white-space: nowrap;
+}
+.tc-key-safe { color: var(--accent-green); }
+.tc-key-dpf { color: var(--accent-yellow); }
+.tc-key-risk { color: var(--accent-red); }
+
+/* Circuit board container — vertical top-to-bottom flow:
+   origin → downward arrow → destination grid. */
 .transfer-circuit {
     position: relative;
     margin-top: var(--content-gap);
-    min-height: clamp(10rem, 22vh, 16rem);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 /* Origin card — the scanned site at top */
@@ -2437,8 +2456,7 @@ A network diagram showing data flowing from the scanned site to third-party juri
     border: 2px solid var(--accent);
     border-radius: 10px;
     box-shadow: var(--card-shadow-accent);
-    max-width: 20rem;
-    margin: 0 auto;
+    max-width: 24rem;
 }
 .tc-origin-icon {
     font-size: clamp(1rem, 2vw, 1.5rem);
@@ -2453,37 +2471,61 @@ A network diagram showing data flowing from the scanned site to third-party juri
 /* Flow arrow between origin and destinations */
 .tc-flow-line {
     display: flex;
-    justify-content: center;
-    padding: clamp(0.3rem, 0.6vh, 0.5rem) 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: clamp(0.3rem, 0.8vh, 0.6rem) 0;
 }
 .tc-flow-arrow {
-    opacity: 0.4;
+    opacity: 0.85;
+}
+.tc-flow-label {
+    font-family: var(--font-mono);
+    font-size: var(--mono-size);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 /* Destination cards grid */
 .tc-dest-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: clamp(0.4rem, 0.8vw, 0.6rem);
-    max-width: 36rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.5rem, 1vw, 0.85rem);
+    width: 100%;
+    max-width: 60rem;
     margin: 0 auto;
 }
 .tc-dest-card {
+    position: relative;
+    overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--bg-card-border);
-    border-left: 3px solid var(--text-muted);
-    border-radius: 8px;
-    padding: clamp(0.4rem, 0.8vw, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
+    border-left: 5px solid var(--text-muted);
+    border-radius: 10px;
+    padding: clamp(0.55rem, 1vw, 0.8rem) clamp(0.7rem, 1.3vw, 0.95rem);
     box-shadow: var(--card-shadow);
 }
-.tc-dest-safe { border-left-color: var(--accent-green); }
-.tc-dest-dpf { border-left-color: var(--accent-yellow); }
-.tc-dest-risk { border-left-color: var(--accent-red); }
+/* Risk colour — driven entirely by these classes (no inline overrides).
+   Strong left accent bar + tinted surface so the coding reads at a glance. */
+.tc-dest-safe {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(90deg, rgba(5,150,105,0.07), var(--bg-card) 60%);
+}
+.tc-dest-dpf {
+    border-left-color: var(--accent-yellow);
+    background: linear-gradient(90deg, rgba(217,119,6,0.08), var(--bg-card) 60%);
+}
+.tc-dest-risk {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(220,38,38,0.09), var(--bg-card) 60%);
+}
+.tc-dest-neutral { border-left-color: var(--text-muted); }
 .tc-dest-header {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    margin-bottom: 0.2rem;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
 }
 .tc-dest-flag {
     font-size: clamp(0.9rem, 1.5vw, 1.2rem);
@@ -2491,82 +2533,132 @@ A network diagram showing data flowing from the scanned site to third-party juri
 }
 .tc-dest-jurisdiction {
     font-size: var(--small-size);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.2;
+}
+/* Risk pill — coloured chip, pinned to the right of the header */
+.tc-dest-pill {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: var(--mono-size);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    color: var(--bg-card);
+    background: var(--text-muted);
+}
+.tc-dest-safe .tc-dest-pill { background: var(--accent-green); }
+.tc-dest-dpf .tc-dest-pill { background: var(--accent-yellow); }
+.tc-dest-risk .tc-dest-pill { background: var(--accent-red); }
+.tc-dest-company {
+    font-size: var(--small-size);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.15rem;
 }
 .tc-dest-domains {
     font-family: var(--font-mono);
-    font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+    font-size: clamp(0.5rem, 0.7vw, 0.62rem);
     color: var(--text-muted);
     line-height: 1.4;
     word-break: break-all;
 }
+.tc-dest-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--bg-card-border);
+}
+.tc-dest-safeguard {
+    font-size: var(--mono-size);
+    color: var(--text-muted);
+}
 .tc-dest-count {
     font-family: var(--font-mono);
     font-size: var(--mono-size);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-secondary);
-    margin-top: 0.2rem;
+    flex-shrink: 0;
 }
 
 /* Transfer risk legend */
 .tc-legend {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: clamp(1rem, 2vw, 1.5rem);
-    margin-top: clamp(0.5rem, 1vh, 0.75rem);
+    margin-top: clamp(0.5rem, 1.2vh, 0.85rem);
     font-size: var(--small-size);
     color: var(--text-secondary);
 }
 .tc-legend-item {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 .tc-legend-swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
+.tc-legend-safe { background: var(--accent-green); }
+.tc-legend-dpf { background: var(--accent-yellow); }
+.tc-legend-risk { background: var(--accent-red); }
 ```
 
 #### Transfer Circuit HTML
 
-Top-down flow: origin card at top, SVG arrow, 2-column grid of destination cards below.
+Top-down flow: a plain-language explainer, the origin card, an SVG "sends data to" arrow,
+then a risk-sorted (worst-first) grid of colour-coded destination cards below. Each card's
+risk class (`tc-dest-safe|dpf|risk|neutral`) drives a visible left bar, tinted surface, and
+pill — no inline colour overrides.
 
 ```html
 <section class="slide" data-title="Cross-Border Transfers">
     <div class="slide-content">
         <span class="badge reveal">Data Transfers</span>
         <h2 class="reveal">Transfer Circuit</h2>
+        <p class="tc-explainer reveal">A <strong>cross-border transfer</strong> happens whenever your data leaves the EU. Jurisdiction decides the safeguard: <span class="tc-key tc-key-safe">EU / adequate countries</span> are protected by default, a <span class="tc-key tc-key-dpf">DPF-certified US recipient</span> is conditionally allowed, and an <span class="tc-key tc-key-risk">unverified or non-adequate destination</span> (e.g. RU, CN) needs Standard Contractual Clauses — or it is a high-risk transfer.</p>
         <div class="transfer-circuit reveal">
             <div class="tc-origin reveal">
                 <span class="tc-origin-icon">🌐</span>
                 <span class="tc-origin-label">{DOMAIN}</span>
             </div>
             <div class="tc-flow-line reveal">
-                <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <polyline points="19 12 12 19 5 12"></polyline>
                 </svg>
+                <span class="tc-flow-label">sends data to</span>
             </div>
             <div class="tc-dest-grid">
                 <div class="tc-dest-card tc-dest-{RISK} reveal">
                     <div class="tc-dest-header">
                         <span class="tc-dest-flag">{FLAG}</span>
                         <span class="tc-dest-jurisdiction">{JURISDICTION}</span>
+                        <span class="tc-dest-pill">{RISK_LABEL}</span>
                     </div>
+                    <div class="tc-dest-company">{COMPANY}</div>
                     <div class="tc-dest-domains">{DOMAIN_LIST}</div>
-                    <div class="tc-dest-count">{N} reqs</div>
+                    <div class="tc-dest-meta">
+                        <span class="tc-dest-safeguard">{SAFEGUARD}</span>
+                        <span class="tc-dest-count">{N} reqs</span>
+                    </div>
                 </div>
-                <!-- More destination cards -->
+                <!-- More destination cards, worst-risk first -->
             </div>
         </div>
         <div class="tc-legend reveal">
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green)"></span> EU / Adequate</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow)"></span> DPF-Certified US</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red)"></span> Unverified Transfer</div>
-            <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-safe"></span> EU / Adequate</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-dpf"></span> DPF-Certified US</div>
+            <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-risk"></span> Unverified / High-risk</div>
         </div>
     </div>
     <div class="datagobes-watermark"><a href="https://datagobes.dev"><span style="color:var(--brand-ember, #c75c2c); -webkit-text-fill-color:var(--brand-ember, #c75c2c)">&gt;_</span> datagobes.dev</a></div>
@@ -2725,6 +2817,23 @@ Concentric defense rings around a core. Each security header is a ring — prese
 .sr-score-good strong { color: var(--accent-green); }
 .sr-score-mid strong { color: var(--accent-yellow); }
 .sr-score-bad strong { color: var(--accent-red); }
+
+/* SRI advisory line — not scored, visually secondary */
+.sri-advisory {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    margin-top: clamp(0.3rem, 0.5vh, 0.4rem);
+    font-family: var(--font-mono);
+    font-size: var(--small-size);
+    color: var(--text-muted);
+}
+.sri-advisory-label {
+    font-style: italic;
+}
+.sri-advisory-value {
+    color: var(--text-secondary);
+}
 ```
 
 #### Shield Rings HTML
@@ -3865,12 +3974,41 @@ All CSS for new slide types added in the gap analysis upgrade.
 
 ```css
 /* ─── Variant Comparison (variantComparison slide) ─── */
+/* Verdict hero — lead with the takeaway, not a footnote. */
+.vc-verdict-hero {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.6rem, 1.2vw, 0.9rem);
+    margin-top: var(--element-gap);
+    padding: clamp(0.6rem, 1.2vw, 0.9rem) clamp(0.9rem, 1.8vw, 1.25rem);
+    background: linear-gradient(90deg, rgba(199,92,44,0.08), var(--bg-card) 70%);
+    border: 1px solid var(--bg-card-border);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+}
+.vc-verdict-icon {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    color: var(--accent);
+    flex-shrink: 0;
+    line-height: 1;
+}
+.vc-verdict-text {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 1.25vw, 1rem);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text-primary);
+}
 .vc-legend {
     display: flex;
-    gap: clamp(1rem, 2vw, 1.5rem);
+    flex-wrap: wrap;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    align-items: center;
     justify-content: center;
-    margin-top: var(--element-gap);
-    margin-bottom: var(--content-gap);
+    margin-top: var(--content-gap);
+    margin-bottom: var(--element-gap);
     font-size: var(--small-size);
     color: var(--text-secondary);
 }
@@ -3880,72 +4018,89 @@ All CSS for new slide types added in the gap analysis upgrade.
     gap: 0.35rem;
 }
 .vc-legend-dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
 }
+.vc-legend-scale {
+    font-family: var(--font-mono);
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    margin-left: auto;
+    padding-left: clamp(0.5rem, 1vw, 1rem);
+}
 .vc-chart {
-    display: flex;
-    flex-direction: column;
-    gap: var(--content-gap);
-    max-width: 600px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.6rem, 1.2vw, 1rem);
 }
 .vc-metric-row {
     background: var(--bg-card);
     border: 1px solid var(--bg-card-border);
     border-radius: 8px;
-    padding: clamp(0.6rem, 1.2vw, 1rem) clamp(0.8rem, 1.5vw, 1.25rem);
+    padding: clamp(0.7rem, 1.3vw, 1.1rem) clamp(0.8rem, 1.5vw, 1.2rem);
     box-shadow: var(--card-shadow);
 }
 .vc-metric-title {
     font-family: var(--font-mono);
-    font-size: var(--body-size);
-    font-weight: 600;
+    font-size: clamp(0.7rem, 1vw, 0.85rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     color: var(--text-primary);
-    margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+    margin-bottom: clamp(0.5rem, 1vh, 0.75rem);
 }
 .vc-bar-group {
     display: flex;
     flex-direction: column;
-    gap: clamp(0.25rem, 0.5vh, 0.4rem);
+    gap: clamp(0.4rem, 0.9vh, 0.65rem);
 }
 .vc-bar-row {
     display: grid;
-    grid-template-columns: clamp(5rem, 10vw, 7rem) 1fr clamp(1.5rem, 3vw, 2.5rem);
-    align-items: center;
-    gap: clamp(0.4rem, 0.8vw, 0.6rem);
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.4rem;
+    row-gap: 0.2rem;
 }
 .vc-bar-label {
+    grid-column: 1;
+    grid-row: 1;
     font-size: var(--small-size);
     color: var(--text-secondary);
-    text-align: right;
     white-space: nowrap;
 }
 .vc-bar-track {
-    height: clamp(1rem, 2vw, 1.4rem);
-    background: rgba(28,25,23,0.03);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: relative;
+    height: clamp(0.9rem, 1.8vw, 1.25rem);
+    background: rgba(28,25,23,0.04);
     border-radius: 4px;
     overflow: hidden;
 }
 .vc-bar-fill {
     height: 100%;
+    width: 0;
+    min-width: 2px;
     border-radius: 4px;
-    transition: width 0.8s var(--ease-out-expo);
+    transition: width 0.9s var(--ease-out-expo);
+}
+.slide.visible .vc-bar-fill {
+    width: var(--vc-w);
 }
 .vc-bar-val {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
     font-family: var(--font-mono);
-    font-size: var(--body-size);
+    font-size: clamp(0.7rem, 1.05vw, 0.9rem);
     font-weight: 700;
-    text-align: right;
+    line-height: 1;
 }
-.vc-verdict {
-    text-align: center;
-    font-size: var(--body-size);
-    color: var(--text-secondary);
-    margin-top: var(--content-gap);
-    font-style: italic;
-}
+.vc-tone-good .vc-bar-val { color: var(--accent-green); }
+.vc-tone-neutral .vc-bar-val { color: var(--accent-yellow); }
+.vc-tone-bad .vc-bar-val { color: var(--accent-red); }
 
 /* ─── Reject Scenario ─── */
 .vc-reject-stats {
@@ -4073,60 +4228,161 @@ All CSS for new slide types added in the gap analysis upgrade.
 }
 
 /* ─── TCF Purpose Chips ─── */
-.tcf-purposes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
+/* ─── TCF & Consent Mode: two explained panels ─── */
+.ct-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--content-gap);
+    align-items: start;
 }
-.tcf-purpose-chip {
-    padding: 0.15rem 0.4rem;
-    border: 1px solid;
-    border-radius: 3px;
+.ct-grid-single {
+    grid-template-columns: 1fr;
+    max-width: 46rem;
+    margin: 0 auto;
+}
+.ct-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 12px;
+    padding: clamp(0.9rem, 1.6vw, 1.3rem);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.ct-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.ct-panel-title {
+    font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+.ct-explainer {
+    font-size: var(--small-size);
+    line-height: 1.45;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.ct-explainer em { color: var(--accent); font-style: normal; font-weight: 600; }
+.ct-legend {
+    display: flex;
+    gap: 0.75rem;
+    font-size: var(--small-size);
+    color: var(--text-muted);
+}
+.ct-legend-item { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ct-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+.ct-dot-granted { background: var(--accent-green); }
+.ct-dot-denied { background: var(--accent-red); }
+.ct-stats { display: flex; gap: 0.6rem; }
+.ct-stat {
+    flex: 1;
+    text-align: center;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--bg-card-border);
+    border-radius: 8px;
+    background: linear-gradient(90deg, rgba(199,92,44,0.06), var(--bg-card) 70%);
+}
+.ct-stat-num {
+    display: block;
     font-family: var(--font-mono);
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.1;
+}
+.ct-stat-label {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ct-sublabel {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.1rem;
+}
+.ct-note {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0.1rem 0 0;
 }
 
-/* ─── Google Consent Mode Signal Grid ─── */
-.gcm-signal-grid {
+/* TCF purpose list — human-readable, colour-coded */
+.tcf-purposes {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.4rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
 }
-.gcm-signal {
+.tcf-purpose {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.3rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
+    padding: 0.32rem 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--text-muted);
+    font-size: var(--small-size);
+    line-height: 1.25;
 }
-.gcm-signal-denied {
-    background: rgba(220,38,38,0.08);
-    color: var(--accent-red);
+.tcf-purpose-granted {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(90deg, rgba(5,150,105,0.07), var(--bg-card) 60%);
 }
-.gcm-signal-granted {
-    background: rgba(5,150,105,0.08);
-    color: var(--accent-green);
+.tcf-purpose-denied {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(220,38,38,0.07), var(--bg-card) 60%);
 }
-.gcm-signal-icon { font-weight: 700; }
-.gcm-signal-name { flex: 1; text-transform: capitalize; }
-.gcm-signal-val { font-family: var(--font-mono); font-weight: 600; }
-.gcm-updates {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--bg-card-border);
-}
-.gcm-update-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    margin-bottom: 0.3rem;
-}
-.gcm-update {
-    display: flex;
-    flex-wrap: wrap;
+.tcf-purpose-icon { font-weight: 700; flex-shrink: 0; }
+.tcf-purpose-granted .tcf-purpose-icon { color: var(--accent-green); }
+.tcf-purpose-denied .tcf-purpose-icon { color: var(--accent-red); }
+.tcf-purpose-label { color: var(--text-primary); }
+
+/* GCM before → after table */
+.gcm-table { display: flex; flex-direction: column; gap: 0.3rem; }
+.gcm-row {
+    display: grid;
+    grid-template-columns: 1.6fr auto auto auto;
+    align-items: center;
     gap: 0.5rem;
+    padding: 0.32rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(28,25,23,0.025);
+    font-size: var(--small-size);
 }
+.gcm-row-changed { background: linear-gradient(90deg, rgba(199,92,44,0.07), var(--bg-card) 70%); }
+.gcm-row-head {
+    background: none;
+    padding-bottom: 0.1rem;
+}
+.gcm-row-name { color: var(--text-primary); font-weight: 500; }
+.gcm-col-head, .gcm-row-head .gcm-row-name {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    text-align: center;
+}
+.gcm-state {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+.gcm-state-granted { color: var(--accent-green); }
+.gcm-state-denied { color: var(--accent-red); }
+.gcm-state-na { color: var(--text-muted); }
+.gcm-arrow { color: var(--text-muted); text-align: center; }
 
 /* ─── Consent Revocation Flow ─── */
 .cr-flow {

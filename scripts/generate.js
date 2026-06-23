@@ -964,30 +964,51 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
 </section>`;
 
-  const visibleDomains = domains.slice(0, MAX.DOMAIN_NODES);
+  // Defensive risk mapping: schema enum is safe | dpf | risk; anything else → neutral.
+  const RISK = {
+    risk: { cls: "risk", rank: 0, label: "High risk", safeguard: "No SCCs / non-adequate" },
+    dpf: { cls: "dpf", rank: 1, label: "Conditional", safeguard: "DPF-certified" },
+    safe: { cls: "safe", rank: 2, label: "Adequate", safeguard: "EU / adequate" },
+  };
+  const NEUTRAL = { cls: "neutral", rank: 3, label: "Unknown", safeguard: "Status unknown" };
+  const riskOf = (d) => RISK[d.risk] || NEUTRAL;
+
+  // Cap then sort worst-risk first so the eye lands on the red destinations.
+  const visibleDomains = domains
+    .slice(0, MAX.DOMAIN_NODES)
+    .sort((a, b) => riskOf(a).rank - riskOf(b).rank);
 
   const cards = visibleDomains.map((d) => {
+    const rk = riskOf(d);
     const flagMatch = (d.jurisdiction || "").match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\S+\s)/u);
     const flag = d.flag || (flagMatch ? flagMatch[1].trim() : "🌍");
-    const juris = d.flag ? esc(d.jurisdiction) : esc((d.jurisdiction || "").replace(/^\S+\s+/, "").trim());
+    // The flag is rendered in its own span, so strip any leading flag/emoji from the
+    // jurisdiction label — some scans embed the flag in the jurisdiction string, which
+    // would otherwise render the flag twice.
+    const juris = esc((d.jurisdiction || "").replace(/^(?:\p{Regional_Indicator}|\p{Extended_Pictographic}|[️‍\s])+/u, "").trim() || d.jurisdiction || "");
     const rawDomains = Array.isArray(d.domains) ? d.domains : (d.domains || "").split(",").map(s => s.trim()).filter(Boolean);
     const domainsStr = rawDomains.join(", ");
-    const riskClass = `tc-dest-${d.risk || "safe"}`;
-    return `<div class="tc-dest-card ${riskClass} reveal" style="background:rgba(28,25,23,0.025);border-color:transparent;box-shadow:none;">
+    return `<div class="tc-dest-card tc-dest-${rk.cls} reveal">
       <div class="tc-dest-header">
         <span class="tc-dest-flag">${flag}</span>
         <span class="tc-dest-jurisdiction">${juris}</span>
+        <span class="tc-dest-pill">${rk.label}</span>
       </div>
+      ${d.company ? `<div class="tc-dest-company">${esc(d.company)}</div>` : ""}
       <div class="tc-dest-domains">${esc(domainsStr)}</div>
-      ${d.requestCount ? `<div class="tc-dest-count">${d.requestCount} req${d.requestCount !== 1 ? "s" : ""}</div>` : ""}
+      <div class="tc-dest-meta">
+        <span class="tc-dest-safeguard">${rk.safeguard}</span>
+        ${d.requestCount ? `<span class="tc-dest-count">${d.requestCount} req${d.requestCount !== 1 ? "s" : ""}</span>` : ""}
+      </div>
     </div>`;
   }).join("\n");
 
   const arrow = `<div class="tc-flow-line reveal">
-    <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="tc-flow-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="5" x2="12" y2="19"></line>
       <polyline points="19 12 12 19 5 12"></polyline>
     </svg>
+    <span class="tc-flow-label">sends data to</span>
   </div>`;
 
   return `<section class="slide" data-title="Cross-Border Transfers">
@@ -995,6 +1016,7 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
     <span class="badge reveal">Data Transfers</span>
     <h2 class="reveal">Transfer Circuit</h2>
     ${slideDesc("thirdPartyDomains")}
+    <p class="tc-explainer reveal">A <strong>cross-border transfer</strong> happens whenever your data leaves the EU. Jurisdiction decides the safeguard: <span class="tc-key tc-key-safe">EU / adequate countries</span> are protected by default, a <span class="tc-key tc-key-dpf">DPF-certified US recipient</span> is conditionally allowed, and an <span class="tc-key tc-key-risk">unverified or non-adequate destination</span> (e.g. RU, CN) needs Standard Contractual Clauses — or it is a high-risk transfer.</p>
     <div class="transfer-circuit reveal">
       <div class="tc-origin reveal">
         <span class="tc-origin-icon">&#x1F310;</span>
@@ -1004,10 +1026,9 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
       <div class="tc-dest-grid">${cards}</div>
     </div>
     <div class="tc-legend reveal">
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> EU / Adequate</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF-Certified US</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> Unverified Transfer</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-safe"></span> EU / Adequate</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-dpf"></span> DPF-Certified US</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch tc-legend-risk"></span> Unverified / High-risk</div>
     </div>
   </div>
   ${watermark()}
@@ -1102,9 +1123,19 @@ function buildSecurityHeaders(slideNum, totalSlides) {
 
   const sri = findings.scriptIntegrity || {};
   const sriLine = (sri.totalExternal > 0)
-    ? `<div class="cm-summary-item reveal" style="margin-top:0.5rem;">
-         <strong>SRI Coverage:</strong> ${sri.coveragePercent || 0}% (${sri.withIntegrity || 0}/${sri.totalExternal} external scripts)
-       </div>`
+    ? (() => {
+        const useEligible = sri.eligibleExternal != null;
+        const pct = useEligible ? (sri.eligibleCoveragePercent || 0) : (sri.coveragePercent || 0);
+        const numerator = sri.withIntegrity || 0;
+        const denominator = useEligible ? sri.eligibleExternal : sri.totalExternal;
+        const label = useEligible
+          ? `${pct}% of SRI-eligible external scripts (${numerator}/${denominator})`
+          : `${pct}% (${numerator}/${denominator} external scripts)`;
+        return `<div class="sri-advisory reveal">
+         <span class="sri-advisory-label">SRI Coverage · advisory (not scored)</span>
+         <span class="sri-advisory-value">${label}</span>
+       </div>`;
+      })()
     : "";
 
   const cors = findings.cors || {};
@@ -1722,10 +1753,15 @@ function buildVariantComparison(slideNum, totalSlides) {
   const vc = findings.variantComparison;
   if (!vc) return null;
 
-  const variants = ["ignore", "accept", "reject"];
-  const labels = { ignore: "No Interaction", accept: "Accept All", reject: "Reject All" };
-  const colors = { ignore: "var(--accent-yellow)", accept: "var(--accent-green)", reject: "var(--accent-red)" };
-  const dotColors = { ignore: "var(--accent-yellow)", accept: "var(--accent-green)", reject: "var(--accent-red)" };
+  // Outcome-based ordering & colour: more tracking = worse.
+  // Reject (least) = green/good, No Interaction (baseline) = yellow/neutral, Accept (most) = red/bad.
+  const variantDefs = [
+    { key: "reject", label: "Reject All", tone: "good", color: "var(--accent-green)", rgb: "5,150,105" },
+    { key: "ignore", label: "No Interaction", tone: "neutral", color: "var(--accent-yellow)", rgb: "217,119,6" },
+    { key: "accept", label: "Accept All", tone: "bad", color: "var(--accent-red)", rgb: "220,38,38" },
+  ];
+  const present = variantDefs.filter((d) => vc[d.key]);
+  const variants = (present.length ? present : variantDefs);
 
   const metrics = [
     { key: "trackerCount", label: "Trackers" },
@@ -1733,32 +1769,38 @@ function buildVariantComparison(slideNum, totalSlides) {
     { key: "thirdPartyDomainCount", label: "3rd Parties" },
   ];
 
+  // Single SHARED scale: one global max across every variant × metric.
+  // A longer bar therefore always means "more tracking", everywhere on the slide.
+  const globalMax = Math.max(
+    1,
+    ...variants.flatMap((d) => metrics.map((m) => (vc[d.key] || {})[m.key] || 0))
+  );
+
   const metricSections = metrics.map((m) => {
-    const maxVal = Math.max(...variants.map((v) => (vc[v] || {})[m.key] || 0), 1);
-    const bars = variants.map((v) => {
-      const val = (vc[v] || {})[m.key] || 0;
-      const pct = (val / maxVal * 100).toFixed(1);
-      return `<div class="vc-bar-row">
-        <span class="vc-bar-label">${labels[v]}</span>
-        <div class="vc-bar-track"><div class="vc-bar-fill" style="width:${pct}%;background:${colors[v]};"></div></div>
+    const bars = variants.map((d) => {
+      const val = (vc[d.key] || {})[m.key] || 0;
+      const pct = (val / globalMax * 100).toFixed(1);
+      return `<div class="vc-bar-row vc-tone-${d.tone}">
+        <span class="vc-bar-label">${d.label}</span>
+        <div class="vc-bar-track"><div class="vc-bar-fill" style="--vc-w:${pct}%;background:linear-gradient(90deg, rgba(${d.rgb},0.85), ${d.color});"></div></div>
         <span class="vc-bar-val">${val}</span>
       </div>`;
     }).join("\n");
-    return `<div class="rs-note reveal" style="border-left-color:var(--accent);padding:clamp(0.6rem,1vw,0.9rem) clamp(0.8rem,1.2vw,1rem);">
-      <div class="rs-note-header" style="margin-bottom:0.4rem;">
-        <span class="rs-note-dot" style="background:var(--accent);"></span>
-        <span class="rs-note-cat">${m.label}</span>
-      </div>
+    return `<div class="vc-metric-row reveal">
+      <div class="vc-metric-title">${m.label}</div>
       <div class="vc-bar-group">${bars}</div>
     </div>`;
   }).join("\n");
 
-  const legend = variants.map((v) =>
-    `<span class="vc-legend-item"><span class="vc-legend-dot" style="background:${dotColors[v]};"></span> ${labels[v]}</span>`
+  const legend = variants.map((d) =>
+    `<span class="vc-legend-item"><span class="vc-legend-dot" style="background:${d.color};"></span> ${d.label}</span>`
   ).join("\n");
+  const scaleNote = `<span class="vc-legend-scale">Shared scale — longer = more tracking (max ${globalMax})</span>`;
 
-  const verdict = vc.verdict ? `<div class="rs-note reveal" style="border-left-color:var(--accent-yellow);margin-top:var(--element-gap);">
-    <p class="rs-note-text" style="font-style:italic;">${esc(vc.verdict)}</p>
+  // Lead with the takeaway: the verdict is the hero, not a footnote.
+  const verdict = vc.verdict ? `<div class="vc-verdict-hero reveal">
+    <span class="vc-verdict-icon" aria-hidden="true">⚠</span>
+    <p class="vc-verdict-text">${esc(vc.verdict)}</p>
   </div>` : "";
 
   return `<section class="slide" data-title="Variant Comparison">
@@ -1766,9 +1808,9 @@ function buildVariantComparison(slideNum, totalSlides) {
     <span class="badge reveal">Consent Variants</span>
     <h2 class="reveal">Ignore vs Accept vs Reject</h2>
     ${slideDesc("variantComparison")}
-    <div class="vc-legend reveal">${legend}</div>
-    <div class="vc-chart">${metricSections}</div>
     ${verdict}
+    <div class="vc-legend reveal">${legend}${scaleNote}</div>
+    <div class="vc-chart">${metricSections}</div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
@@ -2245,21 +2287,61 @@ function buildTcfConsentMode(slideNum, totalSlides) {
   const gcm = findings.googleConsentMode;
   if ((!tcf || !tcf.detected) && (!gcm || !gcm.detected)) return null;
 
+  // Human-readable IAB TCF v2.2 purpose names (id → short label), verbatim per brief.
+  const TCF_PURPOSE_LABELS = {
+    1: "Store / access info on device",
+    2: "Basic ads",
+    3: "Personalised-ads profile",
+    4: "Personalised ads",
+    5: "Personalised-content profile",
+    6: "Personalised content",
+    7: "Measure ad performance",
+    8: "Measure content performance",
+    9: "Market research",
+    10: "Develop & improve services",
+  };
+
+  // Human-readable Google Consent Mode v2 signal labels.
+  const GCM_SIGNAL_LABELS = {
+    analytics_storage: "Analytics storage",
+    ad_storage: "Ad storage",
+    ad_user_data: "Ad user data",
+    ad_personalization: "Ad personalization",
+    functionality_storage: "Functionality storage",
+    personalization_storage: "Personalization storage",
+    security_storage: "Security storage",
+  };
+
+  const consentLegend = `<div class="ct-legend">
+    <span class="ct-legend-item"><span class="ct-dot ct-dot-granted"></span>Granted</span>
+    <span class="ct-legend-item"><span class="ct-dot ct-dot-denied"></span>Denied</span>
+  </div>`;
+
   let tcfSection = "";
   if (tcf && tcf.detected) {
     const purposes = tcf.purposeConsents || {};
-    const purposeChips = Object.entries(purposes).slice(0, 10).map(([id, granted]) => {
-      const color = granted ? "var(--accent-green)" : "var(--accent-red)";
-      return `<span class="tcf-purpose-chip" style="border-color:${color};color:${color};">P${esc(id)}</span>`;
+    const purposeRows = Object.entries(purposes).map(([id, granted]) => {
+      const label = TCF_PURPOSE_LABELS[id] || `Purpose ${esc(id)}`;
+      const cls = granted ? "tcf-purpose-granted" : "tcf-purpose-denied";
+      return `<div class="tcf-purpose ${cls}">
+        <span class="tcf-purpose-icon">${granted ? "&#10003;" : "&#10007;"}</span>
+        <span class="tcf-purpose-label">${esc(label)}</span>
+      </div>`;
     }).join("\n");
 
-    tcfSection = `<div class="card reveal" style="padding:1rem;">
-      <h3 style="font-size:0.9rem;margin:0 0 0.6rem;">IAB TCF v${tcf.version || "?"}</h3>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
-        <div><strong>CMP:</strong> ${tcf.cmpId || "Unknown"}</div>
-        ${tcf.vendorCount ? `<div><strong>Vendors:</strong> ${tcf.vendorCount}</div>` : ""}
+    tcfSection = `<div class="ct-panel reveal">
+      <div class="ct-panel-head">
+        <h3 class="ct-panel-title">IAB TCF v${esc(tcf.version || "?")}</h3>
+        ${consentLegend}
       </div>
-      ${purposeChips ? `<div class="tcf-purposes" style="margin-top:0.5rem;">${purposeChips}</div>` : ""}
+      <p class="ct-explainer">The ad industry's standard <em>consent string</em> &mdash; it records which data-processing purposes you allowed across hundreds of ad vendors.</p>
+      <div class="ct-stats">
+        <div class="ct-stat"><span class="ct-stat-num">${esc(tcf.cmpId || "?")}</span><span class="ct-stat-label">CMP ID</span></div>
+        ${tcf.vendorCount ? `<div class="ct-stat"><span class="ct-stat-num">${esc(tcf.vendorCount)}</span><span class="ct-stat-label">Vendors</span></div>` : ""}
+      </div>
+      ${purposeRows
+        ? `<div class="ct-sublabel">Purposes consented</div><div class="tcf-purposes">${purposeRows}</div>`
+        : `<p class="ct-note">No per-purpose consent data captured.</p>`}
     </div>`;
   }
 
@@ -2267,40 +2349,60 @@ function buildTcfConsentMode(slideNum, totalSlides) {
   if (gcm && gcm.detected) {
     const signals = ["analytics_storage", "ad_storage", "ad_user_data", "ad_personalization", "functionality_storage", "personalization_storage", "security_storage"];
     const defaultState = gcm.defaultState || {};
+    // Merge update events onto the defaults so unchanged signals keep their default value.
+    const afterState = { ...defaultState };
+    const updateEvents = gcm.updateEvents || [];
+    updateEvents.forEach((ev) => {
+      Object.entries(ev).forEach(([k, v]) => {
+        if (k !== "event" && k !== "timestamp" && (v === "granted" || v === "denied")) afterState[k] = v;
+      });
+    });
+    const hasUpdate = updateEvents.length > 0;
 
-    const signalNodes = signals.filter((s) => defaultState[s]).map((s) => {
-      const val = defaultState[s];
-      const denied = val === "denied";
-      const cls = denied ? "gcm-signal-denied" : "gcm-signal-granted";
-      const shortName = s.replace(/_storage$/, "").replace(/_/g, " ");
-      return `<div class="gcm-signal ${cls}">
-        <span class="gcm-signal-icon">${denied ? "✗" : "✓"}</span>
-        <span class="gcm-signal-name">${esc(shortName)}</span>
-        <span class="gcm-signal-val">${val}</span>
+    const stateCell = (val) => {
+      if (val !== "granted" && val !== "denied") return `<span class="gcm-state gcm-state-na">&mdash;</span>`;
+      const cls = val === "granted" ? "gcm-state-granted" : "gcm-state-denied";
+      return `<span class="gcm-state ${cls}">${val === "granted" ? "&#10003;" : "&#10007;"} ${val}</span>`;
+    };
+
+    const signalRows = signals.filter((s) => defaultState[s] != null || afterState[s] != null).map((s) => {
+      const label = GCM_SIGNAL_LABELS[s] || esc(s.replace(/_/g, " "));
+      const changed = hasUpdate && defaultState[s] !== afterState[s];
+      return `<div class="gcm-row${changed ? " gcm-row-changed" : ""}">
+        <span class="gcm-row-name">${esc(label)}</span>
+        ${stateCell(defaultState[s])}
+        ${hasUpdate ? `<span class="gcm-arrow">&rarr;</span>${stateCell(afterState[s])}` : ""}
       </div>`;
     }).join("\n");
 
-    const updates = (gcm.updateEvents || []).slice(0, 3).map((ev) => {
-      const changes = Object.entries(ev).filter(([k]) => k !== "event" && k !== "timestamp").map(([k, v]) => {
-        const color = v === "granted" ? "var(--accent-green)" : "var(--accent-red)";
-        return `<span style="color:${color};font-size:0.7rem;">${esc(k.replace(/_/g, " "))}: ${v}</span>`;
-      }).join(" ");
-      return changes ? `<div class="gcm-update reveal">${changes}</div>` : "";
-    }).filter(Boolean).join("\n");
-
-    gcmSection = `<div class="card reveal" style="padding:1rem;">
-      <h3 style="font-size:0.9rem;margin:0 0 0.6rem;">Google Consent Mode v2</h3>
-      <div class="gcm-signal-grid">${signalNodes || '<span style="opacity:0.6;">No signal data</span>'}</div>
-      ${updates ? `<div class="gcm-updates"><div class="gcm-update-label">After consent update:</div>${updates}</div>` : ""}
+    gcmSection = `<div class="ct-panel reveal">
+      <div class="ct-panel-head">
+        <h3 class="ct-panel-title">Google Consent Mode v2</h3>
+        ${consentLegend}
+      </div>
+      <p class="ct-explainer">A signal layer telling Google's tags whether they may use cookies for ads / analytics.</p>
+      <div class="gcm-table">
+        <div class="gcm-row gcm-row-head">
+          <span class="gcm-row-name">Signal</span>
+          <span class="gcm-col-head">Default</span>
+          ${hasUpdate ? `<span class="gcm-arrow">&nbsp;</span><span class="gcm-col-head">After consent</span>` : ""}
+        </div>
+        ${signalRows || `<p class="ct-note">No signal data captured.</p>`}
+      </div>
+      <p class="ct-note">${hasUpdate
+        ? "Defaults set before consent; the right column shows the state after the user accepted."
+        : "No consent-update events observed &mdash; defaults shown."}</p>
     </div>`;
   }
+
+  const onlyOne = !tcfSection || !gcmSection;
 
   return `<section class="slide" data-title="TCF & Consent Mode">
   <div class="slide-content">
     <span class="badge reveal">Consent Infrastructure</span>
     <h2 class="reveal">TCF &amp; Consent Mode</h2>
     ${slideDesc("tcfConsentMode")}
-    <div style="display:flex;flex-direction:column;gap:0.8rem;">
+    <div class="ct-grid${onlyOne ? " ct-grid-single" : ""}">
       ${tcfSection}
       ${gcmSection}
     </div>

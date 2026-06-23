@@ -50,7 +50,7 @@ Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()
 - Pass: explicit deny for unused features
 
 ## Adjacent Checks
-- **SRI (Subresource Integrity)** — `integrity=` attribute on `<script src>` from external CDNs. **Score only against SRI-*eligible* scripts.** Tag managers and analytics loaders (Google Tag Manager, gtag.js, Tealium, Adobe Launch/DTM, Segment) republish a new file on every container change, so a static hash is infeasible — adding SRI would break them the moment the vendor updates, with no alerting beyond noticing data stopped flowing. GTM is also the single most valuable script to protect, yet the one that *cannot* take SRI. The scanner separates these: see `scriptIntegrity.eligibleCoveragePercent` and `scriptIntegrity.cannotTakeSri[]`.
+- **SRI (Subresource Integrity)** — `integrity=` attribute on `<script src>` from external CDNs. **When reporting coverage, count only SRI-*eligible* scripts.** Tag managers and analytics loaders (Google Tag Manager, gtag.js, Tealium, Adobe Launch/DTM, Segment) republish a new file on every container change, so a static hash is infeasible — adding SRI would break them the moment the vendor updates, with no alerting beyond noticing data stopped flowing. GTM is also the single most valuable script to protect, yet the one that *cannot* take SRI. The scanner separates these: see `scriptIntegrity.eligibleCoveragePercent` and `scriptIntegrity.cannotTakeSri[]`.
 - **CORS** — `Access-Control-Allow-Origin: *` combined with `Allow-Credentials: true` is a misconfiguration
 - **Cookie security flags** — `Secure`, `HttpOnly`, `SameSite=Strict|Lax` on session cookies
 
@@ -77,7 +77,7 @@ When you write an SRI recommendation:
 ## Scanner Output Fields (see field-contract.md)
 - `summary.securityHeaders` — `{header, value, status, weight}` per header
 - `summary.scriptIntegrity.coveragePercent` — raw fraction of external scripts with valid SRI
-- `summary.scriptIntegrity.eligibleCoveragePercent` / `eligibleExternal` — coverage over SRI-eligible scripts only (tag managers excluded) — **score off this**
+- `summary.scriptIntegrity.eligibleCoveragePercent` / `eligibleExternal` — coverage over SRI-eligible scripts only (tag managers excluded) — **report only; SRI is advisory and not scored (see the advisory note below)**
 - `summary.scriptIntegrity.cannotTakeSri[]` — external scripts that cannot take a static hash (GTM, gtag, Tealium, Adobe Launch, Segment)
 - `summary.corsConfig` — `{wildcardOrigin, credentialsAllowed}` flags
 - `summary.cookieFlagAudit[]` — per-cookie `{name, secure, httpOnly, sameSite}`
@@ -86,8 +86,15 @@ When you write an SRI recommendation:
 9% weight (Phase E). Score = `(present_headers / total_checked) × 100`.
 
 Modifiers:
-- SRI **eligible** coverage 0% with 5+ eligible external scripts: −10 (use `eligibleCoveragePercent`; tag managers in `cannotTakeSri[]` don't count toward the penalty)
-- SRI eligible coverage > 80%: +5
 - CORS wildcard with credentials: −10
 - CSP `'unsafe-inline'` in script-src: −5
 - Session cookie missing `Secure`: −5
+
+### SRI — advisory only (not scored)
+
+SRI coverage is **reported but does not affect the score** (no penalty, no bonus). Subresource
+Integrity is a sound Art. 32 hardening measure, but it is not a privacy/ePrivacy signal a DPA
+enforces in a GDPR/ePrivacy audit. Continue to surface `scriptIntegrity.eligibleCoveragePercent`
+and recommend SRI for static third-party scripts (tag managers in `cannotTakeSri[]` cannot take
+a static hash and are excluded from any recommendation). See the "Recommending SRI (don't be
+naive)" guidance above and `scoring.md` for the rationale.
