@@ -983,7 +983,10 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
     const rk = riskOf(d);
     const flagMatch = (d.jurisdiction || "").match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\S+\s)/u);
     const flag = d.flag || (flagMatch ? flagMatch[1].trim() : "🌍");
-    const juris = d.flag ? esc(d.jurisdiction) : esc((d.jurisdiction || "").replace(/^\S+\s+/, "").trim());
+    // The flag is rendered in its own span, so strip any leading flag/emoji from the
+    // jurisdiction label — some scans embed the flag in the jurisdiction string, which
+    // would otherwise render the flag twice.
+    const juris = esc((d.jurisdiction || "").replace(/^(?:\p{Regional_Indicator}|\p{Extended_Pictographic}|[️‍\s])+/u, "").trim() || d.jurisdiction || "");
     const rawDomains = Array.isArray(d.domains) ? d.domains : (d.domains || "").split(",").map(s => s.trim()).filter(Boolean);
     const domainsStr = rawDomains.join(", ");
     return `<div class="tc-dest-card tc-dest-${rk.cls} reveal">
