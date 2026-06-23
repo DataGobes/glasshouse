@@ -993,9 +993,10 @@ function buildThirdPartyDomains(slideNum, totalSlides) {
       <div class="tc-dest-grid">${cards}</div>
     </div>
     <div class="tc-legend reveal">
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> Adequate</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF Certified</div>
-      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> No Safeguards</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-green);"></span> EU / Adequate</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-yellow);"></span> DPF-Certified US</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--accent-red);"></span> Unverified Transfer</div>
+      <div class="tc-legend-item"><span class="tc-legend-swatch" style="background:var(--text-secondary);border-radius:50%;"></span> Node = domain · req count</div>
     </div>
   </div>
   ${watermark()}
