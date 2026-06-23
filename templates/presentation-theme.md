@@ -4173,60 +4173,161 @@ All CSS for new slide types added in the gap analysis upgrade.
 }
 
 /* ─── TCF Purpose Chips ─── */
-.tcf-purposes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
+/* ─── TCF & Consent Mode: two explained panels ─── */
+.ct-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--content-gap);
+    align-items: start;
 }
-.tcf-purpose-chip {
-    padding: 0.15rem 0.4rem;
-    border: 1px solid;
-    border-radius: 3px;
+.ct-grid-single {
+    grid-template-columns: 1fr;
+    max-width: 46rem;
+    margin: 0 auto;
+}
+.ct-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 12px;
+    padding: clamp(0.9rem, 1.6vw, 1.3rem);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.ct-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.ct-panel-title {
+    font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+.ct-explainer {
+    font-size: var(--small-size);
+    line-height: 1.45;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.ct-explainer em { color: var(--accent); font-style: normal; font-weight: 600; }
+.ct-legend {
+    display: flex;
+    gap: 0.75rem;
+    font-size: var(--small-size);
+    color: var(--text-muted);
+}
+.ct-legend-item { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ct-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+.ct-dot-granted { background: var(--accent-green); }
+.ct-dot-denied { background: var(--accent-red); }
+.ct-stats { display: flex; gap: 0.6rem; }
+.ct-stat {
+    flex: 1;
+    text-align: center;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--bg-card-border);
+    border-radius: 8px;
+    background: linear-gradient(90deg, rgba(199,92,44,0.06), var(--bg-card) 70%);
+}
+.ct-stat-num {
+    display: block;
     font-family: var(--font-mono);
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.1;
+}
+.ct-stat-label {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ct-sublabel {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.1rem;
+}
+.ct-note {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0.1rem 0 0;
 }
 
-/* ─── Google Consent Mode Signal Grid ─── */
-.gcm-signal-grid {
+/* TCF purpose list — human-readable, colour-coded */
+.tcf-purposes {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.4rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
 }
-.gcm-signal {
+.tcf-purpose {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.3rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
+    padding: 0.32rem 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--text-muted);
+    font-size: var(--small-size);
+    line-height: 1.25;
 }
-.gcm-signal-denied {
-    background: rgba(220,38,38,0.08);
-    color: var(--accent-red);
+.tcf-purpose-granted {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(90deg, rgba(5,150,105,0.07), var(--bg-card) 60%);
 }
-.gcm-signal-granted {
-    background: rgba(5,150,105,0.08);
-    color: var(--accent-green);
+.tcf-purpose-denied {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(220,38,38,0.07), var(--bg-card) 60%);
 }
-.gcm-signal-icon { font-weight: 700; }
-.gcm-signal-name { flex: 1; text-transform: capitalize; }
-.gcm-signal-val { font-family: var(--font-mono); font-weight: 600; }
-.gcm-updates {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--bg-card-border);
-}
-.gcm-update-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    margin-bottom: 0.3rem;
-}
-.gcm-update {
-    display: flex;
-    flex-wrap: wrap;
+.tcf-purpose-icon { font-weight: 700; flex-shrink: 0; }
+.tcf-purpose-granted .tcf-purpose-icon { color: var(--accent-green); }
+.tcf-purpose-denied .tcf-purpose-icon { color: var(--accent-red); }
+.tcf-purpose-label { color: var(--text-primary); }
+
+/* GCM before → after table */
+.gcm-table { display: flex; flex-direction: column; gap: 0.3rem; }
+.gcm-row {
+    display: grid;
+    grid-template-columns: 1.6fr auto auto auto;
+    align-items: center;
     gap: 0.5rem;
+    padding: 0.32rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(28,25,23,0.025);
+    font-size: var(--small-size);
 }
+.gcm-row-changed { background: linear-gradient(90deg, rgba(199,92,44,0.07), var(--bg-card) 70%); }
+.gcm-row-head {
+    background: none;
+    padding-bottom: 0.1rem;
+}
+.gcm-row-name { color: var(--text-primary); font-weight: 500; }
+.gcm-col-head, .gcm-row-head .gcm-row-name {
+    font-size: var(--small-size);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    text-align: center;
+}
+.gcm-state {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+.gcm-state-granted { color: var(--accent-green); }
+.gcm-state-denied { color: var(--accent-red); }
+.gcm-state-na { color: var(--text-muted); }
+.gcm-arrow { color: var(--text-muted); text-align: center; }
 
 /* ─── Consent Revocation Flow ─── */
 .cr-flow {

@@ -2277,21 +2277,61 @@ function buildTcfConsentMode(slideNum, totalSlides) {
   const gcm = findings.googleConsentMode;
   if ((!tcf || !tcf.detected) && (!gcm || !gcm.detected)) return null;
 
+  // Human-readable IAB TCF v2.2 purpose names (id → short label), verbatim per brief.
+  const TCF_PURPOSE_LABELS = {
+    1: "Store / access info on device",
+    2: "Basic ads",
+    3: "Personalised-ads profile",
+    4: "Personalised ads",
+    5: "Personalised-content profile",
+    6: "Personalised content",
+    7: "Measure ad performance",
+    8: "Measure content performance",
+    9: "Market research",
+    10: "Develop & improve services",
+  };
+
+  // Human-readable Google Consent Mode v2 signal labels.
+  const GCM_SIGNAL_LABELS = {
+    analytics_storage: "Analytics storage",
+    ad_storage: "Ad storage",
+    ad_user_data: "Ad user data",
+    ad_personalization: "Ad personalization",
+    functionality_storage: "Functionality storage",
+    personalization_storage: "Personalization storage",
+    security_storage: "Security storage",
+  };
+
+  const consentLegend = `<div class="ct-legend">
+    <span class="ct-legend-item"><span class="ct-dot ct-dot-granted"></span>Granted</span>
+    <span class="ct-legend-item"><span class="ct-dot ct-dot-denied"></span>Denied</span>
+  </div>`;
+
   let tcfSection = "";
   if (tcf && tcf.detected) {
     const purposes = tcf.purposeConsents || {};
-    const purposeChips = Object.entries(purposes).slice(0, 10).map(([id, granted]) => {
-      const color = granted ? "var(--accent-green)" : "var(--accent-red)";
-      return `<span class="tcf-purpose-chip" style="border-color:${color};color:${color};">P${esc(id)}</span>`;
+    const purposeRows = Object.entries(purposes).map(([id, granted]) => {
+      const label = TCF_PURPOSE_LABELS[id] || `Purpose ${esc(id)}`;
+      const cls = granted ? "tcf-purpose-granted" : "tcf-purpose-denied";
+      return `<div class="tcf-purpose ${cls}">
+        <span class="tcf-purpose-icon">${granted ? "&#10003;" : "&#10007;"}</span>
+        <span class="tcf-purpose-label">${esc(label)}</span>
+      </div>`;
     }).join("\n");
 
-    tcfSection = `<div class="card reveal" style="padding:1rem;">
-      <h3 style="font-size:0.9rem;margin:0 0 0.6rem;">IAB TCF v${tcf.version || "?"}</h3>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
-        <div><strong>CMP:</strong> ${tcf.cmpId || "Unknown"}</div>
-        ${tcf.vendorCount ? `<div><strong>Vendors:</strong> ${tcf.vendorCount}</div>` : ""}
+    tcfSection = `<div class="ct-panel reveal">
+      <div class="ct-panel-head">
+        <h3 class="ct-panel-title">IAB TCF v${esc(tcf.version || "?")}</h3>
+        ${consentLegend}
       </div>
-      ${purposeChips ? `<div class="tcf-purposes" style="margin-top:0.5rem;">${purposeChips}</div>` : ""}
+      <p class="ct-explainer">The ad industry's standard <em>consent string</em> &mdash; it records which data-processing purposes you allowed across hundreds of ad vendors.</p>
+      <div class="ct-stats">
+        <div class="ct-stat"><span class="ct-stat-num">${esc(tcf.cmpId || "?")}</span><span class="ct-stat-label">CMP ID</span></div>
+        ${tcf.vendorCount ? `<div class="ct-stat"><span class="ct-stat-num">${esc(tcf.vendorCount)}</span><span class="ct-stat-label">Vendors</span></div>` : ""}
+      </div>
+      ${purposeRows
+        ? `<div class="ct-sublabel">Purposes consented</div><div class="tcf-purposes">${purposeRows}</div>`
+        : `<p class="ct-note">No per-purpose consent data captured.</p>`}
     </div>`;
   }
 
@@ -2299,40 +2339,60 @@ function buildTcfConsentMode(slideNum, totalSlides) {
   if (gcm && gcm.detected) {
     const signals = ["analytics_storage", "ad_storage", "ad_user_data", "ad_personalization", "functionality_storage", "personalization_storage", "security_storage"];
     const defaultState = gcm.defaultState || {};
+    // Merge update events onto the defaults so unchanged signals keep their default value.
+    const afterState = { ...defaultState };
+    const updateEvents = gcm.updateEvents || [];
+    updateEvents.forEach((ev) => {
+      Object.entries(ev).forEach(([k, v]) => {
+        if (k !== "event" && k !== "timestamp" && (v === "granted" || v === "denied")) afterState[k] = v;
+      });
+    });
+    const hasUpdate = updateEvents.length > 0;
 
-    const signalNodes = signals.filter((s) => defaultState[s]).map((s) => {
-      const val = defaultState[s];
-      const denied = val === "denied";
-      const cls = denied ? "gcm-signal-denied" : "gcm-signal-granted";
-      const shortName = s.replace(/_storage$/, "").replace(/_/g, " ");
-      return `<div class="gcm-signal ${cls}">
-        <span class="gcm-signal-icon">${denied ? "✗" : "✓"}</span>
-        <span class="gcm-signal-name">${esc(shortName)}</span>
-        <span class="gcm-signal-val">${val}</span>
+    const stateCell = (val) => {
+      if (val !== "granted" && val !== "denied") return `<span class="gcm-state gcm-state-na">&mdash;</span>`;
+      const cls = val === "granted" ? "gcm-state-granted" : "gcm-state-denied";
+      return `<span class="gcm-state ${cls}">${val === "granted" ? "&#10003;" : "&#10007;"} ${val}</span>`;
+    };
+
+    const signalRows = signals.filter((s) => defaultState[s] != null || afterState[s] != null).map((s) => {
+      const label = GCM_SIGNAL_LABELS[s] || esc(s.replace(/_/g, " "));
+      const changed = hasUpdate && defaultState[s] !== afterState[s];
+      return `<div class="gcm-row${changed ? " gcm-row-changed" : ""}">
+        <span class="gcm-row-name">${esc(label)}</span>
+        ${stateCell(defaultState[s])}
+        ${hasUpdate ? `<span class="gcm-arrow">&rarr;</span>${stateCell(afterState[s])}` : ""}
       </div>`;
     }).join("\n");
 
-    const updates = (gcm.updateEvents || []).slice(0, 3).map((ev) => {
-      const changes = Object.entries(ev).filter(([k]) => k !== "event" && k !== "timestamp").map(([k, v]) => {
-        const color = v === "granted" ? "var(--accent-green)" : "var(--accent-red)";
-        return `<span style="color:${color};font-size:0.7rem;">${esc(k.replace(/_/g, " "))}: ${v}</span>`;
-      }).join(" ");
-      return changes ? `<div class="gcm-update reveal">${changes}</div>` : "";
-    }).filter(Boolean).join("\n");
-
-    gcmSection = `<div class="card reveal" style="padding:1rem;">
-      <h3 style="font-size:0.9rem;margin:0 0 0.6rem;">Google Consent Mode v2</h3>
-      <div class="gcm-signal-grid">${signalNodes || '<span style="opacity:0.6;">No signal data</span>'}</div>
-      ${updates ? `<div class="gcm-updates"><div class="gcm-update-label">After consent update:</div>${updates}</div>` : ""}
+    gcmSection = `<div class="ct-panel reveal">
+      <div class="ct-panel-head">
+        <h3 class="ct-panel-title">Google Consent Mode v2</h3>
+        ${consentLegend}
+      </div>
+      <p class="ct-explainer">A signal layer telling Google's tags whether they may use cookies for ads / analytics.</p>
+      <div class="gcm-table">
+        <div class="gcm-row gcm-row-head">
+          <span class="gcm-row-name">Signal</span>
+          <span class="gcm-col-head">Default</span>
+          ${hasUpdate ? `<span class="gcm-arrow">&nbsp;</span><span class="gcm-col-head">After consent</span>` : ""}
+        </div>
+        ${signalRows || `<p class="ct-note">No signal data captured.</p>`}
+      </div>
+      <p class="ct-note">${hasUpdate
+        ? "Defaults set before consent; the right column shows the state after the user accepted."
+        : "No consent-update events observed &mdash; defaults shown."}</p>
     </div>`;
   }
+
+  const onlyOne = !tcfSection || !gcmSection;
 
   return `<section class="slide" data-title="TCF & Consent Mode">
   <div class="slide-content">
     <span class="badge reveal">Consent Infrastructure</span>
     <h2 class="reveal">TCF &amp; Consent Mode</h2>
     ${slideDesc("tcfConsentMode")}
-    <div style="display:flex;flex-direction:column;gap:0.8rem;">
+    <div class="ct-grid${onlyOne ? " ct-grid-single" : ""}">
       ${tcfSection}
       ${gcmSection}
     </div>
