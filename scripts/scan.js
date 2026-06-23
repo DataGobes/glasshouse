@@ -23,6 +23,7 @@ const tls = require("tls");
 const { URL } = require("url");
 const fs = require("fs");
 const path = require("path");
+const dns = require("dns/promises");
 
 // ───────────────────────────────────────────
 // Configuration
@@ -54,6 +55,20 @@ function registrableDomain(host) {
   const lastTwo = parts.slice(-2).join(".");
   if (MULTI_PART_TLDS.has(lastTwo)) return parts.slice(-3).join(".");
   return lastTwo;
+}
+
+// A first-party-looking subdomain that CNAMEs to a different registrable
+// domain is cloaking a third party (e.g. smetrics.*.com -> adobedc.demdex.net).
+async function detectCnameCloaking(hosts, baseDomain, resolver) {
+  const resolveCname = resolver || ((h) => dns.resolveCname(h).catch(() => []));
+  const out = [];
+  for (const host of hosts || []) {
+    if (!host.endsWith('.' + baseDomain) && host !== baseDomain) continue;
+    const targets = await resolveCname(host);
+    const cloaked = targets.some((t) => registrableDomain(t) !== registrableDomain(host));
+    out.push({ host, cnameCloaked: cloaked, cnameTarget: cloaked ? targets[0] : null });
+  }
+  return out;
 }
 
 // Pick up to maxPages same-registrable-domain links, preferring campaign/tracking
@@ -1966,6 +1981,27 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
       // Clean up internal fields before serialization
       if (v.preConsent) delete v.preConsent._requestHandler;
       if (v.postConsent) delete v.postConsent._requestHandler;
+
+      // Best-effort CNAME-cloaking enrichment: check first-party-looking subdomains
+      // for CNAMEs that resolve to a different registrable domain.
+      // Time-boxed to 3 s; DNS failures or timeouts never break the scan.
+      const baseDomain = (result.meta.domain || "").replace(/^www\./, "");
+      if (baseDomain && v.preConsent && Array.isArray(v.preConsent.thirdPartyDomains)) {
+        try {
+          const candidateHosts = v.preConsent.thirdPartyDomains.map((d) => d.domain);
+          const CNAME_TIMEOUT_MS = 3000;
+          const cloakingResults = await Promise.race([
+            detectCnameCloaking(candidateHosts, baseDomain),
+            new Promise((resolve) => setTimeout(() => resolve([]), CNAME_TIMEOUT_MS)),
+          ]).catch(() => []);
+          const cloakMap = new Map((cloakingResults || []).map((r) => [r.host, r]));
+          v.preConsent.thirdPartyDomains = v.preConsent.thirdPartyDomains.map((d) => {
+            const r = cloakMap.get(d.domain);
+            if (!r || !r.cnameCloaked) return d;
+            return { ...d, cnameCloaked: true, cnameTarget: r.cnameTarget };
+          });
+        } catch { /* CNAME detection is best-effort; never break a scan */ }
+      }
     }
   }
 
@@ -5014,6 +5050,7 @@ module.exports = {
   buildOverallDiffSummary,
   selectCrawlLinks,
   registrableDomain,
+  detectCnameCloaking,
   CAMPAIGN_PARAM_RE,
   SDK_PATTERNS,
   TRACKER_PATTERNS,
