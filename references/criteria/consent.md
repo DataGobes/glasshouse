@@ -17,10 +17,20 @@ Whether the site obtains valid GDPR Art. 7 consent before placing non-essential 
 4. **Unambiguous** — active opt-in (no pre-ticking, no silence/inactivity, no scrolling)
 
 ## Art. 7(3) — Withdrawal Must Be as Easy as Giving
-Verify the policy and CMP both expose a one-equivalent-click withdrawal path. Examples of violations:
-- Accept = 1 click; Reject buried behind preferences pane = 2+ clicks
-- Consent given via checkbox; withdrawal requires emailing the DPO
-- Settings change accepted instantly; revocation requires "wait 30 days for processing"
+
+**Two distinct checks — do not conflate them:**
+
+1. **Reject parity *at the banner* (the consent moment).** Reject must be as prominent and as shallow as accept on the *first* layer. "Accept = 1 click, Reject only reachable via Manage settings (layer 2)" is a dark pattern — this is the CNIL Bing/Google line of enforcement and is scored via `rejectAccessibility` / `multiLayer` (see dark-patterns.md). This is well-settled law.
+
+2. **Withdrawal *after* consent (Art. 7(3)).** The standard, per EDPB Guidelines 05/2020, is that withdrawal be **"equally straightforward" in effort and accessibility, via the same interface** — **not** that it take the identical number of clicks. The Board's own example of a *violation* is consenting with one online click but having to phone or write a letter to withdraw. A footer "cookie settings" link that reopens the CMP is **compliant**, even though it is one click more than the banner's "Accept all". Do not penalize that.
+
+Genuine Art. 7(3) violations (penalize):
+- Withdrawal requires a *different channel* than granting — emailing the DPO, calling support, a postal letter, or logging into an account when consent was given anonymously on the banner
+- Withdrawal buried >3 clicks deep or hidden in account settings with no on-page entry point
+- Revocation gated behind confirmshaming / "are you SURE?" friction, or "wait 30 days for processing"
+
+Not a violation (do **not** penalize):
+- A clean footer / preference-center link that reopens the CMP in one click (even if a panel then loads) — this is the normal, compliant pattern and an automated raw click-count comparison is a poor proxy for the spirit of Art. 7(3).
 
 ## Invalid Consent Patterns
 - Pre-ticked checkboxes
@@ -68,8 +78,11 @@ A scanner-detected GPC signal can constitute valid objection. Sites should read 
 - `findings.consent.consentGranularity` — `"binary"` | `"granular"` | `"none"`
 - `findings.consent.gpc.siteReadsSignal` — boolean
 - `findings.consent.consentRevocation.mechanismFound` — boolean
-- `findings.consent.consentRevocation.cookiesDeletedAfterRevocation` — boolean
-- `findings.consent.revocationClicks` / `acceptanceClicks` — comparison of effort
+- `findings.consent.consentRevocation.newRequestsAfterRevocation` — number (>0 ⇒ processing continued after revoking; this is the −10 signal)
+- `findings.consent.consentRevocation.trackingCookiesDeleted` — boolean (deletion is best-practice, not the legal test)
+- `findings.consent.consentRevocation.trackingCookiesRemaining[]` — cookie names still present after revocation
+- `findings.consent.consentRevocation.mechanismType` — e.g. `"cmp-api"`, `"footer-link"`, `"not-found"`
+- `findings.consent.revocationClicks` / `acceptanceClicks` — recorded for context; the *delta alone* is not a violation (see Art. 7(3) above)
 - `findings.consent.gcmV2.signalsPresent[]` — list of consent-mode signals detected
 
 ## Scoring Impact (see scoring.md)
@@ -78,6 +91,6 @@ Base 0–100 by CMP quality. Modifiers:
 - TCF malformed string: −5
 - Google ads but no TCF: −10
 - No revocation mechanism: −15
-- Revocation found but cookies persist: −10
-- Revoke clicks > accept clicks: −5
+- Revocation found but non-essential processing continues: −10 (see cookie-hygiene.md — the test is processing cessation, not cookie deletion)
+- Withdrawal needs a *different channel* than granting (email/phone/account login): −15; on-site but buried >3 clicks / confirmshaming: −5; clean footer preference-center link: **no penalty** (Art. 7(3) is "equally straightforward", not identical click count)
 - Reads GPC signal: +5

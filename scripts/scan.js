@@ -9,10 +9,16 @@
  * Usage: node scan.js <url>
  * Output: JSON to /tmp/glasshouse-{domain}-{timestamp}.json
  *
- * Always uses Firefox (Chromium gets blocked by WAFs like Imperva/Cloudflare).
+ * Engine: defaults to Firefox. Playwright's Chromium build ships a JA3/TLS
+ * fingerprint that matches no real Chrome release, so WAFs (Imperva/Cloudflare)
+ * challenge it more readily; Firefox draws fewer challenges for an unattended
+ * scan. Either way THIRD-PARTY COOKIES ARE EXPLICITLY ALLOWED (Firefox
+ * cookieBehavior:0 / Chromium default), matching Chrome's post-2025 default so
+ * no cross-site cookie is missed. Pass --engine chromium for Chrome-fidelity
+ * runs (needs `npx playwright install chromium`). See launchBrowser().
  */
 
-const { firefox } = require("playwright");
+const { firefox, chromium } = require("playwright");
 const tls = require("tls");
 const { URL } = require("url");
 const fs = require("fs");
@@ -27,6 +33,76 @@ const VIEWPORT = { width: 1440, height: 900 };
 const PAGE_TIMEOUT = 45_000;
 const POST_CONSENT_WAIT = 8_000;
 const SCROLL_PAUSE = 1_500;
+const DEFAULT_MAX_CRAWL_PAGES = 5;
+
+// ─── Multi-page crawl helpers ───
+// Trackers "load you up" as a user moves through a site, and many fire only on
+// campaign/landing pages. Navigating a handful of same-site pages surfaces far
+// more cookies/storage than a single homepage load. These helpers pick which
+// links to follow; they are pure and unit-tested.
+const CAMPAIGN_PARAM_RE = /[?&](cmpid|cmp|campaign|utm_[a-z_]+|gclid|gbraid|wbraid|fbclid|mc_cid|mc_eid|msclkid|icid|cid|ef_id|s_kwcid)=/i;
+
+// A few common multi-part public suffixes so registrable-domain comparison
+// doesn't treat `a.co.uk` and `b.co.uk` as the same site.
+const MULTI_PART_TLDS = new Set([
+  "co.uk", "org.uk", "gov.uk", "ac.uk", "com.au", "net.au", "org.au",
+  "co.nz", "co.jp", "com.br", "co.za", "com.tr",
+]);
+function registrableDomain(host) {
+  const parts = String(host || "").toLowerCase().replace(/\.$/, "").split(".").filter(Boolean);
+  if (parts.length <= 2) return parts.join(".");
+  const lastTwo = parts.slice(-2).join(".");
+  if (MULTI_PART_TLDS.has(lastTwo)) return parts.slice(-3).join(".");
+  return lastTwo;
+}
+
+// Pick up to maxPages same-registrable-domain links, preferring campaign/tracking
+// links. Dedupe by origin+path; skip the page we're already on. Pure/deterministic.
+function selectCrawlLinks(links, baseHost, basePath, maxPages) {
+  const base = registrableDomain(baseHost);
+  const currentKey = String(basePath || "").replace(/\/$/, "");
+  const seen = new Set();
+  const sameSite = [];
+  for (const raw of links || []) {
+    let u;
+    try { u = new URL(raw); } catch { continue; }
+    if (u.protocol !== "http:" && u.protocol !== "https:") continue;
+    if (registrableDomain(u.hostname) !== base) continue;
+    const key = (u.origin + u.pathname).replace(/\/$/, "");
+    if (key === currentKey) continue; // don't re-visit the entry page
+    if (seen.has(key)) continue;
+    seen.add(key);
+    sameSite.push({ url: u.href, campaign: CAMPAIGN_PARAM_RE.test(u.href) });
+  }
+  // Stable sort keeps DOM order within each group; campaign links float to front.
+  sameSite.sort((a, b) => (b.campaign ? 1 : 0) - (a.campaign ? 1 : 0));
+  return sameSite.slice(0, Math.max(0, maxPages | 0)).map((l) => l.url);
+}
+
+// ─── Browser engine selection ───
+// Default Firefox (fewer WAF challenges than Playwright's Chromium, whose JA3
+// doesn't match real Chrome). Both explicitly accept third-party cookies so the
+// scan sees the same cross-site cookies a default Chrome user would.
+const SUPPORTED_ENGINES = new Set(["firefox", "chromium"]);
+async function launchBrowser(engine) {
+  if (engine === "chromium") {
+    // Chromium allows third-party cookies by default (no special flag needed),
+    // matching Chrome's post-2025 default. --disable-blink-features hides the
+    // most obvious automation tell.
+    return await chromium.launch({
+      headless: true,
+      args: ["--disable-blink-features=AutomationControlled"],
+    });
+  }
+  return await firefox.launch({
+    headless: true,
+    firefoxUserPrefs: {
+      "privacy.trackingprotection.enabled": false,
+      "network.cookie.cookieBehavior": 0, // accept ALL cookies, incl. third-party
+      "dom.webdriver.enabled": false,
+    },
+  });
+}
 
 // ───────────────────────────────────────────
 // Consent banner selectors (ordered by prevalence)
@@ -623,7 +699,7 @@ const TRACKER_PATTERNS = [
 // ───────────────────────────────────────────
 // Scout mode: lightweight page load for banner detection only
 // ───────────────────────────────────────────
-async function scout(targetUrl) {
+async function scout(targetUrl, engine = "firefox") {
   const url = new URL(targetUrl);
   const domain = url.hostname.replace(/^www\./, "");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -644,16 +720,9 @@ async function scout(targetUrl) {
     suggestedRejectText: null,
   };
 
-  console.error(`[Scout] Starting lightweight scan of ${targetUrl}...`);
+  console.error(`[Scout] Starting lightweight scan of ${targetUrl} (engine: ${engine})...`);
 
-  const browser = await firefox.launch({
-    headless: true,
-    firefoxUserPrefs: {
-      "privacy.trackingprotection.enabled": false,
-      "network.cookie.cookieBehavior": 0,
-      "dom.webdriver.enabled": false,
-    },
-  });
+  const browser = await launchBrowser(SUPPORTED_ENGINES.has(engine) ? engine : "firefox");
 
   try {
     const context = await browser.newContext({
@@ -819,10 +888,14 @@ async function scout(targetUrl) {
   return result;
 }
 
-async function scan(targetUrl, buttonHints = {}) {
+async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
   const url = new URL(targetUrl);
   const domain = url.hostname.replace(/^www\./, "");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const maxCrawlPages = Number.isFinite(scanOpts.maxPages)
+    ? Math.max(0, scanOpts.maxPages)
+    : DEFAULT_MAX_CRAWL_PAGES;
+  const engine = SUPPORTED_ENGINES.has(scanOpts.engine) ? scanOpts.engine : "firefox";
 
   const result = {
     meta: {
@@ -831,7 +904,9 @@ async function scan(targetUrl, buttonHints = {}) {
       domain,
       scannedAt: new Date().toISOString(),
       scanner: "glasshouse/2.2",
-      browser: "Firefox (Playwright)",
+      browser: engine === "chromium" ? "Chromium (Playwright)" : "Firefox (Playwright)",
+      engine,
+      thirdPartyCookiesAllowed: true,
       phases: ["pre-consent", "post-consent"], // Keep for legacy scripts, but variants is what matters now
       variants: ["ignore", "accept", "reject"],
       cleanSession: true, // Fresh context per variant
@@ -844,6 +919,7 @@ async function scan(targetUrl, buttonHints = {}) {
           rejectText: buttonHints.rejectText || null,
           saveText: buttonHints.saveText || null,
         },
+        maxCrawlPages,
       },
     },
     tls: null,
@@ -860,6 +936,7 @@ async function scan(targetUrl, buttonHints = {}) {
     legalPages: [],
     metaTags: {},
     securityHeaders: {},
+    crawl: null,
     errors: [],
   };
 
@@ -874,14 +951,8 @@ async function scan(targetUrl, buttonHints = {}) {
   const variantsToRun = ["ignore", "accept", "reject"];
 
   // ─── Browser Session ───
-  const browser = await firefox.launch({
-    headless: true,
-    firefoxUserPrefs: {
-      "privacy.trackingprotection.enabled": false,
-      "network.cookie.cookieBehavior": 0,
-      "dom.webdriver.enabled": false,
-    },
-  });
+  console.error(`[Scan] Engine: ${engine} (third-party cookies allowed)`);
+  const browser = await launchBrowser(engine);
 
   // Run each variant sequentially — each in its own try/catch so one failure doesn't kill the rest
   for (const variant of variantsToRun) {
@@ -1824,6 +1895,19 @@ async function scan(targetUrl, buttonHints = {}) {
     }
   } // End of variants loop
 
+  // ─── Multi-page crawl (isolated, additive — never touches variant timing) ───
+  if (maxCrawlPages > 0) {
+    console.error(`[Crawl] Navigating up to ${maxCrawlPages} same-site pages to surface navigation-triggered artifacts...`);
+    try {
+      result.crawl = await crawlSite(browser, targetUrl, maxCrawlPages);
+    } catch (err) {
+      result.crawl = { enabled: true, error: err.message, pagesVisited: [] };
+      result.errors.push({ phase: "crawl", error: err.message });
+    }
+  } else {
+    result.crawl = { enabled: false };
+  }
+
   await browser.close();
 
   // ─── Classify all findings for all variants ───
@@ -1867,6 +1951,103 @@ async function scan(targetUrl, buttonHints = {}) {
   fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
   console.log(outFile);
   return outFile;
+}
+
+// ───────────────────────────────────────────
+// Multi-page crawl (isolated, additive)
+// ───────────────────────────────────────────
+// Runs once after the 3-variant scan on its own fresh context, so it CANNOT
+// affect the pre/post-consent timing the audit trail depends on. Accepts consent
+// best-effort, then navigates up to maxPages same-site pages (campaign links
+// first), accumulating cookies + third-party domains. Fully wrapped: any failure
+// degrades to { error } and never breaks the main scan.
+async function crawlSite(browser, targetUrl, maxPages) {
+  const out = {
+    enabled: true,
+    maxPages,
+    pagesVisited: [],
+    startCookieCount: 0,
+    endCookieCount: 0,
+    newCookies: [],
+    newThirdPartyDomains: [],
+    error: null,
+  };
+  let context = null;
+  try {
+    const base = new URL(targetUrl);
+    const baseReg = registrableDomain(base.hostname);
+    context = await browser.newContext({
+      userAgent: STEALTH_UA,
+      viewport: VIEWPORT,
+      locale: "en-NL",
+      timezoneId: "Europe/Amsterdam",
+      extraHTTPHeaders: { "Accept-Language": "en-GB,en;q=0.9,nl;q=0.8" },
+      ignoreHTTPSErrors: true,
+    });
+    await context.clearCookies();
+
+    const thirdParty = new Set();
+    context.on("request", (req) => {
+      try {
+        const h = new URL(req.url()).hostname;
+        if (registrableDomain(h) !== baseReg) thirdParty.add(h);
+      } catch { /* ignore malformed URLs */ }
+    });
+
+    const page = await context.newPage();
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: PAGE_TIMEOUT });
+    await page.waitForTimeout(3000);
+
+    // Best-effort consent accept so the crawl reflects a consented session
+    // (that's when trackers fully fire and drop the most cookies).
+    try {
+      const ci = await detectConsent(page, {});
+      if (ci && ci.acceptButton) {
+        await page.click(ci.acceptButton, { timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(1500);
+      }
+    } catch { /* consent best-effort only */ }
+
+    const startCookies = await context.cookies();
+    out.startCookieCount = startCookies.length;
+    const startKeys = new Set(startCookies.map((c) => `${c.name}@${c.domain}`));
+
+    const links = await page
+      .evaluate(() => Array.from(document.querySelectorAll("a[href]")).map((a) => a.href))
+      .catch(() => []);
+    const targets = selectCrawlLinks(links, base.hostname, base.origin + base.pathname, maxPages);
+    console.error(`[Crawl] ${targets.length} same-site target(s) selected (campaign links prioritised)`);
+
+    for (const link of targets) {
+      const visit = { url: link, campaign: CAMPAIGN_PARAM_RE.test(link), ok: false };
+      try {
+        await page.goto(link, { waitUntil: "domcontentloaded", timeout: PAGE_TIMEOUT });
+        await page.waitForTimeout(2500);
+        await autoScroll(page).catch(() => {});
+        visit.ok = true;
+      } catch (e) {
+        visit.error = e.message;
+      }
+      out.pagesVisited.push(visit);
+    }
+
+    const endCookies = await context.cookies();
+    out.endCookieCount = endCookies.length;
+    out.newCookies = endCookies
+      .filter((c) => !startKeys.has(`${c.name}@${c.domain}`))
+      .map((c) => ({ name: c.name, domain: c.domain }));
+    out.newThirdPartyDomains = Array.from(thirdParty).sort();
+    console.error(
+      `[Crawl] Visited ${out.pagesVisited.filter((p) => p.ok).length}/${targets.length} pages — ` +
+      `cookies ${out.startCookieCount}→${out.endCookieCount} (+${out.newCookies.length} new)`
+    );
+  } catch (e) {
+    out.error = e.message;
+    console.error(`[Crawl] Aborted: ${e.message}`);
+  } finally {
+    try { if (context) await context.close(); } catch { /* ignore */ }
+  }
+  return out;
 }
 
 // ───────────────────────────────────────────
@@ -2251,6 +2432,7 @@ async function detectConsent(page, buttonHints = {}) {
     acceptButton: null,
     rejectButton: null,
     darkPatterns: [],
+    buttonStyling: null,
   };
 
   for (const [key, sel] of Object.entries(CONSENT_SELECTORS)) {
@@ -2284,10 +2466,10 @@ async function detectConsent(page, buttonHints = {}) {
         }
 
         // Dark pattern checks
-        const darkPatterns = await page.evaluate((bannerSel) => {
+        const detection = await page.evaluate((bannerSel) => {
           const patterns = [];
           const banner = document.querySelector(bannerSel);
-          if (!banner) return patterns;
+          if (!banner) return { patterns, buttonStyling: null };
 
           // Check for pre-checked toggles
           const toggles = banner.querySelectorAll(
@@ -2301,11 +2483,16 @@ async function detectConsent(page, buttonHints = {}) {
             });
           }
 
-          // Check for asymmetric buttons (accept prominent, reject hidden)
+          // Check for asymmetric buttons (accept prominent, reject hidden).
+          // Track the actual largest accept/reject elements so we can read
+          // their *measured* computed styling — never describe button colour
+          // from a screenshot impression (see criteria/dark-patterns.md).
           const buttons = banner.querySelectorAll("button, [role='button'], input[type='button']");
           let acceptSize = 0;
           let rejectSize = 0;
           let rejectFound = false;
+          let acceptEl = null;
+          let rejectEl = null;
 
           buttons.forEach((btn) => {
             const text = btn.textContent.toLowerCase().trim();
@@ -2319,7 +2506,7 @@ async function detectConsent(page, buttonHints = {}) {
               text.includes("akkoord") ||
               text.includes("ok")
             ) {
-              acceptSize = Math.max(acceptSize, area);
+              if (area >= acceptSize) { acceptSize = area; acceptEl = btn; }
             }
             if (
               text.includes("reject") ||
@@ -2329,7 +2516,7 @@ async function detectConsent(page, buttonHints = {}) {
               text.includes("deny")
             ) {
               rejectFound = true;
-              rejectSize = Math.max(rejectSize, area);
+              if (area >= rejectSize) { rejectSize = area; rejectEl = btn; }
             }
           });
 
@@ -2360,10 +2547,48 @@ async function detectConsent(page, buttonHints = {}) {
             });
           }
 
-          return patterns;
+          // Measured button styling — grounds the consent commentary in
+          // computed values instead of a vision guess. stylingIdentical=true
+          // means accept and reject share bg/text/border/weight, i.e. NOT a
+          // colour dark pattern (describe them as "styled identically").
+          const styleOf = (el) => {
+            if (!el) return null;
+            const cs = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return {
+              backgroundColor: cs.backgroundColor,
+              color: cs.color,
+              borderStyle: cs.borderStyle,
+              borderColor: cs.borderColor,
+              fontWeight: cs.fontWeight,
+              areaPx: Math.round(rect.width * rect.height),
+              text: (el.textContent || "").trim().substring(0, 40),
+            };
+          };
+          const accept = styleOf(acceptEl);
+          const reject = styleOf(rejectEl);
+          let buttonStyling = null;
+          if (accept || reject) {
+            const stylingIdentical = !!(
+              accept && reject &&
+              accept.backgroundColor === reject.backgroundColor &&
+              accept.color === reject.color &&
+              accept.borderStyle === reject.borderStyle &&
+              accept.borderColor === reject.borderColor &&
+              accept.fontWeight === reject.fontWeight
+            );
+            const areaRatio =
+              accept && reject && reject.areaPx > 0
+                ? Number((accept.areaPx / reject.areaPx).toFixed(2))
+                : null;
+            buttonStyling = { accept, reject, stylingIdentical, areaRatio };
+          }
+
+          return { patterns, buttonStyling };
         }, sel.banner);
 
-        info.darkPatterns = darkPatterns;
+        info.darkPatterns = detection.patterns;
+        info.buttonStyling = detection.buttonStyling;
         break; // Found a match, stop looking
       }
     } catch {
@@ -3871,6 +4096,15 @@ async function findLegalPages(page, origin) {
     "informativa-privacy",
     "aviso-legal",
     "disclaimer",
+    // Provider-identity disclosure (e-Commerce Directive Art. 5) — regional
+    // equivalents of the German Impressum. NL has no fixed page name, so we
+    // match colofon / over-ons; FR mentions-légales; IT note-legali.
+    "colofon",
+    "over-ons",
+    "mentions-legales",
+    "note-legali",
+    // Terms-of-use variants beyond English (NL gebruiks-/algemene voorwaarden)
+    "voorwaarden",
     "data-protection",
     "gdpr",
     "ccpa",
@@ -4319,6 +4553,7 @@ function buildSummary(variantResult, parentResult) {
       detected: variantResult.consent?.detected || false,
       platform: variantResult.consent?.platform || null,
       darkPatterns: variantResult.consent?.darkPatterns || [],
+      buttonStyling: variantResult.consent?.buttonStyling || null,
       viaCookieWall: variantResult.consent?.viaCookieWall || false,
     },
 
@@ -4393,12 +4628,28 @@ function buildSummary(variantResult, parentResult) {
     // SRI coverage
     scriptIntegrity: (() => {
       const scripts = pre.scriptIntegrity || [];
+      // Tag managers and analytics loaders republish a fresh script on every
+      // container change, so a static SRI hash is infeasible for them — they
+      // would break the moment the vendor updates the file. Security scanners
+      // (SecurityScorecard, Bitsight) exclude these from SRI checks as of 2026.
+      // We exclude them from the "eligible" coverage so the scoring modifier
+      // only penalises external scripts that can actually take a hash.
+      const SRI_INCOMPATIBLE = /googletagmanager\.com|\/gtag\/js|google-analytics\.com\/(analytics|ga)\.js|tiqcdn\.com|adobedtm\.com|cdn\.segment\.com\/analytics|ensighten\.com/i;
+      const isLoader = (s) => SRI_INCOMPATIBLE.test(s.url || "");
       const withSRI = scripts.filter(s => s.hasIntegrity);
+      const eligible = scripts.filter(s => !isLoader(s));
+      const eligibleWithSRI = eligible.filter(s => s.hasIntegrity);
       return {
         totalExternal: scripts.length,
         withIntegrity: withSRI.length,
         coveragePercent: scripts.length > 0
           ? Math.round((withSRI.length / scripts.length) * 100) : 100,
+        // SRI-eligible = external scripts that can realistically take a static
+        // hash (tag managers / republishing loaders excluded). Score off this.
+        eligibleExternal: eligible.length,
+        eligibleCoveragePercent: eligible.length > 0
+          ? Math.round((eligibleWithSRI.length / eligible.length) * 100) : 100,
+        cannotTakeSri: scripts.filter(isLoader).map(s => s.url).slice(0, 20),
         details: scripts.slice(0, 20),
       };
     })(),
@@ -4638,6 +4889,9 @@ module.exports = {
   dedupeFpCalls,
   detectConsentMode,
   buildOverallDiffSummary,
+  selectCrawlLinks,
+  registrableDomain,
+  CAMPAIGN_PARAM_RE,
   SDK_PATTERNS,
   TRACKER_PATTERNS,
 };
@@ -4655,6 +4909,9 @@ if (!targetUrl) {
   console.error("  --accept-text   Button text for accepting all cookies (e.g. \"Alles accepteren\")");
   console.error("  --reject-text   Button text for rejecting all cookies (e.g. \"Alles weigeren\")");
   console.error("  --save-text     Button text for saving current toggle selections (e.g. \"Opslaan\")");
+  console.error(`  --max-pages N   Crawl up to N same-site pages after the scan to surface more artifacts (default ${DEFAULT_MAX_CRAWL_PAGES})`);
+  console.error("  --no-crawl      Disable the multi-page crawl (equivalent to --max-pages 0)");
+  console.error("  --engine NAME   Browser engine: firefox (default) or chromium (needs `npx playwright install chromium`)");
   console.error("\nWhen provided, these text hints are used as a fallback if automatic banner detection fails.");
   console.error("Claude reads the viewport screenshot and provides these hints for custom consent banners.");
   process.exit(1);
@@ -4669,6 +4926,16 @@ const buttonHints = {
   acceptText: getArg("--accept-text"),
   rejectText: getArg("--reject-text"),
   saveText: getArg("--save-text"),
+};
+
+// Crawl depth: --no-crawl disables; --max-pages N overrides the default.
+const maxPagesArg = getArg("--max-pages");
+const engineArg = (getArg("--engine") || "firefox").toLowerCase();
+const scanOpts = {
+  maxPages: args.includes("--no-crawl")
+    ? 0
+    : (maxPagesArg !== null && Number.isFinite(Number(maxPagesArg)) ? Number(maxPagesArg) : DEFAULT_MAX_CRAWL_PAGES),
+  engine: engineArg,
 };
 
 const hasHints = buttonHints.acceptText || buttonHints.rejectText || buttonHints.saveText;
@@ -4686,7 +4953,7 @@ if (!normalizedUrl.startsWith("http")) {
 }
 
 if (isScoutMode) {
-  scout(normalizedUrl).then((result) => {
+  scout(normalizedUrl, scanOpts.engine).then((result) => {
     // Output JSON to stdout for Claude to parse
     console.log(JSON.stringify(result, null, 2));
   }).catch((err) => {
@@ -4694,7 +4961,7 @@ if (isScoutMode) {
     process.exit(1);
   });
 } else {
-  scan(normalizedUrl, buttonHints).catch((err) => {
+  scan(normalizedUrl, buttonHints, scanOpts).catch((err) => {
     console.error("Fatal error:", err.message);
     process.exit(1);
   });

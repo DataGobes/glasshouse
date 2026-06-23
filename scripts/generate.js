@@ -2582,15 +2582,15 @@ function generateMarkdown() {
   // so old analyses keep summing to 100%.
   const hasPhaseD = scores.dsar || scores.processorTransparency;
   const categories = hasPhaseD ? [
-    { key: "consent", label: "Consent Mechanism", weight: 22 },
-    { key: "preConsentTracking", label: "Pre-Consent Tracking", weight: 20 },
-    { key: "legalPages", label: "Legal Pages", weight: 12 },
-    { key: "crossBorder", label: "Cross-Border Transfers", weight: 11 },
-    { key: "securityHeaders", label: "Security Headers", weight: 10 },
-    { key: "cookieManagement", label: "Cookie Management", weight: 8 },
-    { key: "processorTransparency", label: "Processor Transparency", weight: 7 },
-    { key: "dsar", label: "DSAR / Rights Mechanism", weight: 5 },
-    { key: "darkPatterns", label: "Dark Patterns", weight: 5 },
+    { key: "consent", label: "Consent Mechanism", weight: 20 },
+    { key: "preConsentTracking", label: "Pre-Consent Tracking", weight: 18 },
+    { key: "darkPatterns", label: "Dark Patterns", weight: 15 },
+    { key: "legalPages", label: "Legal Pages", weight: 11 },
+    { key: "crossBorder", label: "Cross-Border Transfers", weight: 10 },
+    { key: "securityHeaders", label: "Security Headers", weight: 9 },
+    { key: "cookieManagement", label: "Cookie Management", weight: 7 },
+    { key: "processorTransparency", label: "Processor Transparency", weight: 6 },
+    { key: "dsar", label: "DSAR / Rights Mechanism", weight: 4 },
   ] : [
     { key: "consent", label: "Consent Mechanism", weight: 25 },
     { key: "preConsentTracking", label: "Pre-Consent Tracking", weight: 20 },

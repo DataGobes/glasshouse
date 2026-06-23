@@ -53,7 +53,7 @@ Before first use, ensure Playwright is installed:
 cd $SKILL_DIR && npm install 2>/dev/null && npx playwright install firefox 2>/dev/null
 ```
 
-Skip if `node_modules/playwright` already exists.
+Skip if `node_modules/playwright` already exists. The scanner defaults to **Firefox** (fewer WAF challenges; third-party cookies are explicitly allowed so nothing is missed). Only if you intend to run `--engine chromium` for a Chrome-fidelity scan, also run `npx playwright install chromium`.
 
 ### Step 2: Scout the banner
 
@@ -101,6 +101,9 @@ Available hint flags:
 - `--accept-text "..."` — Text of the "accept all" button
 - `--reject-text "..."` — Text of the "reject all" button
 - `--save-text "..."` — Text of a "save preferences" button (used as reject action — saving with toggles off = rejecting)
+- `--max-pages N` — After the 3-variant scan, crawl up to N same-site pages (default 5), preferring campaign/tracking links (`cmpid`, `utm_*`, `gclid`, …). Trackers load progressively as a user navigates, so this surfaces far more cookies/domains than a single homepage load. Results land in `result.crawl` and are summarised in the analysis brief under "MULTI-PAGE CRAWL".
+- `--no-crawl` — Disable the crawl (equivalent to `--max-pages 0`); use for a fast single-page scan.
+- `--engine firefox|chromium` — Browser engine (default `firefox`). Third-party cookies are allowed on both, matching Chrome's post-2025 default. Use `chromium` only when you specifically need Chrome rendering/JS fidelity and have run `npx playwright install chromium`; Firefox is the safer default for unattended scans (Playwright's Chromium has a JA3 fingerprint WAFs flag).
 
 **Examples by language:**
 - Dutch: `--accept-text "Alles accepteren" --save-text "Opslaan"`
@@ -321,7 +324,7 @@ When writing the audit narrative for a site with `rejectAccessibility === "layer
 
 ## Error handling
 
-- **Playwright missing**: `cd $SKILL_DIR && npm install && npx playwright install firefox`
+- **Playwright missing**: `cd $SKILL_DIR && npm install && npx playwright install firefox` (add `chromium` only if using `--engine chromium`)
 - **Malformed JSON**: Report scan failure, suggest manual inspection
 - **Login wall**: Note in report, scan covers public-facing pages only
 - **TLS failure**: Skip TLS section, note in errors

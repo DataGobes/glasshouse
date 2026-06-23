@@ -56,7 +56,7 @@ The "spy cloud" problem: hosting EU user data on US-based AWS / Google Cloud / A
 - `findings.crossBorder.unsafeguardedTransfers[]`
 
 ## Scoring Impact (see scoring.md)
-15% weight.
+10% weight (Phase E).
 - 100: All third parties in EU/EEA or adequate countries
 - 75: Some US transfers, all to DPF-certified entities
 - 50: US transfers without clear DPF certification

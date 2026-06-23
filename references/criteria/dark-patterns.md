@@ -68,10 +68,14 @@ Reject button text engineered to shame: "No, I prefer worse content", "No, I don
 - `findings.darkPatterns.verdictText` — short verdict string
 - `findings.darkPatterns.verdictClass` — `"fs-verdict-clean"` | `"fs-verdict-mild"` | `"fs-verdict-dark"`
 
+## Measured vs. Inferred Button Styling
+
+The scanner emits `findings.consent.buttonStyling` — computed `{backgroundColor, color, borderStyle, fontWeight, areaPx}` for the accept and reject buttons, plus `stylingIdentical` (boolean) and `areaRatio`. **Score button-styling asymmetry only from these measured fields.** Do not describe a button as a "red brand button" or "high-contrast accept" from a screenshot impression — vision is unreliable for this and has produced false positives (a banner whose buttons were styled *identically* was described as having a prominent red accept vs. a plain reject). When `stylingIdentical === true`, state plainly that the buttons are styled identically and do **not** record a colour/contrast dark pattern. Size asymmetry is still a valid signal when `areaRatio` exceeds ~2× (`acceptSize > rejectSize * 2`), independent of colour.
+
 ## Scoring Impact (see scoring.md)
-This criterion currently weighted 5%. Score 0–100 based on number and severity of patterns:
-- 100: no patterns detected
-- 75: minor asymmetry only
-- 50: clear asymmetry OR missing reject button
+This criterion is weighted **15%** (raised from 5% in Phase E — deceptive design invalidates consent regardless of the formal mechanism; EDPB 03/2022, Opinion 08/2024). Score 0–100 based on number and severity of patterns:
+- 100: no patterns detected (symmetric, shallow reject, no pre-ticking)
+- 75: minor asymmetry only (still reject on layer 1)
+- 50: clear asymmetry OR missing reject button OR reject only on layer 2
 - 25: multiple patterns combined
-- 0: cookie wall + forced consent
+- 0: cookie wall + forced consent, or no reject path at all

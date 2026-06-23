@@ -50,9 +50,15 @@ Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()
 - Pass: explicit deny for unused features
 
 ## Adjacent Checks
-- **SRI (Subresource Integrity)** — `integrity=` attribute on `<script src>` from external CDNs
+- **SRI (Subresource Integrity)** — `integrity=` attribute on `<script src>` from external CDNs. **Score only against SRI-*eligible* scripts.** Tag managers and analytics loaders (Google Tag Manager, gtag.js, Tealium, Adobe Launch/DTM, Segment) republish a new file on every container change, so a static hash is infeasible — adding SRI would break them the moment the vendor updates, with no alerting beyond noticing data stopped flowing. GTM is also the single most valuable script to protect, yet the one that *cannot* take SRI. The scanner separates these: see `scriptIntegrity.eligibleCoveragePercent` and `scriptIntegrity.cannotTakeSri[]`.
 - **CORS** — `Access-Control-Allow-Origin: *` combined with `Allow-Credentials: true` is a misconfiguration
 - **Cookie security flags** — `Secure`, `HttpOnly`, `SameSite=Strict|Lax` on session cookies
+
+### Recommending SRI (don't be naive)
+When you write an SRI recommendation:
+- Scope it to **static third-party scripts** (versioned CDN libraries) — those genuinely benefit and won't break.
+- **Explicitly carve out the tag manager.** Recommend CSP + a script-monitoring/change-alerting approach for GTM-managed tags instead of SRI, because SRI on a tag manager forces a site redeploy on every tag change and silently breaks tags when a vendor updates a hosted file.
+- Acknowledge the breakage/alerting tradeoff: with SRI, a vendor changing their script yields broken functionality detectable mainly by noticing GA/Meta stopped receiving data.
 
 ## Verified Enforcement
 
@@ -70,16 +76,18 @@ Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()
 
 ## Scanner Output Fields (see field-contract.md)
 - `summary.securityHeaders` — `{header, value, status, weight}` per header
-- `summary.sriCoverage` — fraction of external scripts with valid SRI
+- `summary.scriptIntegrity.coveragePercent` — raw fraction of external scripts with valid SRI
+- `summary.scriptIntegrity.eligibleCoveragePercent` / `eligibleExternal` — coverage over SRI-eligible scripts only (tag managers excluded) — **score off this**
+- `summary.scriptIntegrity.cannotTakeSri[]` — external scripts that cannot take a static hash (GTM, gtag, Tealium, Adobe Launch, Segment)
 - `summary.corsConfig` — `{wildcardOrigin, credentialsAllowed}` flags
 - `summary.cookieFlagAudit[]` — per-cookie `{name, secure, httpOnly, sameSite}`
 
 ## Scoring Impact (see scoring.md)
-10% weight. Score = `(present_headers / total_checked) × 100`.
+9% weight (Phase E). Score = `(present_headers / total_checked) × 100`.
 
 Modifiers:
-- SRI coverage 0% with 5+ external scripts: −10
-- SRI coverage > 80%: +5
+- SRI **eligible** coverage 0% with 5+ eligible external scripts: −10 (use `eligibleCoveragePercent`; tag managers in `cannotTakeSri[]` don't count toward the penalty)
+- SRI eligible coverage > 80%: +5
 - CORS wildcard with credentials: −10
 - CSP `'unsafe-inline'` in script-src: −5
 - Session cookie missing `Secure`: −5

@@ -94,7 +94,7 @@ Per `callerDomain D`:
 - `T2 ≥ 4 AND distinct APIs ≥ 3` (no T1) → verdict `"probable fingerprinting"` — D's Tier 2 published
 - Otherwise → D's Tier 2 demoted to `tier3Appendix[]`
 
-For each `stackedSignals[]` entry, the LLM analyst fills `rationale`, `legitimateBasisClaim`, and `purposeDisclosed` by reading the privacy policy. Per-tracker Art. 6 nuance: Riskified for fraud prevention has a plausible Art. 6(1)(f) argument; Adobe Target for A/B testing does not.
+For each `stackedSignals[]` entry, the LLM analyst fills `rationale`, `legitimateBasisClaim`, and `purposeDisclosed` by reading **both the privacy policy and the cookie policy** (and the CMP vendor list if available) — profiling/experimentation vendors like Optimizely and Exponea/Bloomreach are commonly disclosed in the *cookie* policy, so checking only the privacy policy yields false "undisclosed" findings. Search the vendor's brand aliases (Exponea ↔ Bloomreach, Optimizely ↔ Episerver) before setting `purposeDisclosed: false`, and record `disclosureSource` + a short excerpt when `true`. Per-tracker Art. 6 nuance: Riskified for fraud prevention has a plausible Art. 6(1)(f) argument; Adobe Target for A/B testing does not.
 
 ## Out of Scope (Documented, Not Detected)
 

@@ -47,6 +47,19 @@ ln(`Detected: ${consent.detected ?? summary?.consentDetected ?? "unknown"}`);
 ln(`Platform: ${consent.platform || summary?.platform || "none"}`);
 ln(`Via cookie wall: ${consent.viaCookieWall ?? false}`);
 
+// Measured button styling — keeps consent commentary grounded. Never describe
+// button colour/contrast from the screenshot when this says identical.
+const bs = consent.buttonStyling || raw.variants?.accept?.consent?.buttonStyling;
+if (bs) {
+  if (bs.stylingIdentical) {
+    ln(`Button styling (MEASURED): accept and reject styled IDENTICALLY — same bg/text/border/weight. Do NOT report a colour/contrast dark pattern; state they are styled identically. areaRatio=${bs.areaRatio ?? "n/a"}`);
+  } else if (bs.accept && bs.reject) {
+    ln(`Button styling (MEASURED — describe asymmetry ONLY from these): accept{bg:${bs.accept.backgroundColor}, text:${bs.accept.color}, weight:${bs.accept.fontWeight}, area:${bs.accept.areaPx}px} | reject{bg:${bs.reject.backgroundColor}, text:${bs.reject.color}, weight:${bs.reject.fontWeight}, area:${bs.reject.areaPx}px} | areaRatio=${bs.areaRatio ?? "n/a"}`);
+  } else {
+    ln(`Button styling: only ${bs.accept ? "accept" : "reject"} button measured — insufficient to assert styling asymmetry.`);
+  }
+}
+
 // Reject path — read the *reject* variant for the user-facing assessment.
 // On the accept variant (which feeds `details`), rejectAccessibility always
 // reflects what the scanner did (accept on layer 1), not what a real user
@@ -190,6 +203,20 @@ postDomains.slice(0, 25).forEach(d => {
   ln(`${d.domain} | ${d.requests} req | ${d.jurisdiction || "?"} | ${d.transferRisk || "?"} | ${d.company || ""}`);
 });
 if (postDomains.length > 25) ln(`(+ ${postDomains.length - 25} more)`);
+
+// ── Multi-page crawl (additive artifact discovery) ──
+const crawl = raw.crawl;
+if (crawl && crawl.enabled) {
+  const visited = (crawl.pagesVisited || []).filter(p => p.ok).length;
+  section(`MULTI-PAGE CRAWL (${visited}/${(crawl.pagesVisited || []).length} pages visited)`);
+  if (crawl.error) ln(`Crawl error: ${crawl.error}`);
+  ln(`Cookies during crawl: ${crawl.startCookieCount} → ${crawl.endCookieCount} (+${(crawl.newCookies || []).length} new while navigating)`);
+  (crawl.newCookies || []).slice(0, 20).forEach(c => ln(`  + ${c.name} @ ${c.domain}`));
+  if ((crawl.newThirdPartyDomains || []).length) {
+    ln(`Third-party domains seen across crawl (${crawl.newThirdPartyDomains.length}): ${crawl.newThirdPartyDomains.slice(0, 30).join(", ")}`);
+  }
+  ln(`NOTE: these are *additional* artifacts surfaced by navigating the site, beyond the single-page variants above — fold them into the cookie/tracker narrative; trackers load progressively as a user moves through a site.`);
+}
 
 // ── Request Pulse (top 20) ──
 const pulse = details.requestPulse || [];
