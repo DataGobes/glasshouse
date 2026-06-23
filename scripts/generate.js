@@ -32,18 +32,18 @@ const MAX = {
 // ───────────────────────────────────────────
 // eTLD+1 and party-classification — pure helpers, usable without CLI setup
 // ───────────────────────────────────────────
-const COMPOUND_TLDS_GEN = new Set([
+const COMPOUND_TLDS = new Set([
   "co.uk", "co.jp", "co.nz", "co.kr", "co.in", "co.za", "co.il",
   "com.au", "com.br", "com.mx", "com.cn", "com.tw", "com.sg", "com.hk", "com.tr",
   "net.au", "net.nz", "org.uk", "ac.uk", "gov.uk", "org.au",
 ]);
-function eTLDplus1Gen(domain) {
+function eTLDplus1(domain) {
   const clean = (domain || "").replace(/^\./, "").toLowerCase().trim();
   if (!clean) return "";
   const parts = clean.split(".");
   if (parts.length <= 2) return clean;
   const last2 = parts.slice(-2).join(".");
-  if (COMPOUND_TLDS_GEN.has(last2)) return parts.slice(-3).join(".");
+  if (COMPOUND_TLDS.has(last2)) return parts.slice(-3).join(".");
   return last2;
 }
 
@@ -58,12 +58,12 @@ function eTLDplus1Gen(domain) {
  * @returns {'first-party'|'affiliated'|'third-party'}
  */
 function classifyParty(host, meta) {
-  const hostEtld = eTLDplus1Gen(host);
+  const hostEtld = eTLDplus1(host);
   if (!hostEtld) return 'third-party';
-  const siteEtld = eTLDplus1Gen(meta.domain);
+  const siteEtld = eTLDplus1(meta.domain);
   if (hostEtld === siteEtld) return 'first-party';
   const aliasEtlds = Array.isArray(meta.aliasDomains)
-    ? meta.aliasDomains.map(eTLDplus1Gen).filter(Boolean)
+    ? meta.aliasDomains.map(eTLDplus1).filter(Boolean)
     : [];
   if (aliasEtlds.includes(hostEtld)) return 'affiliated';
   return 'third-party';
@@ -805,23 +805,8 @@ function buildCookies(slideNum, totalSlides) {
 
 let _cookiePartyWarned = false;
 
-// eTLD+1 extraction — covers common compound TLDs without a PSL dependency
-const COMPOUND_TLDS = new Set([
-  "co.uk", "co.jp", "co.nz", "co.kr", "co.in", "co.za", "co.il",
-  "com.au", "com.br", "com.mx", "com.cn", "com.tw", "com.sg", "com.hk", "com.tr",
-  "net.au", "net.nz", "org.uk", "ac.uk", "gov.uk", "org.au",
-]);
-function eTLDplus1(domain) {
-  const clean = (domain || "").replace(/^\./, "").toLowerCase().trim();
-  if (!clean) return "";
-  const parts = clean.split(".");
-  if (parts.length <= 2) return clean;
-  const last2 = parts.slice(-2).join(".");
-  if (COMPOUND_TLDS.has(last2)) return parts.slice(-3).join(".");
-  return last2;
-}
-
-// classifyParty is defined above the require.main guard (module-level pure helper)
+// eTLDplus1 / COMPOUND_TLDS are defined at module scope above — visible here via outer-scope lookup.
+// classifyParty is also defined there as a module-level pure helper.
 
 function buildCookieParty(slideNum, totalSlides) {
   const cookies = findings.cookies || [];

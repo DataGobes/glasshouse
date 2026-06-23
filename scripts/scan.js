@@ -1990,6 +1990,7 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         try {
           const candidateHosts = v.preConsent.thirdPartyDomains.map((d) => d.domain);
           const CNAME_TIMEOUT_MS = 3000;
+          // Best-effort, time-boxed: only first-party-looking subdomains that surfaced as third-party are checked; DNS hangs/failures can never break or stall the scan.
           const cloakingResults = await Promise.race([
             detectCnameCloaking(candidateHosts, baseDomain),
             new Promise((resolve) => setTimeout(() => resolve([]), CNAME_TIMEOUT_MS)),
