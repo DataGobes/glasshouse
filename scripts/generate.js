@@ -454,7 +454,8 @@ function buildTimelineEvents(events) {
       `<span class="tl-group-chip chip-${c.type}">${esc(c.label)}</span>`
     ).join("");
     const chipsHtml = chips ? `<div class="tl-group">${chips}</div>` : "";
-    return `<div class="tl-event ${typeClass} reveal">
+    const isViolation = ev.tag && ev.tag.type === "violation";
+    return `<div class="tl-event ${typeClass}${isViolation ? " tl-event-violation" : ""} reveal">
       <span class="tl-time">${esc(ev.time)}</span>
       <div class="tl-body">
         <div class="tl-title">${esc(title)} ${domain} ${tag}</div>
@@ -688,36 +689,83 @@ function buildTrackers(slideNum, totalSlides) {
   const cspCt = trackers.filter((t) => t.tier === "csp").length;
   const piggybackCt = trackers.filter((t) => t.is4thParty).length;
 
+  // Consent-gate composition (trk-* namespace; tr-* / .tracker-radar are left for
+  // buildRejectScenario). Left zone = trackers that fire BEFORE consent (the ePrivacy
+  // breach); right zone = trackers that hold until consent (gated) or never fire (CSP).
+  const badgeLabel = { active: "Pre-consent", gated: "Gated", csp: "CSP-only" };
+  const gateIcon = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
+  const card = (t) => {
+    const tier = t.tier || "csp";
+    const live = tier === "active" ? '<span class="trk-live"></span>' : "";
+    const articles = (t.gdprArticles && t.gdprArticles.length)
+      ? `<div class="trk-articles">${t.gdprArticles.map((a) => `<span class="trk-article">${esc(a)}</span>`).join("")}</div>`
+      : "";
+    const piggy = t.is4thParty
+      ? `<div class="trk-piggyback">&#8627; loaded by ${esc(t.loadedBy || "3rd party")}</div>`
+      : "";
+    const isExternal = /^(US|CN|RU)$/i.test(t.jurisdiction || "");
+    const juris = t.jurisdiction
+      ? `<span class="trk-chip trk-chip-juris${isExternal ? " trk-chip-juris-ext" : ""}">${esc(t.jurisdiction)}</span>`
+      : "";
+    return `<div class="trk-card trk-card-${tier} reveal">
+        <div class="trk-card-head">
+          <div class="trk-name">${live}${esc(t.name)}</div>
+          <span class="trk-badge trk-badge-${tier}">${esc(badgeLabel[tier] || tier)}</span>
+        </div>
+        <div class="trk-domain">${esc(normalise.domains(t.domains))}</div>
+        <div class="trk-meta"><span class="trk-chip">${esc(t.category)}</span>${juris}</div>
+        ${articles}
+        ${piggy}
+      </div>`;
+  };
+
+  const zone = (title, dotMod, items, variant) => {
+    if (!items.length) return "";
+    return `<div class="trk-zone trk-zone-${variant}">
+      <div class="trk-zone-head">
+        <span class="trk-zone-dot trk-zone-dot-${dotMod}"></span>
+        <span class="trk-zone-title">${title}</span>
+        <span class="trk-zone-count">${items.length}</span>
+      </div>
+      <div class="trk-cards">${items.map(card).join("\n")}</div>
+    </div>`;
+  };
+
   return pages.map((page, i) => {
     const pageTitle = pages.length > 1 ? `Tracking Systems (${i + 1}/${pages.length})` : "Tracking Systems";
-    const cards = page.map((t) => {
-      const pulse = t.tier === "active" ? '<div class="tr-pulse"></div>' : "";
-      const piggyback = t.is4thParty
-        ? `<div style="font-size:0.55rem;color:var(--accent-red);font-weight:600;margin-top:0.15rem;">loaded by ${esc(t.loadedBy || "3rd party")}</div>`
-        : "";
-      return `<div class="tr-card tr-card-${t.tier} reveal" style="background:rgba(28,25,23,0.025);border-color:transparent;box-shadow:none;">
-        ${pulse}
-        <div class="tr-name">${esc(t.name)}</div>
-        ${piggyback}
-        <div class="tr-domain">${esc(normalise.domains(t.domains))}</div>
-        <div class="tr-category">${esc(t.category)}</div>
-        <div class="tr-status tr-status-${t.tier}">${esc(t.status)}</div>
-      </div>`;
-    }).join("\n");
+    const before = page.filter((t) => t.tier === "active");
+    const holds = page.filter((t) => t.tier !== "active");
 
-    const summary = [
-      activeCt > 0 ? `<div class="tr-summary-item"><span class="tr-summary-dot tr-summary-dot-active"></span> ${activeCt} active pre-consent</div>` : "",
-      gatedCt > 0 ? `<div class="tr-summary-item"><span class="tr-summary-dot tr-summary-dot-gated"></span> ${gatedCt} gated post-consent</div>` : "",
-      cspCt > 0 ? `<div class="tr-summary-item"><span class="tr-summary-dot tr-summary-dot-csp"></span> ${cspCt} CSP-only</div>` : "",
-      piggybackCt > 0 ? `<div class="tr-summary-item"><span class="tr-summary-dot" style="background:var(--accent);"></span> ${piggybackCt} piggybacked</div>` : "",
-    ].filter(Boolean).join("\n");
+    const leftPanel = zone("Fires before consent", "bad", before, "bad");
+    const rightPanel = zone("Holds until consent", "ok", holds, "ok");
+    const gate = (before.length && holds.length)
+      ? `<div class="trk-divider" aria-hidden="true"><span class="trk-gate-badge">${gateIcon}</span><span class="trk-gate-label">consent</span></div>`
+      : "";
+
+    const legend = [
+      activeCt > 0 ? `<span class="trk-legend-item"><span class="trk-legend-dot trk-dot-active"></span>${activeCt} fire pre-consent</span>` : "",
+      gatedCt > 0 ? `<span class="trk-legend-item"><span class="trk-legend-dot trk-dot-gated"></span>${gatedCt} gated</span>` : "",
+      cspCt > 0 ? `<span class="trk-legend-item"><span class="trk-legend-dot trk-dot-csp"></span>${cspCt} CSP-only</span>` : "",
+      piggybackCt > 0 ? `<span class="trk-legend-item"><span class="trk-legend-dot trk-dot-piggy"></span>${piggybackCt} piggybacked</span>` : "",
+    ].filter(Boolean).join("");
+
+    const violationLine = activeCt > 0
+      ? `<span class="trk-desc-bad">${activeCt} fire before the visitor consents</span> &mdash; a breach of ePrivacy 5(3).`
+      : "none fire before consent.";
+    const desc = `${trackers.length} tracking system${trackers.length !== 1 ? "s" : ""} detected; ${violationLine}`;
 
     return `<section class="slide" data-title="${esc(pageTitle)}">
   <div class="slide-content">
     <span class="badge reveal">Tracking Systems</span>
     <h2 class="reveal">Who's Watching?</h2>
-    <div class="tracker-radar">${cards}</div>
-    ${i === 0 ? `<div class="tr-summary reveal">${summary}</div>` : ""}
+    ${i === 0 ? `<p class="slide-desc reveal">${desc}</p>` : ""}
+    <div class="trk-gate reveal">
+      ${leftPanel}
+      ${gate}
+      ${rightPanel}
+    </div>
+    ${i === 0 && legend ? `<div class="trk-legend reveal">${legend}</div>` : ""}
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum + i} / ${totalSlides}</div>
@@ -743,6 +791,32 @@ function buildCookies(slideNum, totalSlides) {
   const GROUP_LABELS = { marketing: "Marketing & Tracking", tracking: "Marketing & Tracking", analytics: "Analytics", functional: "Functional", essential: "Essential", unknown: "Unknown" };
   const colorMap = { essential: "var(--accent-green)", functional: "var(--accent-blue)", analytics: "var(--accent-yellow)", tracking: "var(--accent-red)", marketing: "var(--accent-red)", unknown: "var(--text-muted)" };
 
+  // Headline stat (computed once across the full set, shown in the desc line).
+  const longest = cookies.reduce((m, c) => ((c.durationDays || 0) > (m.durationDays || 0) ? c : m), cookies[0]);
+  const longestLabel = (longest && longest.duration) ? longest.duration : `${maxDays}d`;
+  const trackingCount = cookies.filter((c) => {
+    const p = normalise.cookiePurpose(c.purpose);
+    return p === "marketing" || p === "tracking";
+  }).length;
+
+  // Axis ticks generated FROM maxDays so labels match the linear bar scaling
+  // (the old hardcoded 30d/6mo/1yr labels did not correspond to 25/50/75%).
+  const fmtDur = (d) => {
+    if (d >= 365) { const y = Math.round((d / 365) * 10) / 10; return `${y}yr`; }
+    if (d >= 30) return `${Math.round(d / 30)}mo`;
+    return `${Math.round(d)}d`;
+  };
+  // 1-year reference line — cookies crossing it are the ePrivacy proportionality concern.
+  const threshPct = Math.round((365 / maxDays) * 100);
+  const showThresh = threshPct > 2 && threshPct < 99;
+  const axisTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => {
+    const posPct = f * 100;
+    if (showThresh && Math.abs(posPct - threshPct) < 7) return ""; // make room for the 1-yr limit label
+    const label = f === 0 ? "0" : fmtDur(maxDays * f);
+    const pos = f === 0 ? "left:0;" : f === 1 ? "right:0;" : `left:${posPct}%;`;
+    return `<span class="persist-scale-tick" style="${pos}">${label}</span>`;
+  }).filter(Boolean).join("\n          ");
+
   return pages.map((page, i) => {
     const pageTitle = pages.length > 1 ? `Cookie Lifespan (${i + 1}/${pages.length})` : "Cookie Lifespan";
 
@@ -761,6 +835,7 @@ function buildCookies(slideNum, totalSlides) {
         }).length;
         const label = GROUP_LABELS[groupKey] || groupKey;
         rows.push(`<div class="persist-group-header">
+          <span class="persist-group-dot" style="background:${colorMap[groupKey] || "var(--text-muted)"};"></span>
           <span class="persist-group-label">${label}</span>
           <span class="persist-group-count">${groupCount} cookie${groupCount !== 1 ? "s" : ""}</span>
         </div>`);
@@ -781,32 +856,29 @@ function buildCookies(slideNum, totalSlides) {
         </div>
         <div class="persist-bar-track">
           <div class="persist-bar ${barClass}" style="width:${widthPct.toFixed(1)}%;"></div>
+          ${showThresh ? `<span class="persist-threshold" style="left:${threshPct}%;"></span>` : ""}
         </div>
-        <span class="persist-duration">${esc(c.duration)}</span>
+        <span class="persist-duration${(c.durationDays || 0) > 365 ? " persist-duration-over" : ""}">${esc(c.duration)}</span>
       </div>`);
     });
 
-    const purposes = [...new Set(page.map((c) => normalise.cookiePurpose(c.purpose)))];
-    const legend = purposes.map((p) =>
-      `<div class="persist-legend-item"><span class="persist-legend-swatch" style="background:${colorMap[p] || "var(--text-muted)"}"></span> ${p.charAt(0).toUpperCase() + p.slice(1)}</div>`
-    ).join("\n");
-
     return `<section class="slide" data-title="${esc(pageTitle)}">
   <div class="slide-content">
-    <span class="badge reveal">Cookie Lifespan</span>
-    <h2 class="reveal">Persistence Bars</h2>
+    <span class="badge reveal">Persistence</span>
+    <h2 class="reveal">Cookie Lifespan</h2>
+    <p class="slide-desc reveal">Bar length = how long each cookie persists. ${cookies.length} cookies set${trackingCount ? `, ${trackingCount} marketing &amp; tracking` : ""}; the longest lives ${esc(longestLabel)}.${showThresh ? ` <span class="slide-desc-thresh">Dashed line = 1&nbsp;year.</span>` : ""}</p>
     <div class="persist-chart reveal">
       <div class="persist-scale">
-        <div class="persist-scale-line"></div>
-        <span class="persist-scale-tick" style="left:clamp(6rem,12vw,9rem);">0</span>
-        <span class="persist-scale-tick" style="left:25%;">30d</span>
-        <span class="persist-scale-tick" style="left:50%;">6mo</span>
-        <span class="persist-scale-tick" style="left:75%;">1yr</span>
-        <span class="persist-scale-tick" style="right:0;">2yr</span>
+        <span></span>
+        <div class="persist-scale-track">
+          <div class="persist-scale-line"></div>
+          ${axisTicks}
+          ${showThresh ? `<span class="persist-thresh-label" style="left:${threshPct}%;">1&nbsp;yr limit</span>` : ""}
+        </div>
+        <span></span>
       </div>
       ${rows.join("\n")}
     </div>
-    <div class="persist-legend reveal">${legend}</div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum + i} / ${totalSlides}</div>
@@ -1048,24 +1120,25 @@ function buildRequestPulse(slideNum, totalSlides) {
   const maxReq = Math.max(...items.map((d) => d.total), 1);
   const pages = paginate(items, MAX.REQUEST_ROWS);
 
+  // Show a segment's value inline only when it's wide enough not to clip the numerals.
+  const LABEL_THRESHOLD = 10; // % of maxReq — wide enough to fit numerals without clipping
+  const seg = (val, cls) => {
+    if (!val) return "";
+    const pct = (val / maxReq) * 100;
+    const label = pct >= LABEL_THRESHOLD ? val : "";
+    return `<div class="${cls}" style="width:${pct.toFixed(1)}%">${label}</div>`;
+  };
+
   return pages.map((page, i) => {
     const pageTitle = pages.length > 1 ? `Third-Party Requests (${i + 1}/${pages.length})` : "Third-Party Requests";
     const rows = page.map((d) => {
-      if (d.isEssential) {
-        return `<div class="rp-row reveal">
-          <span class="rp-domain">${esc(d.domain)}</span>
-          <div class="rp-bar-track"><div class="rp-bar-essential" style="width:${(d.total / maxReq * 100).toFixed(1)}%"></div></div>
-          <span class="rp-count">${d.total}</span>
-        </div>`;
-      }
-      const prePct = d.preConsent ? (d.preConsent / maxReq * 100).toFixed(1) : 0;
-      const postPct = d.postConsent ? (d.postConsent / maxReq * 100).toFixed(1) : 0;
+      const bars = d.isEssential
+        ? seg(d.total, "rp-bar-essential")
+        : `${seg(d.preConsent, "rp-bar-pre")}${seg(d.postConsent, "rp-bar-post")}`;
+      const label = (d.domain || "").replace(/^www\./, "");
       return `<div class="rp-row reveal">
-        <span class="rp-domain">${esc(d.domain)}</span>
-        <div class="rp-bar-track">
-          ${d.preConsent ? `<div class="rp-bar-pre" style="width:${prePct}%"></div>` : ""}
-          ${d.postConsent ? `<div class="rp-bar-post" style="width:${postPct}%"></div>` : ""}
-        </div>
+        <span class="rp-domain" title="${esc(d.domain)}">${esc(label)}</span>
+        <div class="rp-bar-track">${bars}</div>
         <span class="rp-count">${d.total}</span>
       </div>`;
     }).join("\n");
@@ -1077,17 +1150,21 @@ function buildRequestPulse(slideNum, totalSlides) {
     ${slideDesc("requestPulse")}
     <div class="request-pulse reveal">
       <div class="rp-scale">
-        <div class="rp-scale-line"></div>
-        <span class="rp-scale-tick" style="left:clamp(7rem,14vw,10rem)">0</span>
-        <span class="rp-scale-tick" style="left:50%">${Math.round(maxReq / 2)}</span>
-        <span class="rp-scale-tick" style="right:0">${maxReq}</span>
+        <span class="rp-scale-axis">Requests</span>
+        <div class="rp-scale-rail">
+          <div class="rp-scale-line"></div>
+          <span class="rp-scale-tick" style="left:0">0</span>
+          <span class="rp-scale-tick rp-scale-tick-mid" style="left:50%">${Math.round(maxReq / 2)}</span>
+          <span class="rp-scale-tick" style="right:0">${maxReq}</span>
+        </div>
+        <span class="rp-scale-countspace">Total</span>
       </div>
-      ${rows}
+      <div class="rp-rows">${rows}</div>
     </div>
     <div class="rp-legend reveal">
-      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-green);opacity:0.5"></span> Essential / CDN</div>
-      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-red);opacity:0.7"></span> Pre-consent</div>
-      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-yellow);opacity:0.7"></span> Post-consent</div>
+      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-green)"></span> Essential / CDN</div>
+      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-red)"></span> Pre-consent</div>
+      <div class="rp-legend-item"><span class="rp-legend-swatch" style="background:var(--accent-yellow)"></span> Post-consent</div>
     </div>
   </div>
   ${watermark()}
@@ -1171,24 +1248,36 @@ function buildLegalPages(slideNum, totalSlides) {
   const found = lp.filter((p) => p.status === "present").length;
   const missing = lp.filter((p) => p.status === "missing").length;
 
-  const books = lp.map((p) =>
-    `<div class="doc-book doc-book-${p.status === "present" ? "present" : "missing"} reveal">
-      <span class="doc-book-title">${esc(p.title)}</span>
-      <span class="doc-book-status">${p.status === "present" ? "Found" : "Missing"}</span>
-    </div>`
-  ).join("\n");
+  if (!lp.length) return null;
+
+  const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const crossIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+  const cards = lp.map((p) => {
+    const present = p.status === "present";
+    return `      <div class="lp-card lp-card-${present ? "found" : "missing"} reveal">
+        <span class="lp-card-icon">${present ? checkIcon : crossIcon}</span>
+        <div class="lp-card-body">
+          <span class="lp-card-title">${esc(p.title)}</span>
+          <span class="lp-card-status">${present ? "Published" : "Missing"}</span>
+          ${present ? "" : `<span class="lp-card-note">Action required</span>`}
+        </div>
+      </div>`;
+  }).join("\n");
 
   return `<section class="slide" data-title="Legal Pages">
-  <div class="slide-content">
-    <span class="badge reveal">Legal Compliance</span>
-    <h2 class="reveal">Document Shelf</h2>
-    <div class="doc-shelf reveal">
-      <div class="doc-books">${books}</div>
-      <div class="doc-shelf-surface"></div>
+  <div class="slide-content lp-content">
+    <div class="lp-rail">
+      <span class="badge reveal">Legal Compliance</span>
+      <h2 class="reveal">Legal Pages</h2>
+      <p class="slide-desc reveal">Mandatory transparency documents &mdash; and whether each one is actually published.</p>
+      <div class="lp-score reveal">
+        <span class="lp-score-num">${found}<span class="lp-score-den">/ ${lp.length}</span></span>
+        <span class="lp-score-label">published${missing ? ` &middot; <span class="lp-score-missing">${missing} missing</span>` : ""}</span>
+      </div>
     </div>
-    <div class="doc-shelf-summary reveal">
-      <div class="doc-shelf-stat"><span class="dot dot-present"></span> ${found} found</div>
-      <div class="doc-shelf-stat"><span class="dot dot-missing"></span> ${missing} missing</div>
+    <div class="lp-grid reveal">
+${cards}
     </div>
   </div>
   ${watermark()}
@@ -1201,53 +1290,66 @@ function buildDsar(slideNum, totalSlides) {
   const d = findings.dsar;
   if (!d || (d.contactPresent === undefined && !d.dedicatedPagePresent && !d.responseCommitmentDays && !(d.disproportionateBurdenFlags || []).length)) return null;
 
-  const yes = (v) => v ? `<span class="rs-note-dot rs-dot-excellent"></span>` : `<span class="rs-note-dot rs-dot-bad"></span>`;
-  const yn  = (v) => v ? "yes" : "no";
+  // dsar-* namespace (rs-note is shared by 13 builders — left untouched).
+  const checkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const crossIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  const alertIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>';
 
-  const rows = [
-    { label: "Contact present", value: d.contactPresent ? `${d.contactType || "yes"}${d.contactEvidence ? ` (${d.contactEvidence})` : ""}` : "missing", ok: !!d.contactPresent && d.contactType !== "postal_only" && d.contactType !== "none" },
-    { label: "Dedicated rights page", value: yn(d.dedicatedPagePresent), ok: !!d.dedicatedPagePresent },
-    { label: "30-day response commitment", value: d.responseCommitmentDays === 30 ? "stated (Art. 12(3))" : "not stated", ok: d.responseCommitmentDays === 30 },
-    { label: "Right of access (Art. 15)", value: yn(d.rightToAccessDisclosed), ok: !!d.rightToAccessDisclosed },
-    { label: "Right to erasure (Art. 17)", value: yn(d.rightToErasureDisclosed), ok: !!d.rightToErasureDisclosed },
-    { label: "Right to portability (Art. 20)", value: yn(d.portabilityDisclosed), ok: !!d.portabilityDisclosed },
-    { label: "Right to object (Art. 21)", value: yn(d.art21Disclosed), ok: !!d.art21Disclosed },
-    { label: "Right to lodge complaint with DPA", value: yn(d.complainToDpaDisclosed), ok: !!d.complainToDpaDisclosed },
+  const days = d.responseCommitmentDays;
+  const rights = [
+    { label: "Contact channel", ref: d.contactPresent ? `${(d.contactType || "yes").replace(/_/g, " ")}${d.contactEvidence ? ` · ${d.contactEvidence}` : ""}` : "no channel found", ok: !!d.contactPresent && d.contactType !== "postal_only" && d.contactType !== "none" },
+    { label: "Dedicated rights page", ref: d.dedicatedPagePresent ? "discoverable" : "not found", ok: !!d.dedicatedPagePresent },
+    { label: "1-month response", ref: days ? `${days}-day commitment · Art. 12(3)` : "not stated · Art. 12(3)", ok: days === 30 },
+    { label: "Right of access", ref: "Art. 15", ok: !!d.rightToAccessDisclosed },
+    { label: "Right to erasure", ref: "Art. 17", ok: !!d.rightToErasureDisclosed },
+    { label: "Right to portability", ref: "Art. 20", ok: !!d.portabilityDisclosed },
+    { label: "Right to object", ref: "Art. 21", ok: !!d.art21Disclosed },
+    { label: "Complaint to DPA", ref: "Art. 77", ok: !!d.complainToDpaDisclosed },
   ];
+  const satisfied = rights.filter((r) => r.ok).length;
+  const total = rights.length;
+  const gaps = total - satisfied;
 
-  const noteCards = rows.map((r, idx) => {
-    const range = r.ok ? "excellent" : "bad";
-    const border = r.ok ? "#059669" : "#dc2626";
-    const delay = (idx * 0.04).toFixed(2);
-    return `<div class="rs-note reveal" style="border-left-color:${border};">
-      <div class="rs-note-header">
-        ${yes(r.ok)}
-        <span class="rs-note-cat">${esc(r.label)}</span>
-        <span class="rs-note-score score-${range}">${esc(r.value)}</span>
-      </div>
-      <div class="rs-note-bar">
-        <div class="rs-note-bar-track"><div class="rs-note-bar-fill score-bar-${range}" style="--bar-width:${r.ok ? 100 : 5}%;transition-delay:${delay}s"></div></div>
-      </div>
-    </div>`;
+  const cards = rights.map((r) => {
+    const cls = r.ok ? "pass" : "fail";
+    const chip = r.ok ? `${checkIcon}PASS` : `${crossIcon}FAIL`;
+    return `<div class="dsar-card dsar-card-${cls} reveal">
+        <div class="dsar-card-main">
+          <span class="dsar-name">${esc(r.label)}</span>
+          <span class="dsar-ref">${esc(r.ref)}</span>
+        </div>
+        <span class="dsar-chip dsar-chip-${cls}">${chip}</span>
+      </div>`;
   }).join("\n");
 
-  const burden = (d.disproportionateBurdenFlags || []).length
-    ? `<div class="rs-note reveal" style="border-left-color:#dc2626;margin-top:1rem;">
-        <div class="rs-note-header">
-          <span class="rs-note-dot rs-dot-bad"></span>
-          <span class="rs-note-cat">Disproportionate burden flags</span>
-          <span class="rs-note-score score-bad">${d.disproportionateBurdenFlags.length}</span>
-        </div>
-        <p class="rs-note-text">${d.disproportionateBurdenFlags.map(esc).join(" · ")}</p>
-      </div>`
+  const flags = d.disproportionateBurdenFlags || [];
+  const burden = flags.length
+    ? `<div class="dsar-burden reveal">
+      <div class="dsar-burden-head">
+        <span class="dsar-burden-icon">${alertIcon}</span>
+        <span class="dsar-burden-title">Disproportionate burden</span>
+        <span class="dsar-burden-count">${flags.length} flag${flags.length !== 1 ? "s" : ""}</span>
+      </div>
+      <div class="dsar-burden-flags">${flags.map((f) => `<span class="dsar-burden-flag">${esc(f)}</span>`).join("")}</div>
+      <p class="dsar-burden-note">Art. 12(5): handling a request must be <strong>free of charge</strong> and proportionate &mdash; fees and notarisation requirements unlawfully obstruct the right.</p>
+    </div>`
     : "";
+
+  const countHtml = `<span class="dsar-count-sat">${satisfied}</span> / ${total} satisfied${gaps ? ` &middot; <span class="dsar-count-gap">${gaps} gap${gaps !== 1 ? "s" : ""}</span>` : ""}`;
 
   return `<section class="slide" data-title="DSAR / Rights Mechanism">
   <div class="slide-content">
     <span class="badge reveal">Data Subject Rights</span>
     <h2 class="reveal">DSAR Mechanism</h2>
-    <p class="slide-intro reveal">GDPR Art. 12(3) requires response within 1 month. The mechanism must be discoverable and proportionate.</p>
-    <div class="rs-notes reveal">${noteCards}</div>
+    <p class="slide-intro reveal">GDPR Art. 12 requires a discoverable, free, one-month response mechanism for every data-subject right.</p>
+    <div class="dsar-section reveal">
+      <div class="dsar-section-head">
+        <span class="dsar-section-title">Rights coverage</span>
+        <span class="dsar-section-count">${countHtml}</span>
+      </div>
+      <div class="dsar-progress"><div class="dsar-progress-fill" style="width:${((satisfied / total) * 100).toFixed(0)}%;"></div></div>
+      <div class="dsar-grid">${cards}</div>
+    </div>
     ${burden}
   </div>
   ${watermark()}
@@ -1821,22 +1923,40 @@ function buildAuditTrailReject(slideNum, totalSlides) {
   const events = (findings.auditTrail || {}).rejectConsent || [];
   if (events.length === 0) return null;
   const pages = paginate(events, MAX.TIMELINE_EVENTS);
+  const firingEvents = events.filter((e) => e.tag && e.tag.type === "violation");
+  const stillFiring = firingEvents.length;
+  const offenders = firingEvents.map((e) => (e.title || e.event || "").split(/\s+[—–-]\s+/)[0].trim()).filter(Boolean);
+  const verdictIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>';
+  const offenderList = offenders.length
+    ? `<div class="atr-offenders">${offenders.map((n) => `<div class="atr-offender"><span class="atr-offender-dot"></span>${esc(n)}</div>`).join("")}</div>`
+    : "";
+  const sidePanel = stillFiring > 0
+    ? `<div class="atr-side reveal">
+        <span class="atr-side-icon">${verdictIcon}</span>
+        <div class="atr-bignum">${stillFiring}</div>
+        <div class="atr-biglabel">tracker${stillFiring !== 1 ? "s" : ""} kept firing after reject</div>
+        <div class="atr-bignote">Rejecting consent had no effect on these requests &mdash; a direct breach of ePrivacy Art. 5(3).</div>
+        ${offenderList}
+      </div>`
+    : "";
   return pages.map((page, i) => {
     const pageTitle = pages.length > 1 ? `Audit Trail: Post-Reject (${i + 1}/${pages.length})` : "Audit Trail: Post-Reject";
-    return `<section class="slide" data-title="${esc(pageTitle)}">
-  <div class="slide-content">
-    <span class="badge reveal" style="background:rgba(220,38,38,0.1);color:var(--accent-red);">Audit Trail</span>
-    <h2 class="reveal">What Happens After <span style="color:var(--accent-red)">Reject</span></h2>
-    ${slideDesc("auditTrailReject")}
-    <div class="timeline reveal">
-      <div class="tl-consent-break reveal">
+    const timelineInner = `<div class="tl-consent-break reveal">
         <span class="tl-consent-click" style="background:var(--accent-red);color:#fff;">User Clicks Reject</span>
       </div>
       <div class="tl-phase tl-phase-post reveal">
         <span class="tl-phase-label">Phase 2 — Post-Reject</span>
       </div>
-      ${buildTimelineEvents(page)}
-    </div>
+      ${buildTimelineEvents(page)}`;
+    const body = (i === 0 && sidePanel)
+      ? `<div class="atr-layout reveal"><div class="timeline">${timelineInner}</div>${sidePanel}</div>`
+      : `<div class="timeline reveal">${timelineInner}</div>`;
+    return `<section class="slide" data-title="${esc(pageTitle)}">
+  <div class="slide-content">
+    <span class="badge reveal" style="background:rgba(220,38,38,0.1);color:var(--accent-red);">Audit Trail</span>
+    <h2 class="reveal">What Happens After <span style="color:var(--accent-red)">Reject</span></h2>
+    ${slideDesc("auditTrailReject")}
+    ${body}
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum + i} / ${totalSlides}</div>
@@ -1855,37 +1975,35 @@ function buildCookiePurposeMatching(slideNum, totalSlides) {
   const matchCount = items.filter((i) => i.match).length;
   const mismatchCount = items.filter((i) => !i.match).length;
   const total = items.length || 1;
+  const matchPct = Math.round((matchCount / total) * 100);
+
+  // cpm-* namespace (purpose-matching matrix); rs-note/score-bar/cm-summary are shared, left untouched.
+  const checkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const crossIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
   const pages = paginate(items, MAX.COOKIE_ROWS);
   return pages.map((page, i) => {
     const pageTitle = pages.length > 1 ? `Cookie Purpose Matching (${i + 1}/${pages.length})` : "Cookie Purpose Matching";
-    const noteCards = page.map((item) => {
-      const rangeClass = item.match ? "excellent" : "bad";
-      const border = item.match ? "#059669" : "#dc2626";
-      const icon = item.match ? "&#10003;" : "&#10007;";
-      const flow = item.match
-        ? `${esc(item.declared)}`
-        : `<span style="text-decoration:line-through;opacity:0.5;">${esc(item.declared)}</span> → ${esc(item.observed)}`;
-      return `<div class="rs-note reveal" style="border-left-color:${border};">
-        <div class="rs-note-header">
-          <span class="rs-note-dot rs-dot-${rangeClass}"></span>
-          <span class="rs-note-cat">${esc(item.cookie)}</span>
-          <span class="rs-note-score score-${rangeClass}">${icon}</span>
-        </div>
-        <p class="rs-note-text">${flow}</p>
+    const rows = page.map((item) => {
+      const cls = item.match ? "pass" : "fail";
+      const verdict = item.match ? checkIcon : crossIcon;
+      return `<div class="cpm-row cpm-row-${cls} reveal">
+        <span class="cpm-cookie">${esc(item.cookie)}</span>
+        <span class="cpm-purpose cpm-declared">${esc(item.declared)}</span>
+        <span class="cpm-verdict cpm-verdict-${cls}">${verdict}</span>
+        <span class="cpm-purpose cpm-observed">${esc(item.observed)}</span>
       </div>`;
     }).join("\n");
 
-    // Overall match rate bar on first page
-    const matchPct = Math.round((matchCount / total) * 100);
-    const overallRange = matchPct >= 80 ? "excellent" : matchPct >= 60 ? "good" : matchPct >= 40 ? "acceptable" : matchPct >= 20 ? "poor" : "bad";
-    const overallBar = i === 0 ? `<div class="rs-overall reveal">
-      <div class="score-bars">
-        <div class="score-bar-row score-bar-overall">
-          <div class="score-bar-label"><span class="score-bar-name">Match Rate</span></div>
-          <div class="score-bar-track"><div class="score-bar-fill score-bar-${overallRange}" style="--bar-width:${matchPct}%;transition-delay:0.30s"></div></div>
-          <div class="score-bar-value score-${overallRange}">${matchPct}%</div>
-        </div>
+    const rateBand = i === 0 ? `<div class="cpm-rate reveal">
+      <div class="cpm-rate-num">${matchPct}%</div>
+      <div class="cpm-rate-mid">
+        <span class="cpm-rate-label">Declared purpose matches observed behaviour</span>
+        <div class="cpm-rate-track"><div class="cpm-rate-fill" style="width:${matchPct}%;"></div></div>
+      </div>
+      <div class="cpm-rate-counts">
+        <span class="cpm-count cpm-count-pass"><span class="cpm-count-dot"></span>${matchCount} match</span>
+        <span class="cpm-count cpm-count-fail"><span class="cpm-count-dot"></span>${mismatchCount} mismatch</span>
       </div>
     </div>` : "";
 
@@ -1894,13 +2012,17 @@ function buildCookiePurposeMatching(slideNum, totalSlides) {
     <span class="badge reveal">Cookie Audit</span>
     <h2 class="reveal">Declared vs Observed Purpose</h2>
     ${slideDesc("cookiePurposeMatching")}
-    <div class="rs-layout rs-unified">
-      <div class="rs-notes-grid">${noteCards}</div>
-      ${overallBar}
-    </div>
-    <div class="cm-summary reveal">
-      <div class="cm-summary-item"><span class="cm-summary-dot cm-summary-dot-pass"></span> ${matchCount} match</div>
-      <div class="cm-summary-item"><span class="cm-summary-dot cm-summary-dot-fail"></span> ${mismatchCount} mismatch</div>
+    <div class="cpm">
+      ${rateBand}
+      <div class="cpm-matrix reveal">
+        <div class="cpm-header">
+          <span class="cpm-h-label">Cookie</span>
+          <span class="cpm-h-label cpm-h-declared">Declared</span>
+          <span class="cpm-h-verdict">Match</span>
+          <span class="cpm-h-label">Observed</span>
+        </div>
+        <div class="cpm-list">${rows}</div>
+      </div>
     </div>
   </div>
   ${watermark()}
@@ -2190,20 +2312,35 @@ function buildFingerprintingTier3Appendix(slideNum, totalSlides) {
     const k = `${c.api}.${c.method}`;
     byApi.set(k, (byApi.get(k) || 0) + (c.count || 1));
   }
-  const rows = Array.from(byApi.entries()).sort((a, b) => b[1] - a[1])
-    .map(([api, count]) =>
-      `<div class="fp-api-row reveal">
-        <div class="fp-api-info"><span class="fp-api-name">${esc(api)}</span><span class="fp-phase fp-phase-post">T3</span></div>
-        <div class="fp-api-bar-track"><div class="fp-api-bar" style="width:60%;background:var(--accent-yellow);opacity:0.5;"></div></div>
-        <span class="fp-api-count">${count}</span>
-      </div>`
-    ).join("\n");
+  const entries = Array.from(byApi.entries()).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(...entries.map(([, n]) => n), 1);
+  const total = entries.reduce((s, [, n]) => s + n, 0);
+  // Bars are proportional to the real call count (was hardcoded width:60% \u2014 a
+  // decorative bar that misrepresented the data). Floor keeps tiny counts visible.
+  const rows = entries.map(([api, count]) => {
+    const pct = Math.max(6, Math.round((count / max) * 90));
+    return `      <div class="fpx-row reveal">
+        <span class="fpx-name">${esc(api)}</span>
+        <div class="fpx-bar-track"><div class="fpx-bar" style="width:${pct}%;"></div></div>
+        <span class="fpx-val">${count}</span>
+      </div>`;
+  }).join("\n");
   return `<section class="slide" data-title="Fingerprinting: Tier 3 Appendix">
-  <div class="slide-content">
-    <span class="badge reveal">Private Appendix</span>
-    <h2 class="reveal">Tier 3 \u2014 Informational Signals</h2>
-    <p class="reveal" style="opacity:0.7;font-size:0.9em;">Low-entropy / commonly-legitimate API access. Not published in the public deck. Forensic context for the audit trail.</p>
-    <div class="fp-api-list">${rows}</div>
+  <div class="slide-content fpx-content">
+    <div class="fpx-rail">
+      <span class="badge reveal">Private Appendix</span>
+      <h2 class="reveal">Tier 3 &mdash; Informational Signals</h2>
+      <p class="slide-desc reveal">Low-entropy, commonly-legitimate API access &mdash; excluded from the public deck, retained as forensic context for the audit trail.</p>
+      <div class="fpx-summary reveal">
+        <div class="fpx-stat"><span class="fpx-stat-num">${total}</span><span class="fpx-stat-label">calls observed</span></div>
+        <div class="fpx-stat"><span class="fpx-stat-num">${entries.length}</span><span class="fpx-stat-label">distinct APIs</span></div>
+      </div>
+    </div>
+    <div class="fpx-chart reveal">
+      <div class="fpx-chart-head"><span>API &middot; method</span><span>calls</span></div>
+${rows}
+      <p class="fpx-note">Bars scaled to the most-frequently accessed API (${max} calls).</p>
+    </div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
@@ -2214,13 +2351,59 @@ function buildOutOfScopeCaveats(slideNum, totalSlides) {
   if (!includePrivateAppendix) return null;
   const fp = findings.fingerprinting;
   if (!fp || !Array.isArray(fp.outOfScopeCaveats) || fp.outOfScopeCaveats.length === 0) return null;
-  const items = fp.outOfScopeCaveats.map(t => `<li class="reveal" style="margin-bottom:0.5rem;">${esc(t)}</li>`).join("\n");
+  // Eye-off glyph — "the scanner cannot see this vector".
+  const eyeOff = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 8 10 8a9.7 9.7 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+
+  // Split a caveat sentence into a bold subject + muted predicate so each card
+  // gains hierarchy. Falls back gracefully for arbitrary phrasing.
+  const splitCaveat = (raw) => {
+    const t = String(raw).trim();
+    const m = t.match(/\s+((?:is|are)\s+not\s+.*|(?:is|are)\s+out of scope.*|cannot\b.*|out of scope.*)$/i);
+    if (m) return { title: t.slice(0, m.index).trim(), detail: m[1].trim() };
+    const c = t.indexOf(",");
+    if (c > 0) return { title: t.slice(0, c).trim(), detail: t.slice(c + 1).trim() };
+    return { title: t, detail: "" };
+  };
+
+  // Infer the stack layer each vector lives at, for a per-card kicker that gives
+  // the eye an entry point and visually distinguishes otherwise-similar rows.
+  const layerOf = (raw) => {
+    const s = String(raw).toLowerCase();
+    if (s.includes("network layer") || /\b(tls|tcp|ja3|ja4|ip)\b/.test(s)) return "Network";
+    if (s.includes("transport layer") || /\b(quic|http\/3|udp)\b/.test(s)) return "Transport";
+    if (s.includes("dns")) return "DNS";
+    if (s.includes("application layer")) return "Application";
+    if (/\b(css|render|paint|gpu|side[- ]channel|timing)\b/.test(s)) return "Render";
+    return "Out of scope";
+  };
+
+  const cards = fp.outOfScopeCaveats.map((raw, i) => {
+    const { title, detail } = splitCaveat(raw);
+    const num = String(i + 1).padStart(2, "0");
+    return `      <div class="oos-card reveal">
+        <span class="oos-card-icon">${eyeOff}</span>
+        <div class="oos-card-body">
+          <div class="oos-card-kicker">${num} &middot; ${esc(layerOf(raw))}</div>
+          <p class="oos-card-line"><strong>${esc(title)}</strong>${detail ? " " + esc(detail) : ""}</p>
+        </div>
+      </div>`;
+  }).join("\n");
+
+  const count = fp.outOfScopeCaveats.length;
   return `<section class="slide" data-title="Methodology: Out of Scope">
-  <div class="slide-content">
-    <span class="badge reveal">Methodology</span>
-    <h2 class="reveal">Out-of-Scope Caveats</h2>
-    <p class="reveal" style="opacity:0.7;font-size:0.9em;">Vectors the JavaScript-instrumentation scanner cannot observe.</p>
-    <ul class="reveal" style="line-height:1.6;">${items}</ul>
+  <div class="slide-content oos-content">
+    <div class="oos-rail">
+      <span class="badge reveal">Methodology</span>
+      <h2 class="reveal">Out-of-Scope Caveats</h2>
+      <p class="slide-desc reveal">Vectors the JavaScript-instrumentation scanner cannot observe &mdash; disclosed for methodological transparency.</p>
+      <div class="oos-summary reveal">
+        <span class="oos-summary-num">${count}</span>
+        <span class="oos-summary-label">vectors outside<br>JS instrumentation</span>
+      </div>
+    </div>
+    <div class="oos-cards reveal">
+${cards}
+    </div>
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
@@ -2525,10 +2708,27 @@ function buildCustomSlide(slot, slideNum, totalSlides) {
   const bodyClass = cs.style === "finding-highlight"
     ? "custom-body custom-body-highlight reveal"
     : "custom-body reveal";
+  const body = cs.content ? `\n    <div class="${bodyClass}">${cs.content}</div>` : "";
+
+  // Optional structured extras — a metrics strip and a tag cloud — so custom
+  // slides can be data-rich without hand-authoring component HTML. Backward
+  // compatible: slides that omit these fields emit nothing extra and render
+  // exactly as before.
+  const metrics = Array.isArray(cs.metrics) && cs.metrics.length
+    ? `\n    <div class="stats-strip cs-metrics reveal">${cs.metrics.map((m) =>
+        `<div class="stat-box${m.tone === "danger" ? " cs-stat-danger" : ""}"><div class="num">${esc(String(m.value))}</div><div class="label">${esc(m.label)}</div></div>`).join("")}</div>`
+    : "";
+  const TONES = { red: "pill-red", amber: "pill-yellow", yellow: "pill-yellow", green: "pill-green", blue: "pill-blue" };
+  const tagsInner = Array.isArray(cs.tags) && cs.tags.length
+    ? cs.tags.map((t) => `<span class="pill ${TONES[t.tone] || "pill-blue"}">${esc(t.label)}</span>`).join("")
+    : "";
+  const tags = tagsInner
+    ? `\n    <div class="cs-tags reveal">${cs.tagsLabel ? `<span class="cs-tags-label">${esc(cs.tagsLabel)}</span>` : ""}<div class="pill-cloud">${tagsInner}</div></div>`
+    : "";
+
   return `<section class="slide" data-title="${esc(cs.title)}">
   <div class="slide-content">
-    <span class="badge reveal">${esc(cs.title)}</span>${heading}${subtitle}
-    <div class="${bodyClass}">${cs.content}</div>
+    <span class="badge reveal">${esc(cs.title)}</span>${heading}${subtitle}${body}${metrics}${tags}
   </div>
   ${watermark()}
   <div class="slide-num">${slideNum} / ${totalSlides}</div>
