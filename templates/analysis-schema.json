@@ -575,7 +575,31 @@
           "heading": { "type": "string", "description": "Optional big <h2> heading, like every native slide. Omit to keep just the eyebrow." },
           "subtitle": { "type": "string", "description": "Optional one-line slide-desc shown under the heading" },
           "content": { "type": "string", "description": "Raw HTML body. Use the shared component classes (.tracker-grid, .split-compare, .callout, .pill-*) so it reads as a native slide — do not hardcode colours inline." },
-          "style": { "type": "string", "enum": ["default", "finding-highlight", "evidence", "analysis", "comparison"] }
+          "style": { "type": "string", "enum": ["default", "finding-highlight", "evidence", "analysis", "comparison"] },
+          "metrics": {
+            "type": "array",
+            "description": "Optional structured metric callouts rendered as a stats strip (no hand-authored HTML needed).",
+            "items": {
+              "type": "object",
+              "required": ["value", "label"],
+              "properties": {
+                "value": { "type": ["string", "number"], "description": "Large mono numeral, e.g. \"5\" or \"3 of 4\"" },
+                "label": { "type": "string", "description": "Short uppercase caption under the value" }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "Optional chip cloud of .pill items (e.g. vendor names), colour-coded by tone.",
+            "items": {
+              "type": "object",
+              "required": ["label"],
+              "properties": {
+                "label": { "type": "string", "description": "Chip text, e.g. a vendor name" },
+                "tone": { "type": "string", "enum": ["red", "amber", "yellow", "green", "blue"], "description": "Colour tone; defaults to blue" }
+              }
+            }
+          }
         }
       }
     },
