@@ -1,0 +1,3099 @@
+{
+  "meta": {
+    "schemaVersion": "1",
+    "url": "https://datagobes.dev",
+    "domain": "datagobes.dev",
+    "scannedAt": "2026-10-02T16:28:38.442Z",
+    "scanner": "glasshouse/2.2",
+    "browser": "Firefox (Playwright)",
+    "engine": "firefox",
+    "thirdPartyCookiesAllowed": true,
+    "phases": [
+      "pre-consent",
+      "post-consent"
+    ],
+    "variants": [
+      "ignore",
+      "accept",
+      "reject"
+    ],
+    "cleanSession": true,
+    "config": {
+      "postConsentWaitMs": 8000,
+      "scrollPauseMs": 1500,
+      "buttonHints": {
+        "acceptText": null,
+        "rejectText": null,
+        "saveText": null
+      },
+      "maxCrawlPages": 5
+    }
+  },
+  "tls": {
+    "protocol": "TLSv1.3",
+    "cipher": {
+      "name": "TLS_AES_128_GCM_SHA256",
+      "version": "TLSv1.3"
+    },
+    "certificate": {
+      "subject": {
+        "CN": "*.datagobes.dev"
+      },
+      "issuer": {
+        "C": "US",
+        "O": "Let's Encrypt",
+        "CN": "YR1"
+      },
+      "validFrom": "Sep 14 11:28:51 2026 GMT",
+      "validTo": "Dec 13 11:28:50 2026 GMT",
+      "serialNumber": "053D4A5FCED6307649415A2C8CA6FB8415AB",
+      "fingerprint256": "D4:70:F1:F1:FC:26:61:F0:78:44:5B:91:FF:91:53:24:9F:95:71:3D:6D:7E:BE:43:32:15:0B:8C:45:67:BF:79"
+    }
+  },
+  "variants": {
+    "ignore": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [
+          {
+            "url": "https://datagobes.dev/",
+            "method": "GET",
+            "resourceType": "document",
+            "timestamp": 1790958520769,
+            "initiatorUrl": "about:blank"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/31a9145ccb84606d-s.p.1_j-vbs-91rji.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958521330,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/9721f9d4df761ffd-s.p.44lcgfy9cmdxl.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958521330,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qnzni99yiylg.css",
+            "method": "GET",
+            "resourceType": "stylesheet",
+            "timestamp": 1790958521330,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1gr2os0o9ui3h.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521333,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1ry8cfts1x4yz.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521333,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2-nlnwhxtafuc.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521333,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/20l2k864y4y9p.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521334,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/turbopack-43i44xao042au.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521334,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2vh_b4baixjei.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521334,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/25_i0vjbu2j8r.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521335,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3fo3_du06ejn0.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521335,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2j8vw-zu1q-rr.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521337,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+            "method": "GET",
+            "resourceType": "image",
+            "timestamp": 1790958521708,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/speed-insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521729,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958521730,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521734,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521734,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521735,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521735,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/view",
+            "method": "POST",
+            "resourceType": "fetch",
+            "timestamp": 1790958521761,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+            "method": "GET",
+            "resourceType": "websocket",
+            "timestamp": 1790958521942,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521987,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958521997,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522027,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/?_rsc=8nTjltbQWvg6NcbE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522072,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=Npvf18QV6N2pz_RZ",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522248,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=BZPL-4BkS0RUjLBR",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522268,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=Lz7jXvQ9hC3ZAz65",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522295,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=tFZ_1PIt4RvRrB7d",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522385,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3583fr_hzy2-i.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958522583,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=hzcUC6YqarYE9pKE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522585,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2mm15cks9vh72.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958522591,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=0GiFsx9_DxLUtz_h",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958522592,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3uhiz2_5m5mpa.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958522623,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qz1gc6zvtcan.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958522623,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3tm3cmzddhxo2.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958522876,
+            "initiatorUrl": "https://datagobes.dev/"
+          }
+        ],
+        "responseHeaders": {
+          "access-control-allow-origin": "*",
+          "age": "0",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-disposition": "inline",
+          "content-encoding": "br",
+          "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+          "content-type": "text/html; charset=utf-8",
+          "date": "Fri, 02 Oct 2026 16:28:41 GMT",
+          "etag": "W/\"3138ce89589737108840c7c4854e15dc\"",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-matched-path": "/",
+          "x-nextjs-prerender": "1",
+          "x-nextjs-stale-time": "300",
+          "x-vercel-cache": "PRERENDER",
+          "x-vercel-id": "fra1::qgblg-1790958520824-219ce6276446",
+          "x-firefox-spdy": "h2"
+        },
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          {
+            "domain": "datagobes.dev",
+            "requestCount": 36,
+            "categories": []
+          },
+          {
+            "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+            "requestCount": 1,
+            "categories": []
+          }
+        ],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [
+          {
+            "url": "https://datagobes.dev/blog/data-freshness-and-schema-drift-alerting?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547353
+          },
+          {
+            "url": "https://datagobes.dev/blog/sessionization-with-window-functions?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547353
+          },
+          {
+            "url": "https://datagobes.dev/blog/data-freshness-and-schema-drift-alerting?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547634
+          },
+          {
+            "url": "https://datagobes.dev/blog/sessionization-with-window-functions?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547649
+          },
+          {
+            "url": "https://datagobes.dev/blog/dlt-rest-api-sources?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547654
+          },
+          {
+            "url": "https://datagobes.dev/blog/how-i-build-ai-native?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547654
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/0_dd2p73mjx3-.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958547980
+          },
+          {
+            "url": "https://datagobes.dev/blog/data-pipelines-with-dlt-and-duckdb?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958547982
+          },
+          {
+            "url": "https://datagobes.dev/blog/agentic-workflows-with-claude-code?_rsc=hjRwlybSvoEojtGc",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958548029
+          },
+          {
+            "url": "https://datagobes.dev/playbooks/privacy-audit?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958548871
+          },
+          {
+            "url": "https://datagobes.dev/community/jukebox?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958548872
+          },
+          {
+            "url": "https://datagobes.dev/community/jukebox?_rsc=tXyZJ52UQVBCVsD3",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958548978
+          },
+          {
+            "url": "https://datagobes.dev/playbooks/privacy-audit?_rsc=EOqX_XSVlievfwHP",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549139
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/semantic-dbt-tests?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549179
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/dark-patterns-lab?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549179
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/dlt-pipeline-sandbox?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549180
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/dlt-pipeline-sandbox?_rsc=FfjSsdKA8XRaQs-2",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549474
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/regex-playground?_rsc=FfjSsdKA8XRaQs-2",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549477
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2j3jedb_d_aja.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958549485
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/sprint-tracker?_rsc=FfjSsdKA8XRaQs-2",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549486
+          },
+          {
+            "url": "https://datagobes.dev/artifacts/gravity-sandbox?_rsc=FfjSsdKA8XRaQs-2",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549752
+          },
+          {
+            "url": "https://datagobes.dev/blog/feed.xml?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549829
+          },
+          {
+            "url": "https://datagobes.dev/community?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549833
+          },
+          {
+            "url": "https://datagobes.dev/guestbook?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958549972
+          }
+        ],
+        "responseHeaders": {},
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          {
+            "domain": "datagobes.dev",
+            "requestCount": 24,
+            "categories": []
+          }
+        ],
+        "trackingPixels": []
+      },
+      "errors": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "acceptButton": null,
+        "rejectButton": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "granularity": null
+      },
+      "cookieWall": null,
+      "legalPages": [],
+      "metaTags": {
+        "viewport": "width=device-width, initial-scale=1",
+        "theme-color": "#113866",
+        "description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "robots": "index, follow",
+        "googlebot": "index, follow, max-image-preview:large, max-snippet:-1",
+        "og:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "og:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "og:url": "https://datagobes.dev",
+        "og:site_name": "Datagobes.dev",
+        "og:locale": "en_US",
+        "og:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "og:image:type": "image/png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "og:type": "website",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "twitter:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "twitter:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "twitter:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "twitter:image:type": "image/png",
+        "twitter:image:width": "1200",
+        "twitter:image:height": "630",
+        "title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer"
+      },
+      "securityHeaders": {
+        "access-control-allow-origin": "*",
+        "age": "0",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-disposition": "inline",
+        "content-encoding": "br",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+        "content-type": "text/html; charset=utf-8",
+        "date": "Fri, 02 Oct 2026 16:28:41 GMT",
+        "etag": "W/\"3138ce89589737108840c7c4854e15dc\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "server": "Vercel",
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-matched-path": "/",
+        "x-nextjs-prerender": "1",
+        "x-nextjs-stale-time": "300",
+        "x-vercel-cache": "PRERENDER",
+        "x-vercel-id": "fra1::qgblg-1790958520824-219ce6276446",
+        "x-firefox-spdy": "h2"
+      },
+      "screenshots": {
+        "viewport": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-ignore-viewport.png",
+        "fullPage": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-ignore-fullpage.png"
+      },
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "cmpVendorList": null,
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "legalPageContent": null,
+      "securityTxt": {
+        "present": false,
+        "url": null,
+        "fields": {},
+        "expired": null
+      },
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      }
+    },
+    "accept": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [
+          {
+            "url": "https://datagobes.dev/",
+            "method": "GET",
+            "resourceType": "document",
+            "timestamp": 1790958552047,
+            "initiatorUrl": "about:blank"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/31a9145ccb84606d-s.p.1_j-vbs-91rji.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958552271,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/9721f9d4df761ffd-s.p.44lcgfy9cmdxl.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958552271,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qnzni99yiylg.css",
+            "method": "GET",
+            "resourceType": "stylesheet",
+            "timestamp": 1790958552272,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1gr2os0o9ui3h.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552272,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1ry8cfts1x4yz.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552272,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2-nlnwhxtafuc.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552272,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/20l2k864y4y9p.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552275,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/turbopack-43i44xao042au.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552275,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2vh_b4baixjei.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552276,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/25_i0vjbu2j8r.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552276,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3fo3_du06ejn0.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552276,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2j8vw-zu1q-rr.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552277,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+            "method": "GET",
+            "resourceType": "image",
+            "timestamp": 1790958552345,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/speed-insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552395,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552395,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552420,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552420,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552420,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552420,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/view",
+            "method": "POST",
+            "resourceType": "fetch",
+            "timestamp": 1790958552427,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552443,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552446,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/?_rsc=8nTjltbQWvg6NcbE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552451,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=Npvf18QV6N2pz_RZ",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552453,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=BZPL-4BkS0RUjLBR",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552477,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=Lz7jXvQ9hC3ZAz65",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552484,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3uhiz2_5m5mpa.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552492,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qz1gc6zvtcan.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552492,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=tFZ_1PIt4RvRrB7d",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552493,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3583fr_hzy2-i.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552497,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=hzcUC6YqarYE9pKE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552500,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2mm15cks9vh72.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552509,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+            "method": "GET",
+            "resourceType": "image",
+            "timestamp": 1790958552587,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=0GiFsx9_DxLUtz_h",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958552588,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3tm3cmzddhxo2.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958552619,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+            "method": "GET",
+            "resourceType": "websocket",
+            "timestamp": 1790958552791,
+            "initiatorUrl": "https://datagobes.dev/"
+          }
+        ],
+        "responseHeaders": {
+          "age": "29",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "br",
+          "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+          "content-type": "text/html; charset=utf-8",
+          "date": "Fri, 02 Oct 2026 16:28:42 GMT",
+          "etag": "W/\"kcm1obwtn73zu2\"",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-matched-path": "/",
+          "x-nextjs-prerender": "1",
+          "x-nextjs-stale-time": "300",
+          "x-powered-by": "Next.js",
+          "x-vercel-cache": "HIT",
+          "x-vercel-id": "fra1::dub1::jcgr9-1790958552094-04b7dcaec606",
+          "x-firefox-spdy": "h2"
+        },
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          {
+            "domain": "datagobes.dev",
+            "requestCount": 36,
+            "categories": []
+          },
+          {
+            "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+            "requestCount": 1,
+            "categories": []
+          }
+        ],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [],
+        "responseHeaders": {},
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [],
+        "trackingPixels": []
+      },
+      "errors": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "acceptButton": null,
+        "rejectButton": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "granularity": null
+      },
+      "cookieWall": null,
+      "legalPages": [],
+      "metaTags": {
+        "viewport": "width=device-width, initial-scale=1",
+        "theme-color": "#113866",
+        "description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "robots": "index, follow",
+        "googlebot": "index, follow, max-image-preview:large, max-snippet:-1",
+        "og:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "og:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "og:url": "https://datagobes.dev",
+        "og:site_name": "Datagobes.dev",
+        "og:locale": "en_US",
+        "og:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "og:image:type": "image/png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "og:type": "website",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "twitter:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "twitter:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "twitter:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "twitter:image:type": "image/png",
+        "twitter:image:width": "1200",
+        "twitter:image:height": "630",
+        "title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer"
+      },
+      "securityHeaders": {
+        "age": "29",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-encoding": "br",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+        "content-type": "text/html; charset=utf-8",
+        "date": "Fri, 02 Oct 2026 16:28:42 GMT",
+        "etag": "W/\"kcm1obwtn73zu2\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "server": "Vercel",
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-matched-path": "/",
+        "x-nextjs-prerender": "1",
+        "x-nextjs-stale-time": "300",
+        "x-powered-by": "Next.js",
+        "x-vercel-cache": "HIT",
+        "x-vercel-id": "fra1::dub1::jcgr9-1790958552094-04b7dcaec606",
+        "x-firefox-spdy": "h2"
+      },
+      "screenshots": {
+        "viewport": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-accept-viewport.png",
+        "fullPage": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-accept-fullpage.png"
+      },
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "cmpVendorList": null,
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "legalPageContent": null,
+      "securityTxt": null,
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      }
+    },
+    "reject": {
+      "preConsent": {
+        "phase": "pre-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [
+          {
+            "url": "https://datagobes.dev/",
+            "method": "GET",
+            "resourceType": "document",
+            "timestamp": 1790958568911,
+            "initiatorUrl": "about:blank"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/31a9145ccb84606d-s.p.1_j-vbs-91rji.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958569049,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/media/9721f9d4df761ffd-s.p.44lcgfy9cmdxl.woff2",
+            "method": "GET",
+            "resourceType": "font",
+            "timestamp": 1790958569049,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qnzni99yiylg.css",
+            "method": "GET",
+            "resourceType": "stylesheet",
+            "timestamp": 1790958569049,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1gr2os0o9ui3h.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569050,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1ry8cfts1x4yz.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569050,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2-nlnwhxtafuc.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569050,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/20l2k864y4y9p.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569050,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/turbopack-43i44xao042au.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569051,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2vh_b4baixjei.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569051,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/25_i0vjbu2j8r.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569051,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3fo3_du06ejn0.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569053,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2j8vw-zu1q-rr.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569053,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+            "method": "GET",
+            "resourceType": "image",
+            "timestamp": 1790958569138,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/speed-insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569158,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/script.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569158,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569188,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569189,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569189,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569189,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_vercel/insights/view",
+            "method": "POST",
+            "resourceType": "fetch",
+            "timestamp": 1790958569190,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569214,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=5CB68i4pnAekjehf",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569217,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/?_rsc=8nTjltbQWvg6NcbE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569226,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/blog?_rsc=Npvf18QV6N2pz_RZ",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569231,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/projects?_rsc=BZPL-4BkS0RUjLBR",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569249,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/artifacts?_rsc=Lz7jXvQ9hC3ZAz65",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569250,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3uhiz2_5m5mpa.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569258,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/1qz1gc6zvtcan.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569259,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/playbooks?_rsc=tFZ_1PIt4RvRrB7d",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569259,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/about?_rsc=hzcUC6YqarYE9pKE",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569266,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/2mm15cks9vh72.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569275,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/assembly?_rsc=0GiFsx9_DxLUtz_h",
+            "method": "GET",
+            "resourceType": "fetch",
+            "timestamp": 1790958569276,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3583fr_hzy2-i.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569277,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+            "method": "GET",
+            "resourceType": "websocket",
+            "timestamp": 1790958569283,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+            "method": "GET",
+            "resourceType": "image",
+            "timestamp": 1790958569298,
+            "initiatorUrl": "https://datagobes.dev/"
+          },
+          {
+            "url": "https://datagobes.dev/_next/static/immutable/chunks/3tm3cmzddhxo2.js",
+            "method": "GET",
+            "resourceType": "script",
+            "timestamp": 1790958569298,
+            "initiatorUrl": "https://datagobes.dev/"
+          }
+        ],
+        "responseHeaders": {
+          "age": "46",
+          "cache-control": "public, max-age=0, must-revalidate",
+          "content-encoding": "br",
+          "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+          "content-type": "text/html; charset=utf-8",
+          "date": "Fri, 02 Oct 2026 16:28:42 GMT",
+          "etag": "W/\"kcm1obwtn73zu2\"",
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "Vercel",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-matched-path": "/",
+          "x-nextjs-prerender": "1",
+          "x-nextjs-stale-time": "300",
+          "x-powered-by": "Next.js",
+          "x-vercel-cache": "HIT",
+          "x-vercel-id": "fra1::dub1::8jjcj-1790958568956-e57cf9a5e741",
+          "x-firefox-spdy": "h2"
+        },
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [
+          {
+            "domain": "datagobes.dev",
+            "requestCount": 36,
+            "categories": []
+          },
+          {
+            "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+            "requestCount": 1,
+            "categories": []
+          }
+        ],
+        "trackingPixels": []
+      },
+      "postConsent": {
+        "phase": "post-consent",
+        "cookies": [],
+        "localStorage": {},
+        "sessionStorage": {
+          "dg-replayed": "1"
+        },
+        "networkRequests": [],
+        "responseHeaders": {},
+        "scriptIntegrity": [],
+        "indexedDB": {
+          "supported": true,
+          "databases": []
+        },
+        "adServing": {
+          "programmaticPublisher": false,
+          "measurementSignals": [],
+          "publisherSignals": []
+        },
+        "trackers": [],
+        "consentModePings": [],
+        "sdkLoads": [],
+        "thirdPartyDomains": [],
+        "trackingPixels": []
+      },
+      "errors": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "acceptButton": null,
+        "rejectButton": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "granularity": null
+      },
+      "cookieWall": null,
+      "legalPages": [],
+      "metaTags": {
+        "viewport": "width=device-width, initial-scale=1",
+        "theme-color": "#113866",
+        "description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "robots": "index, follow",
+        "googlebot": "index, follow, max-image-preview:large, max-snippet:-1",
+        "og:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "og:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "og:url": "https://datagobes.dev",
+        "og:site_name": "Datagobes.dev",
+        "og:locale": "en_US",
+        "og:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "og:image:type": "image/png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "og:type": "website",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+        "twitter:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+        "twitter:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+        "twitter:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+        "twitter:image:type": "image/png",
+        "twitter:image:width": "1200",
+        "twitter:image:height": "630",
+        "title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer"
+      },
+      "securityHeaders": {
+        "age": "46",
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-encoding": "br",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+        "content-type": "text/html; charset=utf-8",
+        "date": "Fri, 02 Oct 2026 16:28:42 GMT",
+        "etag": "W/\"kcm1obwtn73zu2\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "server": "Vercel",
+        "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-matched-path": "/",
+        "x-nextjs-prerender": "1",
+        "x-nextjs-stale-time": "300",
+        "x-powered-by": "Next.js",
+        "x-vercel-cache": "HIT",
+        "x-vercel-id": "fra1::dub1::8jjcj-1790958568956-e57cf9a5e741",
+        "x-firefox-spdy": "h2"
+      },
+      "screenshots": {
+        "viewport": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-reject-viewport.png",
+        "fullPage": "/tmp/glasshouse-datagobes.dev-2026-10-02T16-28-38-441Z-reject-fullpage.png"
+      },
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "cmpVendorList": null,
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "legalPageContent": null,
+      "securityTxt": null,
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      }
+    }
+  },
+  "consent": {
+    "detected": false,
+    "platform": null,
+    "acceptButton": null,
+    "rejectButton": null,
+    "darkPatterns": [],
+    "buttonStyling": null,
+    "granularity": null
+  },
+  "cookieWall": null,
+  "legalPages": [],
+  "metaTags": {
+    "viewport": "width=device-width, initial-scale=1",
+    "theme-color": "#113866",
+    "description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+    "robots": "index, follow",
+    "googlebot": "index, follow, max-image-preview:large, max-snippet:-1",
+    "og:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+    "og:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+    "og:url": "https://datagobes.dev",
+    "og:site_name": "Datagobes.dev",
+    "og:locale": "en_US",
+    "og:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+    "og:image:type": "image/png",
+    "og:image:width": "1200",
+    "og:image:height": "630",
+    "og:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer",
+    "twitter:description": "Data & AI engineer with 15 years in data and backend systems. I build data pipelines, agentic systems, and the AI-native workflows that ship them — in the open.",
+    "twitter:image": "https://datagobes.dev/opengraph-image?9ef39b1533690d37",
+    "twitter:image:alt": "Gijs Jansen — Data & AI engineer · datagobes.dev",
+    "twitter:image:type": "image/png",
+    "twitter:image:width": "1200",
+    "twitter:image:height": "630",
+    "title": "Datagobes.dev — Gijs Jansen, Data & AI Engineer"
+  },
+  "securityHeaders": {
+    "access-control-allow-origin": "*",
+    "age": "0",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-disposition": "inline",
+    "content-encoding": "br",
+    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+    "content-type": "text/html; charset=utf-8",
+    "date": "Fri, 02 Oct 2026 16:28:41 GMT",
+    "etag": "W/\"3138ce89589737108840c7c4854e15dc\"",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "server": "Vercel",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-matched-path": "/",
+    "x-nextjs-prerender": "1",
+    "x-nextjs-stale-time": "300",
+    "x-vercel-cache": "PRERENDER",
+    "x-vercel-id": "fra1::qgblg-1790958520824-219ce6276446",
+    "x-firefox-spdy": "h2"
+  },
+  "crawl": {
+    "enabled": true,
+    "maxPages": 5,
+    "pagesVisited": [
+      {
+        "url": "https://datagobes.dev/blog",
+        "campaign": false,
+        "ok": true
+      },
+      {
+        "url": "https://datagobes.dev/projects",
+        "campaign": false,
+        "ok": true
+      },
+      {
+        "url": "https://datagobes.dev/artifacts",
+        "campaign": false,
+        "ok": true
+      },
+      {
+        "url": "https://datagobes.dev/playbooks",
+        "campaign": false,
+        "ok": true
+      },
+      {
+        "url": "https://datagobes.dev/about",
+        "campaign": false,
+        "ok": true
+      }
+    ],
+    "startCookieCount": 0,
+    "endCookieCount": 0,
+    "newCookies": [],
+    "newThirdPartyDomains": [
+      "jmsrmcpfzkcwofggbvto.supabase.co"
+    ],
+    "error": null
+  },
+  "errors": [],
+  "preConsent": {
+    "phase": "pre-consent",
+    "cookies": [],
+    "localStorage": {},
+    "sessionStorage": {
+      "dg-replayed": "1"
+    },
+    "networkRequests": [
+      {
+        "url": "https://datagobes.dev/",
+        "method": "GET",
+        "resourceType": "document",
+        "timestamp": 1790958552047,
+        "initiatorUrl": "about:blank"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/media/31a9145ccb84606d-s.p.1_j-vbs-91rji.woff2",
+        "method": "GET",
+        "resourceType": "font",
+        "timestamp": 1790958552271,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/media/9721f9d4df761ffd-s.p.44lcgfy9cmdxl.woff2",
+        "method": "GET",
+        "resourceType": "font",
+        "timestamp": 1790958552271,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/1qnzni99yiylg.css",
+        "method": "GET",
+        "resourceType": "stylesheet",
+        "timestamp": 1790958552272,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/1gr2os0o9ui3h.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552272,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/1ry8cfts1x4yz.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552272,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/2-nlnwhxtafuc.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552272,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/20l2k864y4y9p.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552275,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/turbopack-43i44xao042au.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552275,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/2vh_b4baixjei.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552276,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/25_i0vjbu2j8r.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552276,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/3fo3_du06ejn0.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552276,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/2j8vw-zu1q-rr.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552277,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+        "method": "GET",
+        "resourceType": "image",
+        "timestamp": 1790958552345,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_vercel/speed-insights/script.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552395,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_vercel/insights/script.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552395,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/blog?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552420,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/projects?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552420,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/artifacts?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552420,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/playbooks?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552420,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_vercel/insights/view",
+        "method": "POST",
+        "resourceType": "fetch",
+        "timestamp": 1790958552427,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/about?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552443,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/assembly?_rsc=5CB68i4pnAekjehf",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552446,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/?_rsc=8nTjltbQWvg6NcbE",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552451,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/blog?_rsc=Npvf18QV6N2pz_RZ",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552453,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/projects?_rsc=BZPL-4BkS0RUjLBR",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552477,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/artifacts?_rsc=Lz7jXvQ9hC3ZAz65",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552484,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/3uhiz2_5m5mpa.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552492,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/1qz1gc6zvtcan.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552492,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/playbooks?_rsc=tFZ_1PIt4RvRrB7d",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552493,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/3583fr_hzy2-i.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552497,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/about?_rsc=hzcUC6YqarYE9pKE",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552500,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/2mm15cks9vh72.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552509,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/icon.svg?icon.18gjms6d3h2bv.svg",
+        "method": "GET",
+        "resourceType": "image",
+        "timestamp": 1790958552587,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/assembly?_rsc=0GiFsx9_DxLUtz_h",
+        "method": "GET",
+        "resourceType": "fetch",
+        "timestamp": 1790958552588,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://datagobes.dev/_next/static/immutable/chunks/3tm3cmzddhxo2.js",
+        "method": "GET",
+        "resourceType": "script",
+        "timestamp": 1790958552619,
+        "initiatorUrl": "https://datagobes.dev/"
+      },
+      {
+        "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+        "method": "GET",
+        "resourceType": "websocket",
+        "timestamp": 1790958552791,
+        "initiatorUrl": "https://datagobes.dev/"
+      }
+    ],
+    "responseHeaders": {
+      "age": "29",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-encoding": "br",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Fri, 02 Oct 2026 16:28:42 GMT",
+      "etag": "W/\"kcm1obwtn73zu2\"",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-matched-path": "/",
+      "x-nextjs-prerender": "1",
+      "x-nextjs-stale-time": "300",
+      "x-powered-by": "Next.js",
+      "x-vercel-cache": "HIT",
+      "x-vercel-id": "fra1::dub1::jcgr9-1790958552094-04b7dcaec606",
+      "x-firefox-spdy": "h2"
+    },
+    "scriptIntegrity": [],
+    "indexedDB": {
+      "supported": true,
+      "databases": []
+    },
+    "adServing": {
+      "programmaticPublisher": false,
+      "measurementSignals": [],
+      "publisherSignals": []
+    },
+    "trackers": [],
+    "consentModePings": [],
+    "sdkLoads": [],
+    "thirdPartyDomains": [
+      {
+        "domain": "datagobes.dev",
+        "requestCount": 36,
+        "categories": []
+      },
+      {
+        "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+        "requestCount": 1,
+        "categories": []
+      }
+    ],
+    "trackingPixels": []
+  },
+  "postConsent": {
+    "phase": "post-consent",
+    "cookies": [],
+    "localStorage": {},
+    "sessionStorage": {
+      "dg-replayed": "1"
+    },
+    "networkRequests": [],
+    "responseHeaders": {},
+    "scriptIntegrity": [],
+    "indexedDB": {
+      "supported": true,
+      "databases": []
+    },
+    "adServing": {
+      "programmaticPublisher": false,
+      "measurementSignals": [],
+      "publisherSignals": []
+    },
+    "trackers": [],
+    "consentModePings": [],
+    "sdkLoads": [],
+    "thirdPartyDomains": [],
+    "trackingPixels": []
+  },
+  "fingerprinting": {
+    "detected": false,
+    "preConsent": false,
+    "severity": "low",
+    "tier1Calls": [],
+    "tier2Calls": [],
+    "stackedSignals": [],
+    "commercialSdks": [],
+    "callerDomains": [],
+    "tier3Appendix": [],
+    "outOfScopeCaveats": [
+      "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+      "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+      "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+    ],
+    "apiCalls": []
+  },
+  "gpc": {
+    "signalSent": true,
+    "siteReadsSignal": false
+  },
+  "formLeakage": {
+    "formsFound": 0,
+    "fieldsInjected": 0,
+    "leaks": []
+  },
+  "consentRevocation": {
+    "mechanismFound": false,
+    "mechanismType": "not-tested",
+    "acceptanceClicks": 0,
+    "revocationClicks": 0,
+    "cookiesBefore": 0,
+    "cookiesAfter": 0,
+    "trackingCookiesDeleted": false,
+    "trackingCookiesRemaining": [],
+    "newRequestsAfterRevocation": 0
+  },
+  "legalPageContent": null,
+  "variantSummaries": {
+    "ignore": {
+      "preConsentTrackerCount": 0,
+      "preConsentConsentModePingCount": 0,
+      "preConsentSdkLoadCount": 0,
+      "preConsentCookieCount": 0,
+      "postConsentNewTrackerCount": 0,
+      "postConsentNewCookieCount": 0,
+      "thirdPartyDomainCount": 1,
+      "securityHeaderScore": "6/6",
+      "preConsentTrackers": [],
+      "piggybackingCount": 0,
+      "preConsentConsentModePings": [],
+      "preConsentSdkLoads": [],
+      "preConsentCookies": [],
+      "newPostConsentCookies": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "viaCookieWall": false
+      },
+      "cookieWall": {
+        "detected": false
+      },
+      "securityHeaders": {
+        "present": [
+          {
+            "name": "strict-transport-security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "name": "content-security-policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+          },
+          {
+            "name": "x-content-type-options",
+            "value": "nosniff"
+          },
+          {
+            "name": "x-frame-options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "name": "referrer-policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "name": "permissions-policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          }
+        ],
+        "missing": []
+      },
+      "cors": {
+        "allowOrigin": "*",
+        "allowCredentials": null,
+        "isWildcard": true,
+        "hasCredentialsWithWildcard": false
+      },
+      "legalPages": [],
+      "thirdPartyDomains": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "requests": 1,
+          "categories": [],
+          "jurisdiction": "Unknown",
+          "company": null,
+          "flag": null,
+          "transferRisk": "risk",
+          "isInfra": false
+        }
+      ],
+      "tls": {
+        "protocol": "TLSv1.3",
+        "cipher": "TLS_AES_128_GCM_SHA256",
+        "issuer": "YR1",
+        "validTo": "Dec 13 11:28:50 2026 GMT"
+      },
+      "trackingPixelCount": 0,
+      "trackingPixels": [],
+      "scriptIntegrity": {
+        "totalExternal": 0,
+        "withIntegrity": 0,
+        "coveragePercent": 100,
+        "eligibleExternal": 0,
+        "eligibleCoveragePercent": 100,
+        "cannotTakeSri": [],
+        "details": []
+      },
+      "preConsentLocalStorage": [],
+      "postConsentLocalStorage": [],
+      "preConsentIndexedDB": [],
+      "postConsentIndexedDB": [],
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      },
+      "consentGranularity": null,
+      "legalPageContent": null,
+      "securityTxt": {
+        "present": false,
+        "url": null,
+        "fields": {},
+        "expired": null
+      },
+      "policyAnalysis": {
+        "policyTextAvailable": false,
+        "policyLength": 0,
+        "dsar": {
+          "contactPresent": false,
+          "contactType": "none",
+          "contactEvidence": null,
+          "dedicatedPagePresent": false,
+          "responseCommitmentDays": null,
+          "art21Disclosed": false,
+          "rightToErasureDisclosed": false,
+          "rightToAccessDisclosed": false,
+          "portabilityDisclosed": false,
+          "complainToDpaDisclosed": false,
+          "disproportionateBurdenFlags": []
+        },
+        "processors": {
+          "namedInPolicy": [],
+          "detectedOnSite": [],
+          "undisclosed": [],
+          "dpaReferenced": false,
+          "subProcessorsDisclosed": false,
+          "jointControllerScenarios": []
+        },
+        "breach": {
+          "securityTxtPresent": false,
+          "securityTxtExpired": null,
+          "securityTxtFields": {},
+          "dpaNotificationCommitment": false,
+          "individualNotificationCommitment": false,
+          "delayTacticLanguage": []
+        },
+        "optOut": {
+          "unsubscribeMentioned": false,
+          "art21Disclosed": false,
+          "withdrawAsEasyAsConsent": false,
+          "legitimateInterestsObjectionContact": false,
+          "preferenceCenterMentioned": false
+        }
+      },
+      "requestPulse": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "preConsent": 1,
+          "postConsent": 0,
+          "total": 1,
+          "isInfra": false
+        }
+      ],
+      "postConsentThirdPartyDomains": [],
+      "postConsentTrackers": [],
+      "significantEvents": [
+        {
+          "phase": "pre",
+          "time": "t+1.2s",
+          "timestamp": 1790958521942,
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+          "resourceType": "websocket",
+          "isTracker": false,
+          "isPixel": false,
+          "isFirstContact": true
+        }
+      ],
+      "postConsentCookieCount": 0,
+      "adServing": {
+        "programmaticPublisher": false,
+        "measurementSignals": [],
+        "publisherSignals": []
+      },
+      "errors": []
+    },
+    "accept": {
+      "preConsentTrackerCount": 0,
+      "preConsentConsentModePingCount": 0,
+      "preConsentSdkLoadCount": 0,
+      "preConsentCookieCount": 0,
+      "postConsentNewTrackerCount": 0,
+      "postConsentNewCookieCount": 0,
+      "thirdPartyDomainCount": 1,
+      "securityHeaderScore": "6/6",
+      "preConsentTrackers": [],
+      "piggybackingCount": 0,
+      "preConsentConsentModePings": [],
+      "preConsentSdkLoads": [],
+      "preConsentCookies": [],
+      "newPostConsentCookies": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "viaCookieWall": false
+      },
+      "cookieWall": {
+        "detected": false
+      },
+      "securityHeaders": {
+        "present": [
+          {
+            "name": "strict-transport-security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "name": "content-security-policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+          },
+          {
+            "name": "x-content-type-options",
+            "value": "nosniff"
+          },
+          {
+            "name": "x-frame-options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "name": "referrer-policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "name": "permissions-policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          }
+        ],
+        "missing": []
+      },
+      "cors": {
+        "allowOrigin": null,
+        "allowCredentials": null,
+        "isWildcard": false,
+        "hasCredentialsWithWildcard": false
+      },
+      "legalPages": [],
+      "thirdPartyDomains": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "requests": 1,
+          "categories": [],
+          "jurisdiction": "Unknown",
+          "company": null,
+          "flag": null,
+          "transferRisk": "risk",
+          "isInfra": false
+        }
+      ],
+      "tls": {
+        "protocol": "TLSv1.3",
+        "cipher": "TLS_AES_128_GCM_SHA256",
+        "issuer": "YR1",
+        "validTo": "Dec 13 11:28:50 2026 GMT"
+      },
+      "trackingPixelCount": 0,
+      "trackingPixels": [],
+      "scriptIntegrity": {
+        "totalExternal": 0,
+        "withIntegrity": 0,
+        "coveragePercent": 100,
+        "eligibleExternal": 0,
+        "eligibleCoveragePercent": 100,
+        "cannotTakeSri": [],
+        "details": []
+      },
+      "preConsentLocalStorage": [],
+      "postConsentLocalStorage": [],
+      "preConsentIndexedDB": [],
+      "postConsentIndexedDB": [],
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      },
+      "consentGranularity": null,
+      "legalPageContent": null,
+      "securityTxt": null,
+      "policyAnalysis": {
+        "policyTextAvailable": false,
+        "policyLength": 0,
+        "dsar": {
+          "contactPresent": false,
+          "contactType": "none",
+          "contactEvidence": null,
+          "dedicatedPagePresent": false,
+          "responseCommitmentDays": null,
+          "art21Disclosed": false,
+          "rightToErasureDisclosed": false,
+          "rightToAccessDisclosed": false,
+          "portabilityDisclosed": false,
+          "complainToDpaDisclosed": false,
+          "disproportionateBurdenFlags": []
+        },
+        "processors": {
+          "namedInPolicy": [],
+          "detectedOnSite": [],
+          "undisclosed": [],
+          "dpaReferenced": false,
+          "subProcessorsDisclosed": false,
+          "jointControllerScenarios": []
+        },
+        "breach": {
+          "securityTxtPresent": false,
+          "securityTxtExpired": null,
+          "securityTxtFields": {},
+          "dpaNotificationCommitment": false,
+          "individualNotificationCommitment": false,
+          "delayTacticLanguage": []
+        },
+        "optOut": {
+          "unsubscribeMentioned": false,
+          "art21Disclosed": false,
+          "withdrawAsEasyAsConsent": false,
+          "legitimateInterestsObjectionContact": false,
+          "preferenceCenterMentioned": false
+        }
+      },
+      "requestPulse": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "preConsent": 1,
+          "postConsent": 0,
+          "total": 1,
+          "isInfra": false
+        }
+      ],
+      "postConsentThirdPartyDomains": [],
+      "postConsentTrackers": [],
+      "significantEvents": [
+        {
+          "phase": "pre",
+          "time": "t+744ms",
+          "timestamp": 1790958552791,
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+          "resourceType": "websocket",
+          "isTracker": false,
+          "isPixel": false,
+          "isFirstContact": true
+        }
+      ],
+      "postConsentCookieCount": 0,
+      "adServing": {
+        "programmaticPublisher": false,
+        "measurementSignals": [],
+        "publisherSignals": []
+      },
+      "errors": []
+    },
+    "reject": {
+      "preConsentTrackerCount": 0,
+      "preConsentConsentModePingCount": 0,
+      "preConsentSdkLoadCount": 0,
+      "preConsentCookieCount": 0,
+      "postConsentNewTrackerCount": 0,
+      "postConsentNewCookieCount": 0,
+      "thirdPartyDomainCount": 1,
+      "securityHeaderScore": "6/6",
+      "preConsentTrackers": [],
+      "piggybackingCount": 0,
+      "preConsentConsentModePings": [],
+      "preConsentSdkLoads": [],
+      "preConsentCookies": [],
+      "newPostConsentCookies": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "viaCookieWall": false
+      },
+      "cookieWall": {
+        "detected": false
+      },
+      "securityHeaders": {
+        "present": [
+          {
+            "name": "strict-transport-security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "name": "content-security-policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+          },
+          {
+            "name": "x-content-type-options",
+            "value": "nosniff"
+          },
+          {
+            "name": "x-frame-options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "name": "referrer-policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "name": "permissions-policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          }
+        ],
+        "missing": []
+      },
+      "cors": {
+        "allowOrigin": null,
+        "allowCredentials": null,
+        "isWildcard": false,
+        "hasCredentialsWithWildcard": false
+      },
+      "legalPages": [],
+      "thirdPartyDomains": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "requests": 1,
+          "categories": [],
+          "jurisdiction": "Unknown",
+          "company": null,
+          "flag": null,
+          "transferRisk": "risk",
+          "isInfra": false
+        }
+      ],
+      "tls": {
+        "protocol": "TLSv1.3",
+        "cipher": "TLS_AES_128_GCM_SHA256",
+        "issuer": "YR1",
+        "validTo": "Dec 13 11:28:50 2026 GMT"
+      },
+      "trackingPixelCount": 0,
+      "trackingPixels": [],
+      "scriptIntegrity": {
+        "totalExternal": 0,
+        "withIntegrity": 0,
+        "coveragePercent": 100,
+        "eligibleExternal": 0,
+        "eligibleCoveragePercent": 100,
+        "cannotTakeSri": [],
+        "details": []
+      },
+      "preConsentLocalStorage": [],
+      "postConsentLocalStorage": [],
+      "preConsentIndexedDB": [],
+      "postConsentIndexedDB": [],
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      },
+      "consentGranularity": null,
+      "legalPageContent": null,
+      "securityTxt": null,
+      "policyAnalysis": {
+        "policyTextAvailable": false,
+        "policyLength": 0,
+        "dsar": {
+          "contactPresent": false,
+          "contactType": "none",
+          "contactEvidence": null,
+          "dedicatedPagePresent": false,
+          "responseCommitmentDays": null,
+          "art21Disclosed": false,
+          "rightToErasureDisclosed": false,
+          "rightToAccessDisclosed": false,
+          "portabilityDisclosed": false,
+          "complainToDpaDisclosed": false,
+          "disproportionateBurdenFlags": []
+        },
+        "processors": {
+          "namedInPolicy": [],
+          "detectedOnSite": [],
+          "undisclosed": [],
+          "dpaReferenced": false,
+          "subProcessorsDisclosed": false,
+          "jointControllerScenarios": []
+        },
+        "breach": {
+          "securityTxtPresent": false,
+          "securityTxtExpired": null,
+          "securityTxtFields": {},
+          "dpaNotificationCommitment": false,
+          "individualNotificationCommitment": false,
+          "delayTacticLanguage": []
+        },
+        "optOut": {
+          "unsubscribeMentioned": false,
+          "art21Disclosed": false,
+          "withdrawAsEasyAsConsent": false,
+          "legitimateInterestsObjectionContact": false,
+          "preferenceCenterMentioned": false
+        }
+      },
+      "requestPulse": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "preConsent": 1,
+          "postConsent": 0,
+          "total": 1,
+          "isInfra": false
+        }
+      ],
+      "postConsentThirdPartyDomains": [],
+      "postConsentTrackers": [],
+      "significantEvents": [
+        {
+          "phase": "pre",
+          "time": "t+372ms",
+          "timestamp": 1790958569283,
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+          "resourceType": "websocket",
+          "isTracker": false,
+          "isPixel": false,
+          "isFirstContact": true
+        }
+      ],
+      "postConsentCookieCount": 0,
+      "adServing": {
+        "programmaticPublisher": false,
+        "measurementSignals": [],
+        "publisherSignals": []
+      },
+      "errors": []
+    }
+  },
+  "summary": {
+    "consentDetected": false,
+    "platform": null,
+    "variantComparison": {
+      "trackers": {
+        "ignorePhase1": 0,
+        "ignorePhase2": 0,
+        "acceptPhase2": 0,
+        "rejectPhase2": 0
+      },
+      "cookies": {
+        "ignorePhase1": 0,
+        "ignorePhase2": 0,
+        "acceptPhase2": 0,
+        "rejectPhase2": 0
+      }
+    },
+    "darkPatterns": [],
+    "details": {
+      "preConsentTrackerCount": 0,
+      "preConsentConsentModePingCount": 0,
+      "preConsentSdkLoadCount": 0,
+      "preConsentCookieCount": 0,
+      "postConsentNewTrackerCount": 0,
+      "postConsentNewCookieCount": 0,
+      "thirdPartyDomainCount": 1,
+      "securityHeaderScore": "6/6",
+      "preConsentTrackers": [],
+      "piggybackingCount": 0,
+      "preConsentConsentModePings": [],
+      "preConsentSdkLoads": [],
+      "preConsentCookies": [],
+      "newPostConsentCookies": [],
+      "consent": {
+        "detected": false,
+        "platform": null,
+        "darkPatterns": [],
+        "buttonStyling": null,
+        "viaCookieWall": false
+      },
+      "cookieWall": {
+        "detected": false
+      },
+      "securityHeaders": {
+        "present": [
+          {
+            "name": "strict-transport-security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "name": "content-security-policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://opengraph.githubassets.com https://*.supabase.co data:; media-src 'self' https://*.supabase.co; frame-src 'self' https://datagobes.github.io; connect-src 'self' https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+          },
+          {
+            "name": "x-content-type-options",
+            "value": "nosniff"
+          },
+          {
+            "name": "x-frame-options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "name": "referrer-policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "name": "permissions-policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          }
+        ],
+        "missing": []
+      },
+      "cors": {
+        "allowOrigin": null,
+        "allowCredentials": null,
+        "isWildcard": false,
+        "hasCredentialsWithWildcard": false
+      },
+      "legalPages": [],
+      "thirdPartyDomains": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "requests": 1,
+          "categories": [],
+          "jurisdiction": "Unknown",
+          "company": null,
+          "flag": null,
+          "transferRisk": "risk",
+          "isInfra": false
+        }
+      ],
+      "tls": {
+        "protocol": "TLSv1.3",
+        "cipher": "TLS_AES_128_GCM_SHA256",
+        "issuer": "YR1",
+        "validTo": "Dec 13 11:28:50 2026 GMT"
+      },
+      "trackingPixelCount": 0,
+      "trackingPixels": [],
+      "scriptIntegrity": {
+        "totalExternal": 0,
+        "withIntegrity": 0,
+        "coveragePercent": 100,
+        "eligibleExternal": 0,
+        "eligibleCoveragePercent": 100,
+        "cannotTakeSri": [],
+        "details": []
+      },
+      "preConsentLocalStorage": [],
+      "postConsentLocalStorage": [],
+      "preConsentIndexedDB": [],
+      "postConsentIndexedDB": [],
+      "tcf": {
+        "detected": false,
+        "version": null,
+        "cmpId": null,
+        "purposeConsents": {},
+        "vendorCount": 0,
+        "consentString": null
+      },
+      "googleConsentMode": {
+        "detected": false,
+        "defaultState": {},
+        "updateEvents": []
+      },
+      "vendorConsentModes": {
+        "microsoft": {
+          "detected": false,
+          "tagPresent": false,
+          "consentMode": false,
+          "defaultState": {},
+          "updateEvents": []
+        },
+        "amazon": {
+          "detected": false,
+          "tam": false,
+          "ats": false,
+          "tagPresent": false
+        }
+      },
+      "gpc": {
+        "signalSent": true,
+        "siteReadsSignal": false
+      },
+      "fingerprinting": {
+        "detected": false,
+        "preConsent": false,
+        "severity": "low",
+        "tier1Calls": [],
+        "tier2Calls": [],
+        "stackedSignals": [],
+        "commercialSdks": [],
+        "callerDomains": [],
+        "tier3Appendix": [],
+        "outOfScopeCaveats": [
+          "Network-layer fingerprinting (TLS JA3/JA4, HTTP/3 QUIC, IP TTL) is not detectable by JavaScript instrumentation. Sites may use these techniques.",
+          "CSS timing attacks are indistinguishable from legitimate rendering measurements.",
+          "Worker-internal canvas readbacks are detected indirectly (via OffscreenCanvas postMessage transfers); the readback itself is not visible from the main thread."
+        ],
+        "apiCalls": []
+      },
+      "formLeakage": {
+        "formsFound": 0,
+        "fieldsInjected": 0,
+        "leaks": []
+      },
+      "consentRevocation": {
+        "mechanismFound": false,
+        "mechanismType": "not-tested",
+        "acceptanceClicks": 0,
+        "revocationClicks": 0,
+        "cookiesBefore": 0,
+        "cookiesAfter": 0,
+        "trackingCookiesDeleted": false,
+        "trackingCookiesRemaining": [],
+        "newRequestsAfterRevocation": 0
+      },
+      "consentGranularity": null,
+      "legalPageContent": null,
+      "securityTxt": {
+        "present": false,
+        "url": null,
+        "fields": {},
+        "expired": null
+      },
+      "policyAnalysis": {
+        "policyTextAvailable": false,
+        "policyLength": 0,
+        "dsar": {
+          "contactPresent": false,
+          "contactType": "none",
+          "contactEvidence": null,
+          "dedicatedPagePresent": false,
+          "responseCommitmentDays": null,
+          "art21Disclosed": false,
+          "rightToErasureDisclosed": false,
+          "rightToAccessDisclosed": false,
+          "portabilityDisclosed": false,
+          "complainToDpaDisclosed": false,
+          "disproportionateBurdenFlags": []
+        },
+        "processors": {
+          "namedInPolicy": [],
+          "detectedOnSite": [],
+          "undisclosed": [],
+          "dpaReferenced": false,
+          "subProcessorsDisclosed": false,
+          "jointControllerScenarios": []
+        },
+        "breach": {
+          "securityTxtPresent": false,
+          "securityTxtExpired": null,
+          "securityTxtFields": {},
+          "dpaNotificationCommitment": false,
+          "individualNotificationCommitment": false,
+          "delayTacticLanguage": []
+        },
+        "optOut": {
+          "unsubscribeMentioned": false,
+          "art21Disclosed": false,
+          "withdrawAsEasyAsConsent": false,
+          "legitimateInterestsObjectionContact": false,
+          "preferenceCenterMentioned": false
+        }
+      },
+      "requestPulse": [
+        {
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "preConsent": 1,
+          "postConsent": 0,
+          "total": 1,
+          "isInfra": false
+        }
+      ],
+      "postConsentThirdPartyDomains": [],
+      "postConsentTrackers": [],
+      "significantEvents": [
+        {
+          "phase": "pre",
+          "time": "t+744ms",
+          "timestamp": 1790958552791,
+          "domain": "jmsrmcpfzkcwofggbvto.supabase.co",
+          "url": "https://jmsrmcpfzkcwofggbvto.supabase.co/realtime/v1/websocket?apikey=sb_publishable_a8TvwW2jdKp1n1QG4Zt6tg_hwAM9e_T&vsn=2.0.0",
+          "resourceType": "websocket",
+          "isTracker": false,
+          "isPixel": false,
+          "isFirstContact": true
+        }
+      ],
+      "postConsentCookieCount": 0,
+      "adServing": {
+        "programmaticPublisher": false,
+        "measurementSignals": [],
+        "publisherSignals": []
+      },
+      "errors": []
+    }
+  }
+}

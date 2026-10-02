@@ -1,0 +1,27 @@
+{
+  "site": "datagobes.dev",
+  "scan": {
+    "url": "https://datagobes.dev",
+    "scannedAt": "2026-10-02T16:28:38.442Z",
+    "scanner": "glasshouse/2.2",
+    "engine": "firefox",
+    "source": "fresh scan, 2026-10-02 (scripts/scan.js https://datagobes.dev)"
+  },
+  "analysis": {
+    "author": "Claude via glasshouse skill, committed as docs/examples reference",
+    "source": "docs/examples/datagobes.dev/analysis.json",
+    "writtenAt": "2026-10-02T16:27:50.932Z",
+    "notes": "analysis written 2026-05-12 against an earlier scan; paired with a fresh 2026-10-02 scan, cross-check passes"
+  },
+  "addedAt": "2026-10-02T16:30:57.659Z",
+  "validation": {
+    "checkedAt": "2026-10-02T16:31:17.778Z",
+    "validatorCommit": "55bbf79",
+    "exitCode": 0,
+    "errors": [],
+    "warnings": [
+      "️  1 WARNING(S) — may cause suboptimal rendering:",
+      "meta.overallScore=9.5 differs from the weighted category blend (9.2) by 0.3 — acceptable only if score modifiers apply; state them in the report"
+    ]
+  }
+}

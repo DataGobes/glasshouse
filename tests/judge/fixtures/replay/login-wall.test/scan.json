@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "schemaVersion": "1",
+    "domain": "login-wall.test",
+    "scanner": "privacy-scan/2.1"
+  },
+  "variants": {
+    "ignore": {}
+  },
+  "legalPageContent": {
+    "privacyPolicy": {
+      "url": "https://login-wall.test/recover/initiate",
+      "text": "Find your account\nPlease enter your email address or mobile number to search for your account.\nSearch\nCancel\nForgot password?\n"
+    }
+  }
+}

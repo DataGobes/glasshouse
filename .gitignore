@@ -18,3 +18,19 @@ glasshouse-*.json
 glasshouse-*.png
 privacy-summary-*.json
 scans/
+
+# Replay fixtures (scan + analysis pairs) contain raw scans of third-party
+# sites — keep them local. Only the convention README and our own site's
+# fixture are committed. See fixtures/replay/README.md.
+fixtures/replay/*
+!fixtures/replay/README.md
+!fixtures/replay/datagobes.dev/
+
+# glasshouse-judge answer cache: request bodies include third-party policy
+# text. Local only.
+.glasshouse-judge-cache/
+# scripts/replay.js outputs quote third-party policy text.
+replay-report*.json
+replay-review*.md
+# Local secrets (TYPESAFE_API_KEY for scripts/replay.js).
+.env

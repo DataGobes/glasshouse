@@ -1,0 +1,10 @@
+{
+  "findings": {
+    "privacyPolicyAnalysis": [
+      {
+        "element": "Controller identity",
+        "status": "present"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "site": "legacy-shop.test",
+  "scan": {
+    "scanner": "privacy-scan/2.1"
+  },
+  "analysis": {
+    "author": "synthetic test fixture"
+  },
+  "validation": {
+    "exitCode": 1,
+    "errors": [
+      "findings.privacyPolicyAnalysis[1].status: \"missing\" not in [present, absent, vague]"
+    ],
+    "warnings": []
+  }
+}
