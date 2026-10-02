@@ -45,6 +45,14 @@ Labels are not gold: `validation.errors` lists where the analysis disagrees
 with its own scan or the current schema. A harness should either skip those
 fields when scoring or treat the fixture as lower-confidence.
 
+## Replaying
+
+```bash
+TYPESAFE_API_KEY=... node scripts/replay.js [--site <site>] [--min-agreement 0.8]
+```
+
+See `glasshouse-judge/README.md`.
+
 ## Maintaining
 
 ```bash

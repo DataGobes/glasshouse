@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "schemaVersion": "1",
+    "domain": "no-policy.test",
+    "scanner": "glasshouse/2.2"
+  },
+  "variants": {
+    "ignore": {}
+  },
+  "legalPageContent": null
+}

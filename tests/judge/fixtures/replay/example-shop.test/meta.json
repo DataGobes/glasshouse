@@ -1,0 +1,14 @@
+{
+  "site": "example-shop.test",
+  "scan": {
+    "scanner": "glasshouse/2.2"
+  },
+  "analysis": {
+    "author": "synthetic test fixture"
+  },
+  "validation": {
+    "exitCode": 0,
+    "errors": [],
+    "warnings": []
+  }
+}

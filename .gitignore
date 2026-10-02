@@ -25,3 +25,7 @@ scans/
 fixtures/replay/*
 !fixtures/replay/README.md
 !fixtures/replay/datagobes.dev/
+
+# glasshouse-judge answer cache: request bodies include third-party policy
+# text. Local only.
+.glasshouse-judge-cache/

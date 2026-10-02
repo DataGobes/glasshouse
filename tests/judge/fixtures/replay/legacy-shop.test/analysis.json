@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "domain": "example-shop.test"
+  },
+  "findings": {
+    "privacyPolicyAnalysis": [
+      {
+        "element": "Controller identity",
+        "status": "present",
+        "excerpt": "Example Shop B.V., Voorbeeldstraat 1, NL"
+      },
+      {
+        "element": "DPO contact",
+        "status": "missing"
+      },
+      {
+        "element": "Processing purposes",
+        "status": "present"
+      },
+      {
+        "element": "Lawful basis",
+        "status": "present"
+      },
+      {
+        "element": "Recipients",
+        "status": "vague"
+      },
+      {
+        "element": "Retention period",
+        "status": "vague"
+      },
+      {
+        "element": "International transfers",
+        "status": "absent"
+      },
+      {
+        "element": "Data subject rights",
+        "status": "present"
+      },
+      {
+        "element": "Right to lodge complaint",
+        "status": "present"
+      },
+      {
+        "element": "Cookie wall",
+        "status": "present"
+      }
+    ]
+  }
+}
