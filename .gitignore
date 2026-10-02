@@ -29,3 +29,6 @@ fixtures/replay/*
 # glasshouse-judge answer cache: request bodies include third-party policy
 # text. Local only.
 .glasshouse-judge-cache/
+# scripts/replay.js outputs quote third-party policy text.
+replay-report*.json
+replay-review*.md

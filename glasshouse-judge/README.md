@@ -49,7 +49,7 @@ excerpt copied from the policy.
 TYPESAFE_API_KEY=... node scripts/replay.js                 # all fixtures/replay/<site>/
 node scripts/replay.js --site linkedin.com --json report.json
 node scripts/replay.js --min-agreement 0.8                  # exit 1 below 80% exact agreement
-node scripts/replay.js --disagreements review.md            # review sheet: label or judge? (local only)
+node scripts/replay.js --disagreements replay-review.md     # review sheet: label or judge? (local only)
 ```
 
 Per labelled item it compares the judge's status with the hand-written one and
