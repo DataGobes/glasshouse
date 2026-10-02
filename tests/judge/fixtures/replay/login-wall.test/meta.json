@@ -1,0 +1,14 @@
+{
+  "site": "login-wall.test",
+  "scan": {
+    "scanner": "privacy-scan/2.1"
+  },
+  "analysis": {
+    "author": "synthetic test fixture"
+  },
+  "validation": {
+    "exitCode": 0,
+    "errors": [],
+    "warnings": []
+  }
+}

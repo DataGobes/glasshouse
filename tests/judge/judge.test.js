@@ -72,6 +72,12 @@ test("extractPolicy reads current and older scan layouts", () => {
   const legacy = readJson(path.join(FIXTURES, "legacy-shop.test", "scan.json"));
   assert.match(extractPolicy(legacy).text, /Example Shop/);
   assert.strictEqual(extractPolicy({ legalPageContent: null }), null);
+  assert.strictEqual(extractPolicy(exampleScan()).truncated, false);
+  // privacy-scan/2.1 cut at 15000/30000 chars without flagging it.
+  assert.strictEqual(extractPolicy(legacy).truncated, true);
+  assert.match(extractPolicy(legacy).truncatedReason, /15000/);
+  assert.strictEqual(extractPolicy({ legalPageContent: { privacyPolicy: { text: "x".repeat(15001) } } }).truncated, false);
+  assert.strictEqual(extractPolicy({ legalPageContent: { privacyPolicy: { text: "short", truncated: true } } }).truncated, true);
 });
 
 // ── config, optionality, cache, client ────────────────────────────
@@ -173,9 +179,10 @@ test("judgePrivacyPolicy emits the hand-written checklist shape", async () => {
     // Excerpts are copied from the policy, never generated.
     else assert.ok(text.includes(i.excerpt.split(" — ").pop().replace(/…$/, "")), i.excerpt);
   }
-  // One window plus one specificity request.
-  assert.strictEqual(client.calls.length, 2);
-  assert.strictEqual(trace.requests, 2);
+  // Gate, one window, one specificity request.
+  assert.strictEqual(client.calls.length, 3);
+  assert.strictEqual(trace.requests, 3);
+  assert.ok(trace.pIsPolicy > 0.5);
   assert.strictEqual(trace.model, "jev-1.13.0");
 });
 
@@ -183,10 +190,31 @@ test("windowing finds elements that only appear in later windows", async () => {
   const { judge, client } = fakeJudge({ windowMaxChars: 200 });
   const { findings, trace } = await judgePrivacyPolicy(exampleScan(), judge);
   assert.ok(trace.windows > 3);
-  assert.strictEqual(client.calls.length, trace.windows + 1);
+  assert.strictEqual(client.calls.length, trace.windows + 2);
   const status = Object.fromEntries(findings.privacyPolicyAnalysis.map((i) => [i.element, i.status]));
   assert.strictEqual(status["Right to complain"], "present"); // last clause of the policy
   assert.strictEqual(status["Controller identity"], "present"); // first clause
+});
+
+test("the gate skips text that is not a privacy policy", async () => {
+  const { judge, client } = fakeJudge();
+  const scan = readJson(path.join(FIXTURES, "login-wall.test", "scan.json"));
+  const res = await judgePrivacyPolicy(scan, judge);
+  assert.deepStrictEqual(res.findings, {});
+  assert.match(res.trace.skipped, /does not look like a privacy policy \(p=0\.05, \d+ chars from https:\/\/login-wall\.test\/recover\/initiate\)/);
+  assert.strictEqual(client.calls.length, 1);
+  assert.deepStrictEqual(Object.keys(client.calls[0].questions), ["is:privacyPolicy"]);
+});
+
+test("absents on cut-off text are marked unverifiable", async () => {
+  const { judge } = fakeJudge();
+  const scan = readJson(path.join(FIXTURES, "legacy-shop.test", "scan.json"));
+  const { trace } = await judgePrivacyPolicy(scan, judge);
+  assert.strictEqual(trace.policyTruncated, true);
+  const transfers = trace.items.find((i) => i.id === "transfers");
+  assert.strictEqual(transfers.status, "absent");
+  assert.strictEqual(transfers.unverifiable, true);
+  assert.ok(trace.items.filter((i) => i.status !== "absent").every((i) => !i.unverifiable));
 });
 
 test("a scan without policy text yields no checklist instead of 13 absents", async () => {

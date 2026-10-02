@@ -2,7 +2,12 @@
  * Art. 13/14 checklist judge: privacy-policy text in, the hand-written
  * analysis's findings.privacyPolicyAnalysis[] shape out.
  *
- * Two passes, each batched (all elements ask their questions in one request):
+ * Gate first: one Noul on the opening of the text asks whether it is a
+ * privacy policy at all. Scans sometimes capture a login, password-reset or
+ * cookie-only page instead; judging those yields 13 confident "absent"s.
+ * Below gateThreshold the checklist is skipped, not filled with absents.
+ *
+ * Then two passes, each batched (all elements ask their questions at once):
  *
  *   1. Per window of clauses, per element:
  *        has:<el>   Noul   does any clause here address the element?
@@ -33,6 +38,34 @@ function noul(instructions, criteria) { return { type: "noul", instructions, cri
 
 function documentLabel(domain, url) {
   return `Privacy policy of ${domain || "a website"}${url ? ` (${url})` : ""}`;
+}
+
+const GATE_CHARS = 3000;
+const GATE_SAMPLE_CHARS = 1500;
+
+/** Gate request: is this text a privacy policy? */
+function buildGateRequest({ model, domain, policy }) {
+  return {
+    model,
+    // Opening plus a sample from the middle: some captures start with cookie
+    // banner text before the policy proper.
+    state: {
+      site: domain || null,
+      url: policy.url,
+      length_chars: policy.chars,
+      opening: policy.text.slice(0, GATE_CHARS),
+      middle_sample: policy.chars > GATE_CHARS * 2 ? policy.text.slice(Math.floor(policy.chars / 2), Math.floor(policy.chars / 2) + GATE_SAMPLE_CHARS) : null,
+    },
+    questions: {
+      "is:privacyPolicy": noul(
+        "Are `opening` and `middle_sample` taken from the website's privacy policy or privacy statement, the document that explains how the organisation processes personal data?",
+        {
+          true: "A privacy policy or privacy statement (it may open with a table of contents, a cookie notice summary or contact details).",
+          false: "Something else: a login, sign-up or password-reset page, a cookie policy that only covers cookies, terms of service, a consent wall, an error page or a navigation page.",
+        }
+      ),
+    },
+  };
 }
 
 /** Pass-1 request for one window. Exported so tests can assert its shape. */
@@ -92,14 +125,15 @@ async function mapLimit(items, limit, fn) {
 
 function bestNonNone(answer) {
   if (!answer) return null;
-  if (answer.choice && answer.choice !== NONE) return { id: answer.choice, pickedNone: false, confidence: answer.confidence };
+  const pNone = answer.probabilities ? answer.probabilities[NONE] : undefined;
+  if (answer.choice && answer.choice !== NONE) return { id: answer.choice, pickedNone: false, confidence: answer.confidence, pNone };
   const probs = answer.probabilities || {};
   let best = null;
   for (const [id, p] of Object.entries(probs)) {
     if (id === NONE) continue;
     if (!best || p > best.p) best = { id, p };
   }
-  return best ? { id: best.id, pickedNone: true, confidence: answer.confidence } : null;
+  return best ? { id: best.id, pickedNone: true, confidence: answer.confidence, pNone: probs[NONE] } : null;
 }
 
 function excerptOf(text) {
@@ -116,6 +150,7 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
   const policy = extractPolicy(scan, "privacyPolicy");
   const trace = { checklist: VERSION, model: config.model, requests: 0, usage: { input_tokens: 0, output_tokens: 0 } };
   if (!policy) return { findings: {}, trace: { ...trace, skipped: "scan has no privacy policy text" } };
+  Object.assign(trace, { policyUrl: policy.url, policyChars: policy.chars, policyTruncated: policy.truncated, truncatedReason: policy.truncatedReason });
 
   const call = async (body) => {
     trace.requests++;
@@ -127,10 +162,19 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
     return res;
   };
 
+  const gate = await call(buildGateRequest({ model: config.model, domain, policy }));
+  trace.pIsPolicy = gate.answers["is:privacyPolicy"] ? gate.answers["is:privacyPolicy"].noul : null;
+  if (trace.pIsPolicy != null && trace.pIsPolicy < config.gateThreshold) {
+    return {
+      findings: {},
+      trace: { ...trace, skipped: `text does not look like a privacy policy (p=${trace.pIsPolicy.toFixed(2)}, ${policy.chars} chars from ${policy.url || "unknown url"})` },
+    };
+  }
+
   const clauses = segmentClauses(policy.text, config);
   const windows = windowClauses(clauses, config);
   const byId = new Map(clauses.map((c, i) => [c.id, i]));
-  Object.assign(trace, { policyUrl: policy.url, policyTruncated: policy.truncated, clauses: clauses.length, windows: windows.length });
+  Object.assign(trace, { clauses: clauses.length, windows: windows.length });
 
   const pass1 = await mapLimit(windows, config.concurrency, (w) =>
     call(buildWindowRequest({ model: config.model, domain, url: policy.url, clauses: w }))
@@ -153,6 +197,8 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
       clauseId: idx >= 0 ? pick.id : null,
       pickedNone: pick ? pick.pickedNone : true,
       pickConfidence: pick ? pick.confidence : null,
+      // P(none) next to pExists shows where the Noul and the Choice disagree.
+      pNone: pick && pick.pNone != null ? pick.pNone : null,
       clause: idx >= 0 ? clauses[idx].text : null,
       // The next clause often finishes the thought ("Retention —" / "24 months").
       passage: idx >= 0 ? [clauses[idx].text, clauses[idx + 1] && clauses[idx + 1].text].filter(Boolean).join("\n") : null,
@@ -169,6 +215,9 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
   }
 
   for (const it of items) {
+    // On cut-off text an "absent" may just sit past the cut: say so in the
+    // trace so a reviewer (and the replay) does not take it at face value.
+    if (it.pExists < config.existsThreshold && policy.truncated) it.unverifiable = true;
     if (it.pExists < config.existsThreshold) it.status = "absent";
     else if (it.pSpecific == null) it.status = "vague"; // disclosed but no clause to point at
     else it.status = it.pSpecific >= config.specificThreshold ? "present" : "vague";
@@ -187,4 +236,4 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
   };
 }
 
-module.exports = { judgePrivacyPolicy, buildWindowRequest, buildSpecificityRequest, NONE };
+module.exports = { judgePrivacyPolicy, buildGateRequest, buildWindowRequest, buildSpecificityRequest, NONE };

@@ -59,12 +59,12 @@ test("aggregate weights items and computes kappa", () => {
   assert.strictEqual(kappa({ present: { present: 5, vague: 0, absent: 0 }, vague: { present: 0, vague: 5, absent: 0 }, absent: { present: 0, vague: 0, absent: 5 } }), 1);
 });
 
-test("replay scores fixtures, down-weights dirty ones and skips scans without a policy", async () => {
+test("replay scores fixtures, down-weights dirty ones and skips text that is not a policy", async () => {
   const judge = createJudge({ client: createFakeClient(), cache: createMemoryCache(), env: {} });
   const report = await runReplay({ fixturesDir: FIXTURES, judge });
 
   const by = Object.fromEntries(report.sites.map((s) => [s.site, s]));
-  assert.deepStrictEqual(Object.keys(by).sort(), ["example-shop.test", "legacy-shop.test", "no-policy.test"]);
+  assert.deepStrictEqual(Object.keys(by).sort(), ["example-shop.test", "legacy-shop.test", "login-wall.test", "no-policy.test"]);
 
   const clean = by["example-shop.test"];
   assert.strictEqual(clean.weight, 1);
@@ -76,13 +76,22 @@ test("replay scores fixtures, down-weights dirty ones and skips scans without a 
   assert.strictEqual(dirty.weight, 0.5);
   assert.strictEqual(dirty.labelled, 8); // DPO label dropped by its validation error
   assert.deepStrictEqual(dirty.rows.filter((r) => r.agree === false).map((r) => r.id), ["recipients"]);
+  // Cut-off text: its "absent" for transfers is shown but not scored.
+  assert.strictEqual(dirty.rows.find((r) => r.id === "transfers").excluded, "truncated");
+  assert.ok(dirty.rows.filter((r) => r.excluded).every((r) => r.judged === "absent" && r.agree === null));
+  assert.strictEqual(dirty.policy.truncated, true);
 
   assert.match(by["no-policy.test"].skipped, /no privacy policy/);
+  assert.match(by["login-wall.test"].skipped, /does not look like a privacy policy/);
 
-  assert.strictEqual(report.summary.items, 17);
-  assert.strictEqual(report.summary.agreement, 12.5 / 13);
+  assert.strictEqual(report.summary.items, 16);
+  assert.strictEqual(report.summary.agreement, 12 / 12.5);
   assert.strictEqual(report.model, "jev-1.13.0");
-  assert.match(formatReport(report), /legacy-shop\.test: 7\/8 labelled items agree \[validation errors: 1, weight 0\.5\]/);
+  const text = formatReport(report);
+  assert.match(text, /legacy-shop\.test: 6\/7 labelled items agree \[validation errors: 1, weight 0\.5\]/);
+  assert.match(text, /policy: https:\/\/example-shop\.test\/privacy, \d+ chars, P\(policy\)=0\.95\n/);
+  assert.match(text, /TRUNCATED \(length is exactly 15000 chars, a scanner cap\)/);
+  assert.match(text, /· International transfers .*not scored: truncated/);
 });
 
 test("replay without a key replays cached answers and skips the rest", async () => {

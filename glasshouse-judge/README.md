@@ -16,6 +16,13 @@ on the replay fixtures (`scripts/replay.js`).
 of `references/analysis-guide.md` with `present | vague | absent` and an
 excerpt copied from the policy.
 
+0. **Gate.** One Noul over the opening and a middle sample asks whether the
+   text is a privacy policy at all. Scans sometimes capture a login,
+   password-reset or cookie-only page; those are skipped instead of producing
+   13 confident "absent"s. Text cut at a scanner cap (flagged, or exactly
+   15000/30000/… chars, which old privacy-scan/2.1 scans don't flag) is still
+   judged, but its "absent"s are marked unverifiable and the replay doesn't
+   score them.
 1. The policy text is split into clauses (`c0001`, …) and packed into windows
    of at most 254 clauses and ~16k characters.
 2. Per window, one request asks for every element at once: a **Noul** "does

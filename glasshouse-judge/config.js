@@ -26,6 +26,8 @@ const DEFAULTS = {
   windowMaxClauses: 254,
   // Paragraphs longer than this are split on sentence boundaries.
   clauseMaxChars: 1200,
+  // P(text is a privacy policy) below this skips the checklist.
+  gateThreshold: 0.5,
   // P(disclosed) at or above this counts as disclosed.
   existsThreshold: 0.5,
   // P(specific) at or above this makes a disclosed element "present",

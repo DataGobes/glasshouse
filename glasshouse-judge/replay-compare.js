@@ -41,18 +41,24 @@ function labelsFromAnalysis(analysis, { errors = [] } = {}) {
   return { labels, unmatched, skipped };
 }
 
-function compareChecklist(labels, judged) {
+/**
+ * @param unverifiable ids whose judged "absent" can't be trusted (the policy
+ *        text was cut off); those rows are shown but not scored.
+ */
+function compareChecklist(labels, judged, { unverifiable = new Set() } = {}) {
   const byElement = new Map((judged || []).map((j) => [matchElement(j.element), j]));
   const rows = [];
   for (const e of ELEMENTS) {
     const label = labels.get(e.id);
     const j = byElement.get(e.id);
+    const excluded = j && j.status === "absent" && unverifiable.has(e.id) ? "truncated" : null;
     rows.push({
       id: e.id,
       element: e.element,
       label: label ? label.status : null,
       judged: j ? j.status : null,
-      agree: label && j ? label.status === j.status : null,
+      agree: label && j && !excluded ? label.status === j.status : null,
+      excluded,
     });
   }
   return rows;
@@ -95,7 +101,7 @@ function aggregate(sites) {
 
   for (const s of sites) {
     for (const r of s.rows) {
-      if (r.label == null || r.judged == null) continue;
+      if (r.agree == null) continue;
       const pe = perElement[r.id];
       pe.n++; pe.weight += s.weight;
       if (r.agree) pe.agree += s.weight;

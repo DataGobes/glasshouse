@@ -16,6 +16,10 @@
  * key, cached answers still replay, so re-scoring after a threshold or
  * comparison change costs nothing. Sites that need the API are skipped.
  *
+ * Fixture quality: each site line shows the policy URL and length. Text that
+ * the judge's gate says is not a privacy policy (a login or cookie page) is
+ * skipped; on text that was cut off, "absent" judgments are not scored.
+ *
  * --min-agreement turns the run into a gate: exit 1 when weighted exact
  * agreement is below it, or when nothing could be scored.
  */
@@ -58,10 +62,12 @@ async function replaySite(dir, judge) {
     return { ...base, skipped: `judge failed: ${err.message}` };
   }
   const trace = judged.trace.privacyPolicy;
-  if (trace.skipped) return { ...base, skipped: trace.skipped, labelled: labels.size };
+  const policy = { url: trace.policyUrl || null, chars: trace.policyChars || 0, truncated: !!trace.policyTruncated, truncatedReason: trace.truncatedReason || null, pIsPolicy: trace.pIsPolicy };
+  if (trace.skipped) return { ...base, policy, skipped: trace.skipped, labelled: labels.size };
 
-  const rows = compareChecklist(labels, judged.findings.privacyPolicyAnalysis);
-  return { ...base, labelled: labels.size, unmatchedLabels: unmatched, skippedLabels: skipped, rows, judged: judged.findings, trace };
+  const unverifiable = new Set((trace.items || []).filter((i) => i.unverifiable).map((i) => i.id));
+  const rows = compareChecklist(labels, judged.findings.privacyPolicyAnalysis, { unverifiable });
+  return { ...base, policy, labelled: labels.size, unmatchedLabels: unmatched, skippedLabels: skipped, rows, judged: judged.findings, trace };
 }
 
 async function runReplay({ fixturesDir = DEFAULT_FIXTURES, sites, judge = createJudge() } = {}) {
@@ -93,9 +99,12 @@ function formatReport(report) {
     const scored = s.rows.filter((r) => r.agree != null);
     const agree = scored.filter((r) => r.agree).length;
     out.push(`- ${s.site}: ${agree}/${scored.length} labelled items agree${tag}`);
+    const p = s.policy;
+    out.push(`    policy: ${p.url || "unknown url"}, ${p.chars} chars${p.pIsPolicy != null ? `, P(policy)=${p.pIsPolicy.toFixed(2)}` : ""}${p.truncated ? `, TRUNCATED (${p.truncatedReason}): its "absent"s are not scored` : ""}`);
     for (const r of s.rows) {
       if (r.label == null) continue;
-      out.push(`    ${r.agree ? "✓" : "✗"} ${r.element.padEnd(34)} label=${r.label.padEnd(7)} judge=${r.judged}`);
+      const mark = r.excluded ? "·" : r.agree ? "✓" : "✗";
+      out.push(`    ${mark} ${r.element.padEnd(34)} label=${r.label.padEnd(7)} judge=${r.judged}${r.excluded ? `  (not scored: ${r.excluded})` : ""}`);
     }
     if (s.unmatchedLabels.length) out.push(`    ? unmatched label names: ${s.unmatchedLabels.join(", ")}`);
   }

@@ -36,6 +36,9 @@ const SPECIFIC = {
 
 function answerFor(qid, q, state) {
   const [kind, el] = qid.split(":");
+  if (kind === "is") {
+    return { type: "noul", noul: /privacy (policy|statement)/i.test(state.opening) && /personal data/i.test(state.opening) ? 0.95 : 0.05 };
+  }
   if (kind === "has") {
     const hit = state.clauses.some((c) => KEYWORDS[el].test(c.text));
     return { type: "noul", noul: hit ? 0.9 : 0.1 };
