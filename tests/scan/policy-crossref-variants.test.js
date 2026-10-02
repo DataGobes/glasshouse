@@ -73,9 +73,12 @@ test('policy text and DSAR checks still come from the ignore variant', () => {
 
 test('collectObservedThirdPartyDomains unions and dedupes across variants and phases', () => {
   const hosts = collectObservedThirdPartyDomains(scanResult().variantSummaries).map(d => d.domain);
-  assert.strictEqual(new Set(hosts).size, hosts.length);
-  assert.ok(hosts.includes('bat.bing.com'));
-  assert.ok(hosts.includes('cdn.cookielaw.org'));
+  // Exact sorted host list: every variant and phase, each host once.
+  assert.deepStrictEqual(hosts, [
+    'api.exponea.com', 'bat.bing.com', 'cdn.cookielaw.org', 'connect.facebook.net',
+    'ct.pinterest.com', 'geolocation.onetrust.com', 'logx.optimizely.com',
+    'px.ads.linkedin.com', 'www.googletagmanager.com',
+  ]);
 });
 
 test('no legal text: processors still detected, all of them undisclosed', () => {
