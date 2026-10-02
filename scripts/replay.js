@@ -10,6 +10,7 @@
  * Usage:
  *   node scripts/replay.js [--site <name>]... [--fixtures <dir>]
  *                          [--json <report.json>] [--min-agreement <0..1>]
+ *                          [--disagreements <review.md>]
  *
  * Needs TYPESAFE_API_KEY for answers not yet in the judge cache
  * (GLASSHOUSE_JUDGE_CACHE_DIR, default ./.glasshouse-judge-cache). Without a
@@ -31,7 +32,7 @@
 const fs = require("fs");
 const path = require("path");
 const { createJudge, judgeScan } = require("../glasshouse-judge");
-const { labelsFromAnalysis, compareChecklist, aggregate, DIRTY_WEIGHT } = require("../glasshouse-judge/replay-compare");
+const { labelsFromAnalysis, compareChecklist, aggregate, sweepSpecific, DIRTY_WEIGHT } = require("../glasshouse-judge/replay-compare");
 const { VERSION } = require("../glasshouse-judge/checklists/art13");
 
 const DEFAULT_FIXTURES = path.join(__dirname, "..", "fixtures", "replay");
@@ -95,6 +96,7 @@ async function runReplay({ fixturesDir = DEFAULT_FIXTURES, sites, judge = create
     thresholds: { exists: judge.config.existsThreshold, specific: judge.config.specificThreshold },
     cache: { ...judge.stats },
     summary: aggregate(scored),
+    sweep: sweepSpecific(scored, { existsThreshold: judge.config.existsThreshold }),
     sites: results,
   };
 }
@@ -126,6 +128,9 @@ function formatReport(report) {
   out.push(`Overall: ${sum.items} item(s), exact ${pct(sum.agreement)}, addressed-or-not ${pct(sum.presenceAgreement)}, kappa ${sum.kappa == null ? "n/a" : sum.kappa.toFixed(2)}`);
   if (sum.items) {
     out.push("");
+    out.push("If the specific-vs-vague threshold were (cached answers, no new calls; small sample, read the trend only):");
+    out.push("  " + report.sweep.map((x) => `${x.specificThreshold.toFixed(1)}:${pct(x.agreement).trim()}`).join("  "));
+    out.push("");
     out.push("Per element (weighted exact agreement, n):");
     for (const pe of Object.values(sum.perElement)) {
       if (pe.n) out.push(`  ${pe.element.padEnd(34)} ${pct(pe.agreement)}  n=${pe.n}`);
@@ -140,6 +145,33 @@ function formatReport(report) {
   return out.join("\n");
 }
 
+/**
+ * A review sheet: every scored disagreement with the judge's numbers and the
+ * clause it pointed at, so a person can say whether the label or the judge
+ * is wrong. Contains policy excerpts of third-party sites: keep it local.
+ */
+function formatDisagreements(report) {
+  const out = [`# Replay disagreements (${report.checklist}, ${report.model})`, "", "For each: is the label right, or the judge? Excerpts are the judge's best clause, not all the evidence it saw.", ""];
+  for (const s of report.sites) {
+    if (!s.rows) continue;
+    const bad = s.rows.filter((r) => r.agree === false);
+    if (!bad.length) continue;
+    out.push(`## ${s.site}`, "", `Policy: ${s.policy.url}`, "");
+    const items = new Map(s.trace.items.map((i) => [i.id, i]));
+    const excerpts = new Map((s.judged.privacyPolicyAnalysis || []).map((j) => [j.element, j.excerpt]));
+    for (const r of bad) {
+      const it = items.get(r.id) || {};
+      const f = (x) => (x == null ? "n/a" : x.toFixed(2));
+      out.push(`### ${r.element}: label ${r.label}, judge ${r.judged}`);
+      out.push(`P(addressed) ${f(it.pExists)}, P(specific) ${f(it.pSpecific)}, evidence ${(it.evidenceClauseIds || []).join(", ") || "none"}`);
+      const ex = excerpts.get(r.element);
+      if (ex) out.push("", `> ${ex.replace(/\n/g, " ")}`);
+      out.push("", "Verdict: [ ] label right  [ ] judge right  [ ] both defensible", "");
+    }
+  }
+  return out.join("\n");
+}
+
 function parseArgs(argv) {
   const args = { sites: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -148,6 +180,7 @@ function parseArgs(argv) {
     else if (a === "--fixtures") args.fixturesDir = path.resolve(argv[++i]);
     else if (a === "--json") args.json = argv[++i];
     else if (a === "--min-agreement") args.minAgreement = Number(argv[++i]);
+    else if (a === "--disagreements") args.disagreements = argv[++i];
     else if (a === "-h" || a === "--help") args.help = true;
     else throw new Error(`unknown argument: ${a}`);
   }
@@ -165,6 +198,7 @@ async function main() {
   const report = await runReplay({ fixturesDir: args.fixturesDir, sites: args.sites, judge });
   console.log(formatReport(report));
   if (args.json) fs.writeFileSync(args.json, JSON.stringify(report, null, 2) + "\n");
+  if (args.disagreements) fs.writeFileSync(args.disagreements, formatDisagreements(report) + "\n");
 
   if (args.minAgreement != null) {
     const { agreement, items } = report.summary;
@@ -181,4 +215,4 @@ if (require.main === module) {
   main().then((code) => process.exit(code), (err) => { console.error(err.message); process.exit(2); });
 }
 
-module.exports = { runReplay, replaySite, discoverSites, formatReport, parseArgs };
+module.exports = { runReplay, replaySite, discoverSites, formatReport, formatDisagreements, parseArgs };

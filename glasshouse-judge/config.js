@@ -33,6 +33,8 @@ const DEFAULTS = {
   // P(specific) at or above this makes a disclosed element "present",
   // below it "vague".
   specificThreshold: 0.5,
+  // Clauses shown to the specific-vs-vague check per element.
+  evidenceClauses: 4,
   concurrency: 4,
   timeoutMs: 30000,
   maxRetries: 3,

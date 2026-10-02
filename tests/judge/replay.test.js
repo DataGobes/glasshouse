@@ -6,7 +6,8 @@ const { matchElement } = require("../../glasshouse-judge/checklists/art13");
 const { excludedByValidation, labelsFromAnalysis, aggregate, kappa } = require("../../glasshouse-judge/replay-compare");
 const { createJudge } = require("../../glasshouse-judge");
 const { createMemoryCache } = require("../../glasshouse-judge/cache");
-const { runReplay, discoverSites, formatReport, parseArgs } = require("../../scripts/replay");
+const { runReplay, discoverSites, formatReport, formatDisagreements, parseArgs } = require("../../scripts/replay");
+const { sweepSpecific, statusAt } = require("../../glasshouse-judge/replay-compare");
 const { createFakeClient } = require("./fake-jev");
 
 const FIXTURES = path.join(__dirname, "fixtures", "replay");
@@ -127,6 +128,40 @@ test("validation errors outside the checklist don't down-weight a fixture", asyn
 
 test("the committed datagobes.dev fixture is discovered", () => {
   assert.ok(discoverSites(REPO_FIXTURES).includes("datagobes.dev"));
+});
+
+test("statusAt and the threshold sweep re-score from cached probabilities", () => {
+  assert.strictEqual(statusAt({ pExists: 0.2, pSpecific: 0.9 }, { existsThreshold: 0.5, specificThreshold: 0.5 }), "absent");
+  assert.strictEqual(statusAt({ pExists: 0.9, pSpecific: 0.3 }, { existsThreshold: 0.5, specificThreshold: 0.5 }), "vague");
+  assert.strictEqual(statusAt({ pExists: 0.9, pSpecific: 0.3 }, { existsThreshold: 0.5, specificThreshold: 0.2 }), "present");
+  assert.strictEqual(statusAt({ pExists: 0.9, pSpecific: null }, { existsThreshold: 0.5, specificThreshold: 0.2 }), "vague");
+
+  const site = {
+    weight: 1,
+    rows: [
+      { id: "controller", label: "present", judged: "vague", agree: false },
+      { id: "retention", label: "vague", judged: "vague", agree: true },
+      { id: "dpo", label: null, judged: "absent", agree: null },
+    ],
+    trace: { items: [
+      { id: "controller", pExists: 0.9, pSpecific: 0.35 },
+      { id: "retention", pExists: 0.9, pSpecific: 0.1 },
+      { id: "dpo", pExists: 0.1, pSpecific: null },
+    ] },
+  };
+  const sweep = sweepSpecific([site], { existsThreshold: 0.5, thresholds: [0.3, 0.5] });
+  assert.deepStrictEqual(sweep.map((x) => x.agreement), [1, 0.5]);
+});
+
+test("the disagreement sheet lists every scored miss with its excerpt", async () => {
+  const judge = createJudge({ client: createFakeClient(), cache: createMemoryCache(), env: {} });
+  const report = await runReplay({ fixturesDir: FIXTURES, sites: ["legacy-shop.test"], judge });
+  const md = formatDisagreements(report);
+  assert.match(md, /## legacy-shop\.test/);
+  assert.match(md, /### Recipients: label vague, judge present/);
+  assert.match(md, /> .*Mollie B\.V\./);
+  assert.doesNotMatch(md, /### Controller identity/);
+  assert.match(formatReport(report), /If the specific-vs-vague threshold were/);
 });
 
 test("parseArgs reads repeatable sites and the gate", () => {

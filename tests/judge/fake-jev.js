@@ -44,14 +44,21 @@ function answerFor(qid, q, state) {
     return { type: "noul", noul: hit ? 0.9 : 0.1 };
   }
   if (kind === "pick") {
-    const c = state.clauses.find((c) => KEYWORDS[el].test(c.text));
-    const choice = c ? c.id : "none";
+    // Matching clauses get most of the mass, the first one the most.
+    const matches = state.clauses.filter((c) => KEYWORDS[el].test(c.text)).map((c) => c.id);
+    const labels = Object.keys(q.criteria);
+    const rest = labels.filter((k) => !matches.includes(k));
     const probabilities = {};
-    for (const k of Object.keys(q.criteria)) probabilities[k] = k === choice ? 0.8 : 0.2 / (Object.keys(q.criteria).length - 1);
-    return { type: "choice", choice, confidence: 0.8, probabilities };
+    for (const k of labels) {
+      if (k === matches[0]) probabilities[k] = matches.length > 1 ? 0.6 : 0.9;
+      else if (matches.includes(k)) probabilities[k] = 0.3 / (matches.length - 1);
+      else probabilities[k] = 0.1 / rest.length;
+    }
+    if (!matches.length) for (const k of labels) probabilities[k] = k === "none" ? 0.9 : 0.1 / (labels.length - 1);
+    return { type: "choice", choice: matches[0] || "none", confidence: 0.8, probabilities };
   }
   if (kind === "specific") {
-    return { type: "noul", noul: SPECIFIC[el].test(state.evidence[el].passage) ? 0.85 : 0.2 };
+    return { type: "noul", noul: state.passages.some((t) => SPECIFIC[el].test(t)) ? 0.85 : 0.2 };
   }
   throw new Error(`fake-jev: unexpected question ${qid}`);
 }

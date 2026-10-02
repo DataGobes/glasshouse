@@ -179,9 +179,11 @@ test("judgePrivacyPolicy emits the hand-written checklist shape", async () => {
     // Excerpts are copied from the policy, never generated.
     else assert.ok(text.includes(i.excerpt.split(" — ").pop().replace(/…$/, "")), i.excerpt);
   }
-  // Gate, one window, one specificity request.
-  assert.strictEqual(client.calls.length, 3);
-  assert.strictEqual(trace.requests, 3);
+  // Gate, one window, one specific-vs-vague request per disclosed element.
+  const disclosed = items.filter((i) => i.status !== "absent").length;
+  assert.strictEqual(client.calls.length, 2 + disclosed);
+  assert.strictEqual(trace.requests, 2 + disclosed);
+  for (const c of client.calls.slice(2)) assert.strictEqual(Object.keys(c.questions).length, 1);
   assert.ok(trace.pIsPolicy > 0.5);
   assert.strictEqual(trace.model, "jev-1.13.0");
 });
@@ -190,10 +192,31 @@ test("windowing finds elements that only appear in later windows", async () => {
   const { judge, client } = fakeJudge({ windowMaxChars: 200 });
   const { findings, trace } = await judgePrivacyPolicy(exampleScan(), judge);
   assert.ok(trace.windows > 3);
-  assert.strictEqual(client.calls.length, trace.windows + 2);
+  const disclosed = trace.items.filter((i) => i.status !== "absent").length;
+  assert.strictEqual(client.calls.length, 1 + trace.windows + disclosed);
   const status = Object.fromEntries(findings.privacyPolicyAnalysis.map((i) => [i.element, i.status]));
   assert.strictEqual(status["Right to complain"], "present"); // last clause of the policy
   assert.strictEqual(status["Controller identity"], "present"); // first clause
+});
+
+test("the vague check sees evidence beyond the first matching clause", async () => {
+  const { judge, client } = fakeJudge();
+  const text = [
+    "Privacy statement. This privacy statement explains how we process personal data.",
+    "Retention — We retain your data as long as necessary.",
+    "Cookies — We use cookies for analytics.",
+    "Newsletter — We send a newsletter when you subscribe.",
+    "Invoices — For tax reasons we retain invoices for 7 years.",
+  ].join("\n");
+  const scan = { meta: { domain: "spread.test" }, legalPageContent: { privacyPolicy: { url: "https://spread.test/p", text } } };
+  const { findings, trace } = await judgePrivacyPolicy(scan, judge);
+  const retention = trace.items.find((i) => i.id === "retention");
+  assert.strictEqual(retention.clauseId, "c0002");
+  assert.ok(retention.evidenceClauseIds.includes("c0005"), retention.evidenceClauseIds.join());
+  assert.ok(retention.evidenceClauseIds.length <= 4);
+  assert.strictEqual(findings.privacyPolicyAnalysis.find((i) => i.element === "Retention periods").status, "present");
+  const req = client.calls.find((c) => c.questions["specific:retention"]);
+  assert.deepStrictEqual(Object.keys(req.state), ["document", "item", "passages"]);
 });
 
 test("the gate skips text that is not a privacy policy", async () => {

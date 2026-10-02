@@ -13,7 +13,7 @@
  * the question text, and replay reports carry it.
  */
 
-const VERSION = "art13-v1";
+const VERSION = "art13-v2";
 
 const ELEMENTS = [
   {

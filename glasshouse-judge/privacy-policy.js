@@ -14,8 +14,9 @@
  *        pick:<el>  Choice which clause ID best does (or "none")?
  *      P(disclosed) is the max of has:<el> over windows; the evidence clause
  *      is the pick from the window that scored highest.
- *   2. One request over the picked clauses of every disclosed element:
- *        specific:<el> Noul  is that disclosure specific, or vague?
+ *   2. Per disclosed element, one small request over its best few clauses
+ *      (the pick, the clause after it, and the top candidates elsewhere):
+ *        specific:<el> Noul  taken together, specific or vague?
  *
  * Status: absent if P(disclosed) < existsThreshold, else present if
  * P(specific) >= specificThreshold, else vague. The excerpt is copied from
@@ -95,19 +96,24 @@ function buildWindowRequest({ model, domain, url, clauses }) {
   };
 }
 
-/** Pass-2 request over the evidence picked for each disclosed element. */
-function buildSpecificityRequest({ model, domain, url, evidence }) {
-  const state = { document: documentLabel(domain, url), evidence: {} };
-  const questions = {};
-  for (const ev of evidence) {
-    const e = ELEMENTS.find((x) => x.id === ev.id);
-    state.evidence[e.id] = { item: `${e.element} (GDPR ${e.article})`, passage: ev.passage };
-    questions[`specific:${e.id}`] = noul(
-      `\`evidence.${e.id}.passage\` is what this privacy policy says about "${e.element}". Is that disclosure specific rather than vague?`,
-      e.specific
-    );
-  }
-  return { model, state, questions };
+/**
+ * Pass-2 request for one element: is what the policy says about it, across
+ * its best few passages, specific or vague? One element per request keeps
+ * the state about that element only (Jev's accuracy drops as unrelated text
+ * fills the state).
+ */
+function buildSpecificityRequest({ model, domain, url, id, passages }) {
+  const e = ELEMENTS.find((x) => x.id === id);
+  return {
+    model,
+    state: { document: documentLabel(domain, url), item: `${e.element} (GDPR ${e.article})`, passages },
+    questions: {
+      [`specific:${e.id}`]: noul(
+        `\`passages\` are the parts of this privacy policy that address "${e.element}". Taken together, is the policy's disclosure of this item specific rather than vague?`,
+        e.specific
+      ),
+    },
+  };
 }
 
 async function mapLimit(items, limit, fn) {
@@ -182,13 +188,34 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
 
   const items = ELEMENTS.map((e) => {
     let best = { p: -1, w: -1 };
+    // Candidate clauses from every window, ranked by
+    // P(window addresses the element) x P(this clause is the one).
+    const candidates = [];
     pass1.forEach((res, w) => {
       const a = res.answers[`has:${e.id}`];
       const p = a ? a.noul : 0;
       if (p > best.p) best = { p, w };
+      const probs = (res.answers[`pick:${e.id}`] || {}).probabilities || {};
+      for (const [cid, pc] of Object.entries(probs)) {
+        if (cid !== NONE && byId.has(cid)) candidates.push({ id: cid, score: p * pc });
+      }
     });
+    candidates.sort((a, b) => b.score - a.score);
     const pick = best.w >= 0 ? bestNonNone(pass1[best.w].answers[`pick:${e.id}`]) : null;
     const idx = pick && byId.has(pick.id) ? byId.get(pick.id) : -1;
+
+    // Evidence for pass 2: the picked clause (plus the one after it, which
+    // often finishes the thought) and the next-best candidates elsewhere.
+    // A disclosure spread over several sections looks vague in any one of them.
+    const evidenceIdx = [];
+    const add = (i) => { if (i >= 0 && i < clauses.length && !evidenceIdx.includes(i)) evidenceIdx.push(i); };
+    if (idx >= 0) { add(idx); add(idx + 1); }
+    for (const c of candidates) {
+      if (evidenceIdx.length >= config.evidenceClauses) break;
+      add(byId.get(c.id));
+    }
+    evidenceIdx.sort((a, b) => a - b);
+
     return {
       id: e.id,
       element: e.element,
@@ -199,20 +226,18 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
       pickConfidence: pick ? pick.confidence : null,
       // P(none) next to pExists shows where the Noul and the Choice disagree.
       pNone: pick && pick.pNone != null ? pick.pNone : null,
+      evidenceClauseIds: evidenceIdx.map((i) => clauses[i].id),
       clause: idx >= 0 ? clauses[idx].text : null,
-      // The next clause often finishes the thought ("Retention —" / "24 months").
-      passage: idx >= 0 ? [clauses[idx].text, clauses[idx + 1] && clauses[idx + 1].text].filter(Boolean).join("\n") : null,
+      passages: evidenceIdx.map((i) => clauses[i].text),
     };
   });
 
-  const disclosed = items.filter((it) => it.pExists >= config.existsThreshold && it.passage);
-  if (disclosed.length) {
-    const res = await call(buildSpecificityRequest({ model: config.model, domain, url: policy.url, evidence: disclosed }));
-    for (const it of disclosed) {
-      const a = res.answers[`specific:${it.id}`];
-      it.pSpecific = a ? a.noul : null;
-    }
-  }
+  const disclosed = items.filter((it) => it.pExists >= config.existsThreshold && it.passages.length);
+  await mapLimit(disclosed, config.concurrency, async (it) => {
+    const res = await call(buildSpecificityRequest({ model: config.model, domain, url: policy.url, id: it.id, passages: it.passages }));
+    const a = res.answers[`specific:${it.id}`];
+    it.pSpecific = a ? a.noul : null;
+  });
 
   for (const it of items) {
     // On cut-off text an "absent" may just sit past the cut: say so in the
@@ -223,7 +248,7 @@ async function judgePrivacyPolicy(scan, { systemOne, config }) {
     else it.status = it.pSpecific >= config.specificThreshold ? "present" : "vague";
   }
 
-  trace.items = items.map(({ clause, passage, ...rest }) => rest);
+  trace.items = items.map(({ clause, passages, ...rest }) => rest);
   return {
     findings: {
       privacyPolicyAnalysis: items.map((it) => {

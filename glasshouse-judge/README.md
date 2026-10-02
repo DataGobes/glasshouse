@@ -28,8 +28,11 @@ excerpt copied from the policy.
 2. Per window, one request asks for every element at once: a **Noul** "does
    any clause address it?" and a **Choice** over the clause IDs plus `none`
    "which clause does?". P(disclosed) is the max over windows.
-3. One more request asks a **Noul** per disclosed element: is the picked
-   passage specific or vague (criteria per element in `checklists/art13.js`).
+3. Per disclosed element, one small request asks a **Noul**: taken together,
+   is what the policy says specific or vague? It sees up to 4 clauses: the
+   pick, the clause after it, and the best candidates from elsewhere, because
+   large policies spread one item over several sections (criteria per
+   element in `checklists/art13.js`).
 
 ## Configuration
 
@@ -46,11 +49,13 @@ excerpt copied from the policy.
 TYPESAFE_API_KEY=... node scripts/replay.js                 # all fixtures/replay/<site>/
 node scripts/replay.js --site linkedin.com --json report.json
 node scripts/replay.js --min-agreement 0.8                  # exit 1 below 80% exact agreement
+node scripts/replay.js --disagreements review.md            # review sheet: label or judge? (local only)
 ```
 
 Per labelled item it compares the judge's status with the hand-written one and
 reports exact agreement, "addressed or not" agreement, Cohen's kappa, per
-element agreement and a confusion matrix. Labels named in a fixture's
+element agreement, a confusion matrix, and what agreement would be at other
+specific-vs-vague thresholds (from cached answers, no new calls). Labels named in a fixture's
 `validation.errors` are dropped; fixtures with a checklist-related validation
 error count at half weight (errors about trackers, cookies etc. don't affect
 the checklist score). Hand-written element names are mapped by alias ("Lawful basis",

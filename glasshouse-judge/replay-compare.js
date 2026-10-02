@@ -123,4 +123,35 @@ function aggregate(sites) {
   };
 }
 
-module.exports = { STATUSES, DIRTY_WEIGHT, excludedByValidation, labelsFromAnalysis, compareChecklist, aggregate, kappa };
+/** Re-derives a judged status from the trace's probabilities at other thresholds. */
+function statusAt(item, { existsThreshold, specificThreshold }) {
+  if (item.pExists < existsThreshold) return "absent";
+  if (item.pSpecific == null) return "vague";
+  return item.pSpecific >= specificThreshold ? "present" : "vague";
+}
+
+/**
+ * Exact agreement at each specific-vs-vague threshold, from cached
+ * probabilities only (no API calls). With a handful of sites this shows the
+ * direction to move, not a value to trust: 4 sites x 13 items overfit fast.
+ */
+function sweepSpecific(sites, { existsThreshold, thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7] }) {
+  return thresholds.map((t) => {
+    const rescored = sites.filter((s) => s.rows && s.trace).map((s) => {
+      const byId = new Map(s.trace.items.map((i) => [i.id, i]));
+      return {
+        weight: s.weight,
+        rows: s.rows.map((r) => {
+          const it = byId.get(r.id);
+          if (r.agree == null || !it) return { ...r, agree: null };
+          const judged = statusAt(it, { existsThreshold, specificThreshold: t });
+          return { ...r, judged, agree: r.label === judged };
+        }),
+      };
+    });
+    const sum = aggregate(rescored);
+    return { specificThreshold: t, agreement: sum.agreement, kappa: sum.kappa };
+  });
+}
+
+module.exports = { statusAt, sweepSpecific, STATUSES, DIRTY_WEIGHT, excludedByValidation, labelsFromAnalysis, compareChecklist, aggregate, kappa };
