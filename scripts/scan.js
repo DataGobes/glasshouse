@@ -3781,21 +3781,49 @@ function aggregateFingerprinting(rawResult) {
 // real policy seen so far while still guarding against runaway pages.
 const LEGAL_PAGE_MAX_CHARS = 250000;
 
+const POLICY_LINK_RULES = {
+  privacyPolicy: {
+    match: (l) => /privacy/i.test(l.type || "") || /privacy/i.test(l.text || ""),
+    // Link text that names the policy itself, across the languages we scan.
+    strong: /privacy\s*(policy|statement|notice)|privacyverklaring|privacybeleid|datenschutz|confidentialit|informativa|privacidad/i,
+    // Pages that only borrow "privacy" (cookie statements under /privacy/,
+    // login links carrying a privacy_* token, privacy centres/settings).
+    weak: /cookie|password|wachtwoord|recover|log\s*in|sign\s*in|center|centre|settings|instellingen/i,
+  },
+  cookiePolicy: {
+    match: (l) => /cookie/i.test(l.type || "") || /cookie/i.test(l.text || ""),
+    strong: /cookie\s*(policy|statement|notice)|cookieverklaring|cookiebeleid|cookies/i,
+    weak: /settings|instellingen|preferences/i,
+  },
+};
+
+// Picks the legal link most likely to be the policy document, not just the
+// first one mentioning the keyword. Ties keep page order.
+function pickPolicyLink(legalPages, key) {
+  const rule = POLICY_LINK_RULES[key];
+  const candidates = (legalPages || []).filter((l) => l && l.url && rule.match(l));
+  let best = null;
+  let bestScore = -Infinity;
+  for (const l of candidates) {
+    const text = l.text || "";
+    let score = 0;
+    if (rule.strong.test(text)) score += 2;
+    if (rule.weak.test(text)) score -= 3;
+    if (rule.weak.test(new URL(l.url, "https://x.invalid").pathname)) score -= 1;
+    if (score > bestScore) { best = l; bestScore = score; }
+  }
+  return best;
+}
+
 async function fetchLegalPageContent(context, legalPages) {
   const result = {};
-  // Find privacy policy and cookie policy URLs
-  const policyTypes = [
-    { key: "privacyPolicy", match: (l) => /privacy/i.test(l.type || "") || /privacy/i.test(l.text || "") },
-    { key: "cookiePolicy", match: (l) => /cookie/i.test(l.type || "") || /cookie/i.test(l.text || "") },
-  ];
-
-  for (const pt of policyTypes) {
-    const found = (legalPages || []).find(pt.match);
+  for (const key of Object.keys(POLICY_LINK_RULES)) {
+    const found = pickPolicyLink(legalPages, key);
     if (!found || !found.url) continue;
 
     let policyPage;
     try {
-      console.error(`[Legal] Fetching ${pt.key}: ${found.url}`);
+      console.error(`[Legal] Fetching ${key}: ${found.url}`);
       policyPage = await context.newPage();
       await policyPage.goto(found.url, { waitUntil: "networkidle", timeout: 30000 });
       await policyPage.waitForTimeout(3000);
@@ -3804,14 +3832,30 @@ async function fetchLegalPageContent(context, legalPages) {
         // Strip nav, footer, header to get just the content
         const clutter = document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']");
         clutter.forEach(el => el.remove());
+        // Accordion-style policies hide each section body until clicked, and
+        // innerText skips hidden content. Unfold anything holding real text.
+        document.querySelectorAll("details").forEach(d => { d.open = true; });
+        for (const el of document.body.querySelectorAll("*")) {
+          if (/^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT|SVG|IFRAME)$/i.test(el.tagName)) continue;
+          const cs = getComputedStyle(el);
+          if ((cs.display === "none" || el.hidden) && el.textContent.trim().length > 40) {
+            el.hidden = false;
+            el.style.setProperty("display", "block", "important");
+          }
+          if (cs.visibility === "hidden" || cs.maxHeight === "0px" || (cs.height === "0px" && cs.overflow === "hidden")) {
+            el.style.setProperty("visibility", "visible", "important");
+            el.style.setProperty("max-height", "none", "important");
+            el.style.setProperty("height", "auto", "important");
+          }
+        }
         const full = document.body.innerText || "";
         return { text: full.substring(0, maxChars), fullLength: full.length };
       }, LEGAL_PAGE_MAX_CHARS);
       if (fullLength > text.length) {
-        console.error(`[Legal] ${pt.key} truncated at ${text.length} of ${fullLength} chars`);
+        console.error(`[Legal] ${key} truncated at ${text.length} of ${fullLength} chars`);
       }
 
-      result[pt.key] = {
+      result[key] = {
         url: found.url,
         text: text,
         fetchedAt: new Date().toISOString(),
@@ -3819,7 +3863,7 @@ async function fetchLegalPageContent(context, legalPages) {
         truncated: fullLength > text.length,
       };
     } catch (err) {
-      console.error(`[Legal] Failed to fetch ${pt.key}: ${err.message}`);
+      console.error(`[Legal] Failed to fetch ${key}: ${err.message}`);
     } finally {
       if (policyPage) {
         try { await policyPage.close(); } catch { }
@@ -5343,6 +5387,7 @@ module.exports = {
   collectObservedThirdPartyDomains,
   siteWidePolicyAnalysis,
   fetchLegalPageContent,
+  pickPolicyLink,
   LEGAL_PAGE_MAX_CHARS,
   pickCallerFrame,
   parseCmpVendorText,
