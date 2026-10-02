@@ -3615,6 +3615,32 @@ const COMMERCIAL_FP_SDKS = [
   { name: "PerimeterX / HUMAN", domains: ["perimeterx.net", "px-cdn.net", "humansecurity.com"] },
 ];
 
+// Script hosts of ad / analytics / profiling trackers. Used by the
+// known-tracker rule in aggregateFingerprinting: a tracker that reads device
+// properties before consent is collecting identifiers for tracking, which
+// needs consent under ePrivacy Art. 5(3) whatever the entropy. Deliberately
+// excludes CMPs, payment, CDN and support widgets, which read screen/navigator
+// for layout or fraud reasons. Matched on the host or any parent domain.
+const AD_TRACKER_SCRIPT_DOMAINS = [
+  "bing.com", "clarity.ms",
+  "facebook.net", "facebook.com",
+  "google-analytics.com", "googletagmanager.com", "doubleclick.net",
+  "googleadservices.com", "googlesyndication.com",
+  "licdn.com", "linkedin.com",
+  "pinimg.com", "pinterest.com",
+  "tiktok.com", "ads-twitter.com", "sc-static.net", "snapchat.com",
+  "criteo.com", "criteo.net", "amazon-adsystem.com", "adnxs.com",
+  "taboola.com", "outbrain.com", "scorecardresearch.com",
+  "hotjar.com", "hotjar.io", "mouseflow.com", "fullstory.com",
+  "segment.com", "segment.io", "amplitude.com", "mixpanel.com",
+  "optimizely.com", "exponea.com",
+];
+
+function isKnownAdTracker(host) {
+  const h = (host || "").toLowerCase();
+  return AD_TRACKER_SCRIPT_DOMAINS.some(d => h === d || h.endsWith("." + d));
+}
+
 function classifyApiName(api, method) {
   return `${api}.${(method || "").split(" ")[0]}`;
 }
@@ -3653,28 +3679,43 @@ function aggregateFingerprinting(rawResult) {
     const t2Count = bucket.tier2.reduce((s, c) => s + c.count, 0);
     const distinctT2 = new Set(bucket.tier2.map(c => classifyApiName(c.api, c.method))).size;
 
+    const preConsentT2 = bucket.tier2.filter(c => c.preConsent);
+    const distinctPreConsentT2 = new Set(preConsentT2.map(c => classifyApiName(c.api, c.method))).size;
+
     let verdict = null;
+    let rule = null;
+    let published = bucket.tier2;
     if (t1Count >= 1) {
       verdict = "active fingerprinting";
-      promotedTier2Calls.push(...bucket.tier2);
+      rule = "tier1";
     } else if (t2Count >= 4 && distinctT2 >= 3) {
       verdict = "probable fingerprinting";
-      promotedTier2Calls.push(...bucket.tier2);
+      rule = "tier2-stack";
+    } else if (distinctPreConsentT2 >= 2 && isKnownAdTracker(domain)) {
+      // Known-tracker rule: an ad/analytics tracker reading ≥2 distinct
+      // Tier-2 device properties before consent. Only the pre-consent reads
+      // are published; the post-consent ones stay in the appendix.
+      verdict = "probable fingerprinting";
+      rule = "known-tracker-pre-consent";
+      published = preConsentT2;
+      droppedTier2Calls.push(...bucket.tier2.filter(c => !c.preConsent));
     } else {
       droppedTier2Calls.push(...bucket.tier2);
       continue;
     }
+    promotedTier2Calls.push(...published);
 
     const apis = Array.from(new Set([
       ...bucket.tier1.map(c => classifyApiName(c.api, c.method)),
-      ...bucket.tier2.map(c => classifyApiName(c.api, c.method)),
+      ...published.map(c => classifyApiName(c.api, c.method)),
     ]));
 
     stackedSignals.push({
       callerDomain: domain,
       verdict,
+      rule,
       tier1Count: t1Count,
-      tier2Count: t2Count,
+      tier2Count: published.reduce((s, c) => s + c.count, 0),
       apis,
       preConsent: bucket.preConsent,
       rationale: null,
@@ -5288,6 +5329,7 @@ module.exports = {
   detectVendorConsentModes,
   parseUetqConsent,
   aggregateFingerprinting,
+  isKnownAdTracker,
   dedupeFpCalls,
   detectConsentMode,
   buildOverallDiffSummary,
