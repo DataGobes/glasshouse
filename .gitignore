@@ -32,3 +32,5 @@ fixtures/replay/*
 # scripts/replay.js outputs quote third-party policy text.
 replay-report*.json
 replay-review*.md
+# Local secrets (TYPESAFE_API_KEY for scripts/replay.js).
+.env
