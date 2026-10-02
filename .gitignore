@@ -18,3 +18,10 @@ glasshouse-*.json
 glasshouse-*.png
 privacy-summary-*.json
 scans/
+
+# Replay fixtures (scan + analysis pairs) contain raw scans of third-party
+# sites — keep them local. Only the convention README and our own site's
+# fixture are committed. See fixtures/replay/README.md.
+fixtures/replay/*
+!fixtures/replay/README.md
+!fixtures/replay/datagobes.dev/
