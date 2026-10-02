@@ -16,6 +16,10 @@
  * key, cached answers still replay, so re-scoring after a threshold or
  * comparison change costs nothing. Sites that need the API are skipped.
  *
+ * Labels named in a fixture's validation.errors are dropped, and fixtures
+ * with any checklist-related validation error count at half weight; errors
+ * about other findings (tracker drift and the like) are ignored here.
+ *
  * Fixture quality: each site line shows the policy URL and length. Text that
  * the judge's gate says is not a privacy policy (a login or cookie page) is
  * skipped; on text that was cut off, "absent" judgments are not scored.
@@ -47,8 +51,17 @@ async function replaySite(dir, judge) {
   const meta = readJson(path.join(dir, "meta.json"));
   const site = meta.site || path.basename(dir);
   const errors = (meta.validation && meta.validation.errors) || [];
-  const clean = !meta.validation || meta.validation.exitCode === 0;
-  const base = { site, scanner: meta.scan && meta.scan.scanner, weight: clean ? 1 : DIRTY_WEIGHT, validationErrors: errors.length };
+  // Only errors about the checklist itself lower trust in its labels. Tracker
+  // or cookie drift between an old analysis and a fresh scan says nothing
+  // about whether the policy checklist was right.
+  const relevant = errors.filter((e) => /privacyPolicyAnalysis/.test(e));
+  const base = {
+    site,
+    scanner: meta.scan && meta.scan.scanner,
+    weight: relevant.length ? DIRTY_WEIGHT : 1,
+    validationErrors: relevant.length,
+    otherValidationErrors: errors.length - relevant.length,
+  };
 
   const scan = readJson(path.join(dir, "scan.json"));
   const analysis = readJson(path.join(dir, "analysis.json"));
@@ -94,7 +107,7 @@ function formatReport(report) {
   out.push(`Cache: ${report.cache.hits} hit(s), ${report.cache.misses} miss(es)`);
   out.push("");
   for (const s of report.sites) {
-    const tag = s.weight < 1 ? ` [validation errors: ${s.validationErrors}, weight ${s.weight}]` : "";
+    const tag = s.weight < 1 ? ` [checklist validation errors: ${s.validationErrors}, weight ${s.weight}]` : "";
     if (s.skipped) { out.push(`- ${s.site}: skipped (${s.skipped})${tag}`); continue; }
     const scored = s.rows.filter((r) => r.agree != null);
     const agree = scored.filter((r) => r.agree).length;

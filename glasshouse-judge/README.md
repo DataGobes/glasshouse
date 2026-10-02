@@ -51,8 +51,9 @@ node scripts/replay.js --min-agreement 0.8                  # exit 1 below 80% e
 Per labelled item it compares the judge's status with the hand-written one and
 reports exact agreement, "addressed or not" agreement, Cohen's kappa, per
 element agreement and a confusion matrix. Labels named in a fixture's
-`validation.errors` are dropped; fixtures that failed validation count at half
-weight. Hand-written element names are mapped by alias ("Lawful basis",
+`validation.errors` are dropped; fixtures with a checklist-related validation
+error count at half weight (errors about trackers, cookies etc. don't affect
+the checklist score). Hand-written element names are mapped by alias ("Lawful basis",
 "Retention period", …); names that map to nothing are listed, not scored.
 
 ## Caveats

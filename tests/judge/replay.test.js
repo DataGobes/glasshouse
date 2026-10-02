@@ -88,7 +88,7 @@ test("replay scores fixtures, down-weights dirty ones and skips text that is not
   assert.strictEqual(report.summary.agreement, 12 / 12.5);
   assert.strictEqual(report.model, "jev-1.13.0");
   const text = formatReport(report);
-  assert.match(text, /legacy-shop\.test: 6\/7 labelled items agree \[validation errors: 1, weight 0\.5\]/);
+  assert.match(text, /legacy-shop\.test: 6\/7 labelled items agree \[checklist validation errors: 1, weight 0\.5\]/);
   assert.match(text, /policy: https:\/\/example-shop\.test\/privacy, \d+ chars, P\(policy\)=0\.95\n/);
   assert.match(text, /TRUNCATED \(length is exactly 15000 chars, a scanner cap\)/);
   assert.match(text, /· International transfers .*not scored: truncated/);
@@ -106,6 +106,23 @@ test("replay without a key replays cached answers and skips the rest", async () 
   // Same policy text but another domain in state: a different request, not cached.
   assert.match(by["legacy-shop.test"].skipped, /TYPESAFE_API_KEY/);
   assert.strictEqual(report.cache.misses, 1);
+});
+
+test("validation errors outside the checklist don't down-weight a fixture", async () => {
+  const fs = require("fs");
+  const os = require("os");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "replay-"));
+  fs.cpSync(path.join(FIXTURES, "example-shop.test"), path.join(dir, "example-shop.test"), { recursive: true });
+  const metaFile = path.join(dir, "example-shop.test", "meta.json");
+  const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
+  meta.validation = { exitCode: 1, errors: ['findings.cookies: "_ga" does not appear in the scan', "findings.trackers[2]: not in scan"], warnings: [] };
+  fs.writeFileSync(metaFile, JSON.stringify(meta));
+
+  const judge = createJudge({ client: createFakeClient(), cache: createMemoryCache(), env: {} });
+  const [site] = (await runReplay({ fixturesDir: dir, judge })).sites;
+  assert.strictEqual(site.weight, 1);
+  assert.strictEqual(site.validationErrors, 0);
+  assert.strictEqual(site.otherValidationErrors, 2);
 });
 
 test("the committed datagobes.dev fixture is discovered", () => {

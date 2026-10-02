@@ -3,8 +3,8 @@
  * judge output and computes agreement.
  *
  * Labels are not gold (fixtures/replay/README.md). Items named in the
- * fixture's validation.errors are dropped, and fixtures that failed
- * validation count at half weight.
+ * fixture's validation.errors are dropped, and fixtures with any checklist
+ * validation error count at half weight.
  */
 
 const { ELEMENTS, matchElement } = require("./checklists/art13");
