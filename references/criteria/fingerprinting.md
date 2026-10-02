@@ -83,7 +83,7 @@ Every detected API call is bucketed into one of three tiers based on entropy con
 
 **Tier 1 — high-confidence hardware probes (always published).** Canvas (`toDataURL`/`getImageData` on tiny/hidden OR text-only-undisplayed canvases; `measureText` >20× in 5s), OffscreenCanvas + Worker postMessage, WebGL/WebGL2 hardware params + `getShaderPrecisionFormat`, WebGPU `requestAdapter` + `adapter.info`, AudioContext (`OfflineAudioContext`, `createAnalyser`+`createScriptProcessor` graph, `AudioWorkletNode`), `getBattery`, `enumerateDevices`, `RTCPeerConnection`, `document.fonts.check >20×` + `.values/.entries/.forEach`, `NavigatorUAData.getHighEntropyValues`.
 
-**Tier 2 — medium-entropy (published only when stacked with ≥1 Tier 1 from same caller, OR ≥4 hits across ≥3 distinct APIs).** `navigator.{deviceMemory, hardwareConcurrency, platform, maxTouchPoints, pdfViewerEnabled}`, `navigator.connection.{effectiveType,downlink,rtt}`, `screen.{colorDepth,pixelDepth,availWidth,availHeight}`, FP-class `matchMedia` queries (`color-gamut`, `dynamic-range`, `resolution: ≥2dppx`), `document.fonts.size`.
+**Tier 2 — medium-entropy (published only when stacked with ≥1 Tier 1 from same caller, OR ≥4 hits across ≥3 distinct APIs, OR read pre-consent by a known ad/analytics tracker across ≥2 distinct APIs).** `navigator.{deviceMemory, hardwareConcurrency, platform, maxTouchPoints, pdfViewerEnabled}`, `navigator.connection.{effectiveType,downlink,rtt}`, `screen.{colorDepth,pixelDepth,availWidth,availHeight}`, FP-class `matchMedia` queries (`color-gamut`, `dynamic-range`, `resolution: ≥2dppx`), `document.fonts.size`.
 
 **Tier 3 — low-entropy / commonly-legitimate (private appendix only).** `navigator.{language,languages,cookieEnabled,doNotTrack}`, `screen.{width,height}`, `navigator.storage.estimate()`, `caches.keys()`.
 
@@ -92,7 +92,10 @@ Every detected API call is bucketed into one of three tiers based on entropy con
 Per `callerDomain D`:
 - `T1 ≥ 1` → verdict `"active fingerprinting"` — all D's Tier 1 + Tier 2 calls published
 - `T2 ≥ 4 AND distinct APIs ≥ 3` (no T1) → verdict `"probable fingerprinting"` — D's Tier 2 published
+- D is a known ad/analytics tracker (`AD_TRACKER_SCRIPT_DOMAINS` in `scan.js`) AND it read ≥2 distinct Tier 2 APIs **before consent** → verdict `"probable fingerprinting"` — only D's pre-consent Tier 2 calls published. A tracker reading device properties before consent is collecting identifiers for tracking, which needs consent under ePrivacy Art. 5(3) whatever the entropy. CMPs, payment, CDN and support widgets are deliberately not on the list.
 - Otherwise → D's Tier 2 demoted to `tier3Appendix[]`
+
+Each `stackedSignals[]` entry carries `rule` (`"tier1"`, `"tier2-stack"` or `"known-tracker-pre-consent"`) naming which branch produced it, so a verdict can be traced back to the rule that fired.
 
 For each `stackedSignals[]` entry, the LLM analyst fills `rationale`, `legitimateBasisClaim`, and `purposeDisclosed` by reading **both the privacy policy and the cookie policy** (and the CMP vendor list if available) — profiling/experimentation vendors like Optimizely and Exponea/Bloomreach are commonly disclosed in the *cookie* policy, so checking only the privacy policy yields false "undisclosed" findings. Search the vendor's brand aliases (Exponea ↔ Bloomreach, Optimizely ↔ Episerver) before setting `purposeDisclosed: false`, and record `disclosureSource` + a short excerpt when `true`. Per-tracker Art. 6 nuance: Riskified for fraud prevention has a plausible Art. 6(1)(f) argument; Adobe Target for A/B testing does not.
 

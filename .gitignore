@@ -10,3 +10,11 @@ node_modules/
 
 # Generated complaint dossiers contain personal data — do not commit
 dpa-complaint-*/
+
+# Raw scan outputs, screenshots and extracted summaries (default file names
+# from scripts/scan.js and extract-summary.js). Scans of real third-party
+# sites never belong in the repo; curated examples live under docs/examples/.
+glasshouse-*.json
+glasshouse-*.png
+privacy-summary-*.json
+scans/
