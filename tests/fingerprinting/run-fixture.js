@@ -3,7 +3,7 @@
  * Run the privacy scanner against the local fixture page and assert the
  * fingerprinting output structure. Exit code 0 = pass, 1 = fail.
  *
- * Usage: node tests/fingerprinting/run-fixture.js
+ * Usage: node tests/fingerprinting/run-fixture.js [--engine chromium|firefox]
  */
 const fs = require("fs");
 const path = require("path");
@@ -12,6 +12,8 @@ const { spawn } = require("child_process");
 
 const FIXTURE_DIR = __dirname;
 const SCAN_DIR = path.resolve(__dirname, "../..");
+const engineIdx = process.argv.indexOf("--engine");
+const ENGINE = engineIdx !== -1 ? process.argv[engineIdx + 1] : null;
 
 function startFixtureServer() {
   return new Promise((resolve) => {
@@ -27,7 +29,9 @@ function startFixtureServer() {
 
 function runScan(url) {
   return new Promise((resolve, reject) => {
-    const proc = spawn("node", [path.join(SCAN_DIR, "scripts/scan.js"), url], {
+    const args = [path.join(SCAN_DIR, "scripts/scan.js"), url];
+    if (ENGINE) args.push("--engine", ENGINE);
+    const proc = spawn("node", args, {
       stdio: ["ignore", "pipe", "inherit"],
     });
     let stdout = "";

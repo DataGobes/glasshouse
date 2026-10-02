@@ -1062,6 +1062,10 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
         // Wrap browser APIs commonly used for fingerprinting.
         // Each wrapper calls the original, logs the call, and returns the unmodified result.
         window.__fpCalls = [];
+        // Raw stack of this init script itself, so the Node side can recognise
+        // (and skip) our own wrapper frames when attributing a call to the
+        // script that made it. See pickCallerFrame() in scan.js.
+        try { window.__fpSelfStack = ((new Error()).stack || "").substring(0, 400); } catch { }
         const TIER1 = "tier1";
         const TIER2 = "tier2";
         const TIER3 = "tier3";
@@ -1072,7 +1076,8 @@ async function scan(targetUrl, buttonHints = {}, scanOpts = {}) {
               method,
               tier: tier || TIER1,
               timestamp: Date.now(),
-              callerUrl: (new Error()).stack?.split("\n")[2]?.trim()?.substring(0, 200) || "",
+              // Raw (bounded) stack; resolved to callerUrl in collectFingerprintingResult.
+              stack: ((new Error()).stack || "").substring(0, 800),
               inWorker: typeof importScripts !== "undefined",
             });
           } catch { }
@@ -3523,9 +3528,56 @@ function dedupeFpCalls(fpCalls, consentTimestamp) {
   return Array.from(callMap.values());
 }
 
+// Parse the script location out of one stack frame line, engine-agnostic:
+//   Chromium: "    at fn (https://x/y.js:1:2)" or "    at https://x/y.js:1:2"
+//   Firefox:  "fn@https://x/y.js:1:2"
+// Returns the location without :line:col, or null for non-frame lines
+// (Chromium's leading "Error" header).
+function parseFrameSource(line) {
+  const l = (line || "").trim();
+  let m = l.match(/\((.*?):\d+:\d+\)$/);
+  if (m) return m[1];
+  m = l.match(/^at\s+(.*?):\d+:\d+$/);
+  if (m) return m[1];
+  m = l.match(/@(.*?):\d+:\d+$/);
+  if (m) return m[1];
+  return null;
+}
+
+// Pick the stack frame of the script that triggered a fingerprinting hook.
+//
+// The previous approach took stack line [2] verbatim. That is correct in
+// Firefox (frames: logFP, wrapper, caller) but in Chromium the stack starts
+// with an "Error" header line, so [2] is our own wrapper frame
+// ("<anonymous>"), every call resolved to callerDomain "<unknown>", and the
+// aggregator dropped all Tier-2 calls into tier3Appendix. Nested hooks
+// (callbacks, helper functions) were mis-attributed in both engines.
+//
+// Now: drop non-frame lines, then skip every frame that comes from the init
+// script itself (its source is learned from selfStack), and return the first
+// remaining frame. Without a usable selfStack we fall back to "skip logFP +
+// wrapper", which matches the old Firefox behaviour.
+function pickCallerFrame(stack, selfStack) {
+  const frames = String(stack || "").split("\n").map(l => l.trim()).filter(l => parseFrameSource(l) !== null);
+  if (frames.length === 0) return "";
+  const selfFrame = String(selfStack || "").split("\n").map(l => l.trim()).find(l => parseFrameSource(l) !== null);
+  const selfSource = selfFrame ? parseFrameSource(selfFrame) : null;
+  let pick;
+  if (selfSource) pick = frames.find(f => parseFrameSource(f) !== selfSource);
+  if (pick === undefined) pick = frames[2] || "";
+  return pick.substring(0, 200);
+}
+
 async function collectFingerprintingResult(page, consentTimestamp) {
   try {
-    const fpCalls = await page.evaluate(() => window.__fpCalls || []);
+    const { calls: rawCalls, selfStack } = await page.evaluate(() => ({
+      calls: window.__fpCalls || [],
+      selfStack: window.__fpSelfStack || "",
+    }));
+    const fpCalls = rawCalls.map(({ stack, ...c }) => ({
+      ...c,
+      callerUrl: c.callerUrl || pickCallerFrame(stack, selfStack),
+    }));
     if (fpCalls.length === 0) {
       return { detected: false, apiCalls: [], preConsent: false, callerDomains: [] };
     }
@@ -3679,6 +3731,15 @@ function aggregateFingerprinting(rawResult) {
 // ───────────────────────────────────────────
 // Privacy policy content fetch (new page)
 // ───────────────────────────────────────────
+
+// Upper bound on stored legal-page text. analyzePolicyText runs regexes over
+// this text, so anything past the cap is invisible to the rights / processor /
+// breach checks. The old 30k cap cut long single-page policies (66k+ is common
+// for multinationals) mid-way and produced false "not disclosed" results for
+// sections near the end (rights, DPA complaint, Art. 21). 250k covers every
+// real policy seen so far while still guarding against runaway pages.
+const LEGAL_PAGE_MAX_CHARS = 250000;
+
 async function fetchLegalPageContent(context, legalPages) {
   const result = {};
   // Find privacy policy and cookie policy URLs
@@ -3698,18 +3759,23 @@ async function fetchLegalPageContent(context, legalPages) {
       await policyPage.goto(found.url, { waitUntil: "networkidle", timeout: 30000 });
       await policyPage.waitForTimeout(3000);
 
-      const text = await policyPage.evaluate(() => {
+      const { text, fullLength } = await policyPage.evaluate((maxChars) => {
         // Strip nav, footer, header to get just the content
         const clutter = document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']");
         clutter.forEach(el => el.remove());
-        return (document.body.innerText || "").substring(0, 30000);
-      });
+        const full = document.body.innerText || "";
+        return { text: full.substring(0, maxChars), fullLength: full.length };
+      }, LEGAL_PAGE_MAX_CHARS);
+      if (fullLength > text.length) {
+        console.error(`[Legal] ${pt.key} truncated at ${text.length} of ${fullLength} chars`);
+      }
 
       result[pt.key] = {
         url: found.url,
         text: text,
         fetchedAt: new Date().toISOString(),
         charCount: text.length,
+        truncated: fullLength > text.length,
       };
     } catch (err) {
       console.error(`[Legal] Failed to fetch ${pt.key}: ${err.message}`);
@@ -3921,6 +3987,10 @@ function analyzePolicyText(legalPageContent, thirdPartyDomains, securityTxt) {
     "bing.com": "Microsoft Advertising / Bing",
     "exponea.com": "Bloomreach / Exponea",
     "licdn.com": "LinkedIn Insight",
+    "linkedin.com": "LinkedIn Insight",          // px.ads.linkedin.com (Insight Tag beacon)
+    "pinterest.com": "Pinterest Tag",            // ct.pinterest.com (Pinterest Tag beacon)
+    "bloomreach.com": "Bloomreach / Exponea",
+    "hotjar.io": "Hotjar",
     "scorecardresearch.com": "Comscore",
     "pinimg.com": "Pinterest Tag",
   };
@@ -5075,6 +5145,42 @@ function buildSummary(variantResult, parentResult) {
 // ───────────────────────────────────────────
 // Build Overall Diff Summary
 // ───────────────────────────────────────────
+// Every third-party host observed anywhere in the scan: all three variants,
+// pre- and post-consent. The legal pages are only fetched on the ignore
+// variant, so the per-variant policyAnalysis there only sees ignore's
+// pre-consent hosts — on a site with a working CMP that is just the tag
+// manager and the CMP itself. The processors that load after "Accept"
+// (ad pixels, A/B testing, CRM) were never cross-referenced against the
+// policy, so `undisclosed` came back empty. Disclosure is a site-level
+// question, so the cross-reference has to use the site-level host set.
+function collectObservedThirdPartyDomains(variantSummaries) {
+  const hosts = new Set();
+  for (const v of Object.values(variantSummaries || {})) {
+    if (!v) continue;
+    for (const d of [...(v.thirdPartyDomains || []), ...(v.postConsentThirdPartyDomains || [])]) {
+      if (d && d.domain) hosts.add(d.domain.toLowerCase());
+    }
+  }
+  return Array.from(hosts).sort().map((domain) => ({ domain }));
+}
+
+// Site-wide policy analysis: ignore's legal text + security.txt, cross-
+// referenced against hosts from every variant. Falls back to the variant-local
+// result if recomputation throws, so a bad edge case never drops the section.
+function siteWidePolicyAnalysis(variantSummaries) {
+  const ignore = variantSummaries?.ignore;
+  if (!ignore) return null;
+  try {
+    return analyzePolicyText(
+      ignore.legalPageContent || null,
+      collectObservedThirdPartyDomains(variantSummaries),
+      ignore.securityTxt || null
+    );
+  } catch {
+    return ignore.policyAnalysis || null;
+  }
+}
+
 function buildOverallDiffSummary(result) {
   const sum = result.variantSummaries;
   if (!sum || !sum.ignore || !sum.accept || !sum.reject) return null;
@@ -5102,11 +5208,11 @@ function buildOverallDiffSummary(result) {
       // legalPageContent is only captured during the ignore variant (to save time).
       // Inject it here so the summary always has it.
       legalPageContent: sum.ignore.legalPageContent || null,
-      // securityTxt and policyAnalysis are computed only on the ignore variant
-      // (their inputs are static for the site). Promote them so analysis-brief
-      // and downstream consumers don't have to reach into per-variant data.
+      // securityTxt is computed only on the ignore variant (static for the
+      // site). policyAnalysis uses ignore's legal text but is cross-referenced
+      // against third-party hosts from all variants — see siteWidePolicyAnalysis.
       securityTxt: sum.ignore.securityTxt || null,
-      policyAnalysis: sum.ignore.policyAnalysis || null,
+      policyAnalysis: siteWidePolicyAnalysis(sum),
     }
   };
 }
@@ -5192,6 +5298,11 @@ module.exports = {
   SDK_PATTERNS,
   TRACKER_PATTERNS,
   analyzePolicyText,
+  collectObservedThirdPartyDomains,
+  siteWidePolicyAnalysis,
+  fetchLegalPageContent,
+  LEGAL_PAGE_MAX_CHARS,
+  pickCallerFrame,
   parseCmpVendorText,
   extractCmpVendorList,
 };
